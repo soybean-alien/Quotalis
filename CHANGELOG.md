@@ -8,7 +8,7 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ### Added
 
-- **Claude plan bars from Tokenz.** When Tokenz is installed, Claudex reads its `%LOCALAPPDATA%\Tokenz	okenz_status.json` (Claude `five_hour` and `weekly` only) and shows the 5-hour and weekly bars like Codex's. This works with the Claude desktop app, which never runs Claude Code's status line. Estimates between Tokenz's exact readings show as `~23%` and "estimated" in the reset line. They are never stored as measured daily peaks. Without Tokenz, the status line bridge is used as before.
+- **Claude plan bars from Tokenz.** When Tokenz is installed, Claudex reads its `%LOCALAPPDATA%\Tokenz\tokenz_status.json` (Claude `five_hour` and `weekly` only) and shows the 5-hour and weekly bars like Codex's. This works with the Claude desktop app, which never runs Claude Code's status line. Estimates between Tokenz's exact readings show as `~23%` and "estimated" in the reset line. They are never stored as measured daily peaks. Without Tokenz, the status line bridge is used as before.
 - Settings, Modules shows "Reading from Tokenz" and when it last updated.
 
 ## [0.2.0] - 2026-10-17
