@@ -77,13 +77,14 @@ public class DailyStatisticsTests
     }
 
     [Fact]
-    public void Intensity_levels_follow_quartiles_and_keep_empty_days_at_zero()
+    public void Intensity_levels_follow_thirds_and_keep_empty_days_at_zero()
     {
         var levels = UsageAggregator.IntensityLevels([0, 10, 20, 30, 40, 1_000_000]);
 
         Assert.Equal(0, levels[0]);
         Assert.Equal(1, levels[1]);
-        Assert.Equal(4, levels[5]);
+        Assert.Equal(3, levels[5]);
+        Assert.True(levels.Max() <= 3);
         Assert.True(levels.Skip(1).Zip(levels.Skip(2)).All(p => p.First <= p.Second));
     }
 

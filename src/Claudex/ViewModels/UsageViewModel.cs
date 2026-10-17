@@ -13,6 +13,7 @@ public sealed class UsageViewModel : ObservableObject
     private IReadOnlyList<UsageDay> _days = [];
     private int[] _levels = [];
     private int _inspectedIndex = -1;
+    private long _maxProviderFresh;
 
     public UsageViewModel()
     {
@@ -90,31 +91,34 @@ public sealed class UsageViewModel : ObservableObject
 
     public bool HasInspectedPlan => InspectedPlan.Length > 0;
 
-    /// <summary>Tooltip: the day's fresh tokens (Claude and Codex together).</summary>
+    /// <summary>Readout: the day's fresh tokens (Claude and Codex together).</summary>
     public string InspectedTooltipTokens => !IsInspecting ? string.Empty
         : _days[_inspectedIndex].FreshTokens == 0 ? "No usage"
         : $"{DisplayFormat.Tokens(_days[_inspectedIndex].FreshTokens)} fresh tokens";
 
-    /// <summary>Tooltip: sessions and the estimated API equivalent, when there was usage.</summary>
-    public string InspectedTooltipDetail
-    {
-        get
-        {
-            if (!IsInspecting || !_days[_inspectedIndex].HasUsage)
-            {
-                return string.Empty;
-            }
-
-            var d = _days[_inspectedIndex];
-            var parts = new List<string>();
-            if (d.Sessions > 0) parts.Add(DisplayFormat.Count(d.Sessions, "session", "sessions"));
-            parts.Add(d.ApiValuePartial ? "API equivalent unavailable" : $"{DisplayFormat.Usd(d.TotalApiValueUsd)} API equivalent");
-            return string.Join(" · ", parts);
-        }
-    }
-
     /// <summary>The readout grows by one line once plan usage has ever been measured (no jump per day).</summary>
-    public double ReadoutHeight => _planPeaks.Count > 0 ? 52 : 36;
+    public double ReadoutHeight => _planPeaks.Count > 0 ? 100 : 82;
+
+    // Per-tool bars of the inspected day: Claude above Codex, on one scale (the busiest single-tool day).
+
+    public double InspectedClaudeFraction => Fraction(IsInspecting ? _days[_inspectedIndex].Claude.Fresh : 0);
+
+    public double InspectedCodexFraction => Fraction(IsInspecting ? _days[_inspectedIndex].Codex.Fresh : 0);
+
+    /// <summary>"2.96M · $42.03", or tokens alone when the day is only partly priced.</summary>
+    public string InspectedClaudeText => IsInspecting ? ToolText(_days[_inspectedIndex].Claude.Fresh, _days[_inspectedIndex].ClaudeApiValueUsd) : string.Empty;
+
+    public string InspectedCodexText => IsInspecting ? ToolText(_days[_inspectedIndex].Codex.Fresh, _days[_inspectedIndex].CodexApiValueUsd) : string.Empty;
+
+    public string InspectedSessions => IsInspecting && _days[_inspectedIndex].HasUsage
+        ? DisplayFormat.Count(_days[_inspectedIndex].Sessions, "session", "sessions")
+        : "No usage";
+
+    private double Fraction(long fresh) => _maxProviderFresh <= 0 ? 0 : Math.Clamp((double)fresh / _maxProviderFresh, 0, 1);
+
+    private string ToolText(long fresh, decimal usd) => fresh <= 0 ? "None"
+        : _days[_inspectedIndex].ApiValuePartial ? DisplayFormat.Tokens(fresh)
+        : $"{DisplayFormat.Tokens(fresh)} · {DisplayFormat.Usd(usd)}";
 
     public string InspectedValue => !IsInspecting ? string.Empty
         : _days[_inspectedIndex].ApiValuePartial ? "Unavailable"
@@ -130,7 +134,7 @@ public sealed class UsageViewModel : ObservableObject
         get
         {
             var active = _days.Count(d => d.HasUsage);
-            return active == 0 ? "No usage in the last 26 weeks" : $"{DisplayFormat.Count(active, "active day", "active days")}, shaded by fresh tokens";
+            return active == 0 ? "No usage in the last 26 weeks" : $"{DisplayFormat.Count(active, "active day", "active days")}, combined fresh tokens";
         }
     }
 
@@ -190,6 +194,7 @@ public sealed class UsageViewModel : ObservableObject
         _days = days;
         // Intensity follows fresh tokens: cache reads would let one long session flatten every other day.
         _levels = UsageAggregator.IntensityLevels(days.Select(d => d.FreshTokens).ToList());
+        _maxProviderFresh = days.Count == 0 ? 0 : days.Max(d => Math.Max(d.Claude.Fresh, d.Codex.Fresh));
         if (_inspectedIndex >= days.Count)
         {
             _inspectedIndex = -1;
@@ -216,6 +221,12 @@ public sealed class UsageViewModel : ObservableObject
         OnPropertyChanged(nameof(InspectedCodex));
         OnPropertyChanged(nameof(InspectedValue));
         OnPropertyChanged(nameof(InspectedDetail));
+        OnPropertyChanged(nameof(InspectedTooltipTokens));
+        OnPropertyChanged(nameof(InspectedClaudeFraction));
+        OnPropertyChanged(nameof(InspectedCodexFraction));
+        OnPropertyChanged(nameof(InspectedClaudeText));
+        OnPropertyChanged(nameof(InspectedCodexText));
+        OnPropertyChanged(nameof(InspectedSessions));
         OnPropertyChanged(nameof(InspectedAccessibleText));
     }
 

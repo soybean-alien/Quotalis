@@ -14,9 +14,10 @@ using Windows.UI;
 namespace Claudex.UI.Components;
 
 /// <summary>
-/// Contribution-style usage graph: one column per week, one row per weekday, intensity by quartile.
-/// Pointer hover, a click or tap, and arrow keys inspect a day; the readout lives in the panel below
-/// the graph, so nothing pops up outside the island.
+/// Contribution-style usage graph: one column per week, one row per weekday. Claude and Codex are
+/// pooled; the purple intensity (dim, brighter, brightest) follows thirds of the active days.
+/// Pointer hover, a click or tap, and arrow keys inspect a day; the readout (per-tool bars and the
+/// total) lives in the panel below the graph, so nothing pops up over it.
 /// <para>The cells are not hit-testable; the canvas is, through its transparent background. A
 /// UserControl has no template, so a background set on the control itself is never drawn and
 /// gives no hit-test area: pointer input would go to the scroll viewer behind the graph instead.</para>
@@ -27,26 +28,19 @@ public sealed class UsageHeatmap : UserControl
     public const double Gap = 3;
     private const double Pitch = CellSize + Gap;
 
-    private static readonly Color Accent = Color.FromArgb(255, 0x29, 0x97, 0xFF);
     private static readonly SolidColorBrush[] LevelBrushes =
     [
         new(Color.FromArgb(0x16, 0xFF, 0xFF, 0xFF)),
-        new(Color.FromArgb(0x4D, Accent.R, Accent.G, Accent.B)),
-        new(Color.FromArgb(0x80, Accent.R, Accent.G, Accent.B)),
-        new(Color.FromArgb(0xB8, Accent.R, Accent.G, Accent.B)),
-        new(Accent),
+        new(Color.FromArgb(0xFF, 0x3B, 0x2A, 0x6B)),
+        new(Color.FromArgb(0xFF, 0x6A, 0x52, 0xC4)),
+        new(Color.FromArgb(0xFF, 0xA9, 0x96, 0xFF)),
     ];
 
     private readonly Canvas _canvas = new() { Background = new SolidColorBrush(Colors.Transparent) };
     private readonly Rectangle _ring;
     private readonly List<Rectangle> _cells = [];
     private readonly List<(int Column, int Row)> _positions = [];
-    private readonly Border _tip;
-    private readonly TextBlock _tipDate = new();
-    private readonly TextBlock _tipTokens = new();
-    private readonly TextBlock _tipDetail = new();
     private Claudex.Core.Usage.HeatmapLayout _layout = Claudex.Core.Usage.HeatmapLayout.For([], DayOfWeek.Monday);
-    private bool _tipShown;
     private UsageViewModel? _viewModel;
     private int _columns;
     private DateOnly _firstDay;
@@ -69,30 +63,6 @@ public sealed class UsageHeatmap : UserControl
         };
         Content = _canvas;
         AutomationProperties.SetLiveSetting(this, AutomationLiveSetting.Polite);
-
-        // Tooltip: a small floating capsule in the island's own style (not the system tooltip).
-        var resources = Application.Current.Resources;
-        _tipDate.Style = (Style)resources["CaptionTextStyle"];
-        _tipDate.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
-        _tipDate.Foreground = (Brush)resources["TextPrimaryBrush"];
-        _tipTokens.Style = (Style)resources["CaptionTextStyle"];
-        _tipTokens.Foreground = (Brush)resources["TextPrimaryBrush"];
-        Microsoft.UI.Xaml.Documents.Typography.SetNumeralAlignment(_tipTokens, Microsoft.UI.Xaml.FontNumeralAlignment.Tabular);
-        _tipDetail.Style = (Style)resources["FineTextStyle"];
-        _tip = new Border
-        {
-            Background = new SolidColorBrush(Color.FromArgb(0xF2, 0x23, 0x23, 0x26)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x24, 0xFF, 0xFF, 0xFF)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(10, 6, 10, 7),
-            IsHitTestVisible = false,
-            Opacity = 0,
-            Child = new StackPanel { Spacing = 1, Children = { _tipDate, _tipTokens, _tipDetail } },
-        };
-        _tip.Shadow = new ThemeShadow();
-        _tip.Translation = new System.Numerics.Vector3(0, 0, 12);
-        AutomationProperties.SetAccessibilityView(_tip, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
 
         PointerMoved += (_, e) => InspectAt(e.GetCurrentPoint(_canvas).Position);
         PointerPressed += OnPointerPressed;
@@ -173,7 +143,6 @@ public sealed class UsageHeatmap : UserControl
         if (e.PropertyName is nameof(UsageViewModel.InspectedIndex) or "" or null)
         {
             UpdateRing();
-            UpdateTip();
         }
     }
 
@@ -227,7 +196,6 @@ public sealed class UsageHeatmap : UserControl
         _columns = _layout.Columns;
         _firstDay = vm.Days[0].Day;
         _canvas.Children.Add(_ring);
-        _canvas.Children.Add(_tip);
         Width = _columns * Pitch - Gap;
         Height = 7 * Pitch - Gap;
         UpdateRing();
@@ -262,40 +230,6 @@ public sealed class UsageHeatmap : UserControl
         }
 
         _viewModel.Inspect(_layout.IndexAt(point.X, point.Y, Pitch));
-    }
-
-    /// <summary>
-    /// Shows the inspected day above its cell (never under the pointer), fades in once, follows from
-    /// cell to cell without blinking, and disappears as soon as nothing is inspected.
-    /// </summary>
-    private void UpdateTip()
-    {
-        if (_viewModel is not { IsInspecting: true } vm || vm.InspectedIndex >= _positions.Count)
-        {
-            _tip.Opacity = 0;
-            _tipShown = false;
-            return;
-        }
-
-        _tipDate.Text = vm.InspectedDate;
-        _tipTokens.Text = vm.InspectedTooltipTokens;
-        _tipDetail.Text = vm.InspectedTooltipDetail;
-        _tipDetail.Visibility = vm.InspectedTooltipDetail.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        _tip.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
-        var size = _tip.DesiredSize;
-
-        var (column, row) = _positions[vm.InspectedIndex];
-        var x = column * Pitch + CellSize / 2 - size.Width / 2;
-        x = Math.Clamp(x, 0, Math.Max(0, Width - size.Width));
-        var y = row * Pitch - size.Height - 6;
-        Canvas.SetLeft(_tip, x);
-        Canvas.SetTop(_tip, y);
-        if (!_tipShown)
-        {
-            _tipShown = true;
-            _tip.Opacity = 1;
-            Claudex.UI.Animations.Motion.FadeIn(_tip, delay: TimeSpan.Zero, fromY: 3);
-        }
     }
 
     private void UpdateRing()

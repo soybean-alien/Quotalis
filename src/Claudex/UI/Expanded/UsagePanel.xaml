@@ -24,43 +24,62 @@
                 <TextBlock Text="{x:Bind ViewModel.HistorySummary, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
                     <TextBlock Text="Less" Style="{StaticResource FineTextStyle}" Margin="0,0,4,0" />
-                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#16FFFFFF" />
-                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#4D2997FF" />
-                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#802997FF" />
-                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#B82997FF" />
-                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FF2997FF" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FF3B2A6B" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FF6A52C4" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FFA996FF" />
                     <TextBlock Text="More" Style="{StaticResource FineTextStyle}" Margin="4,0,0,0" />
                 </StackPanel>
             </Grid>
-            <Grid Visibility="{x:Bind ViewModel.IsInspecting, Mode=OneWay}" ColumnSpacing="16" RowSpacing="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="{x:Bind ViewModel.InspectedDate, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                <TextBlock Grid.Column="1" Style="{StaticResource CaptionTextStyle}" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}">
-                    <Run Text="Claude" /><Run Text=" " /><Run Text="{x:Bind ViewModel.InspectedClaude, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
-                </TextBlock>
-                <TextBlock Grid.Column="2" Style="{StaticResource CaptionTextStyle}" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}">
-                    <Run Text="Codex" /><Run Text=" " /><Run Text="{x:Bind ViewModel.InspectedCodex, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
-                </TextBlock>
-                <TextBlock Grid.Column="3" HorizontalAlignment="Right" Style="{StaticResource CaptionTextStyle}">
-                    <Run Text="{x:Bind ViewModel.InspectedValue, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" /><Run Text=" API" />
-                </TextBlock>
-                <TextBlock Grid.Row="1" Grid.ColumnSpan="4" Text="{x:Bind ViewModel.InspectedDetail, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
-                <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Text="{x:Bind ViewModel.InspectedPlan, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
+            <!-- Inspected day: pooled total, then Claude (orange) above Codex (blue) on one scale. -->
+            <StackPanel Visibility="{x:Bind ViewModel.IsInspecting, Mode=OneWay}" Spacing="4">
+                <Grid>
+                    <TextBlock Text="{x:Bind ViewModel.InspectedDate, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="{x:Bind ViewModel.InspectedTooltipTokens, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Right" />
+                </Grid>
+                <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Claude" Style="{StaticResource CaptionTextStyle}" Foreground="#FFD97757" />
+                    <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
+                        <Rectangle Fill="#FFD97757" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedClaudeFraction, Mode=OneWay}" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedClaudeText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </Grid>
+                <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Codex" Style="{StaticResource CaptionTextStyle}" Foreground="#FF3A9BFF" />
+                    <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
+                        <Rectangle Fill="#FF3A9BFF" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedCodexFraction, Mode=OneWay}" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedCodexText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </Grid>
+                <Grid>
+                    <TextBlock Text="{x:Bind ViewModel.InspectedSessions, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
+                    <TextBlock HorizontalAlignment="Right" Style="{StaticResource CaptionTextStyle}">
+                        <Run Text="Total " /><Run Text="{x:Bind ViewModel.InspectedValue, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
+                    </TextBlock>
+                </Grid>
+                <TextBlock Text="{x:Bind ViewModel.InspectedPlan, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
                            Visibility="{x:Bind ViewModel.HasInspectedPlan, Mode=OneWay}" />
-            </Grid>
+            </StackPanel>
         </Grid>
 
         <TextBlock Margin="0,12,0,0" Style="{StaticResource FineTextStyle}"
-                   Text="Fresh tokens exclude context re-read from the cache. The estimated API equivalent uses list prices; it is not what you pay." TextWrapping="Wrap" TextTrimming="None" />
+                   Text="Costs are API list prices, not what you pay." TextWrapping="Wrap" TextTrimming="None" />
     </StackPanel>
 </UserControl>

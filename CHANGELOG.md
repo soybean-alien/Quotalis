@@ -4,6 +4,16 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-17
+
+### Changed
+
+- **Usage graph redesign.** The heatmap pools Claude and Codex and is shaded in purple: dim, brighter and brightest for the lighter, middle and heaviest third of your active days.
+- Inspecting a day shows its combined fresh tokens, then an orange Claude bar above a blue Codex bar (each with its tokens and cost, on one scale), the session count and the day's total cost in USD.
+- The floating tooltip over the graph is gone; the readout below it shows everything.
+- The footnote is one line: "Costs are API list prices, not what you pay."
+
+
 ## [0.3.1] - 2026-10-17
 
 ### Changed
