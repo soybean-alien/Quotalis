@@ -118,6 +118,18 @@ public sealed partial class SettingsWindow
     /// <summary>Shows whether Claude Code hands plan usage to Claudex (its status line).</summary>
     private void UpdatePlanConnection()
     {
+        if (!_isDemo && TokenzStatus.Load(TokenzStatus.DefaultPath()) is { } tokenz)
+        {
+            // Tokenz feeds plan usage; the status line link is not needed.
+            var age = Core.Formatting.DisplayFormat.Ago(DateTimeOffset.UtcNow - tokenz.MeasuredAt);
+            (PlanStatusTitle.Text, PlanStatusText.Text) = DateTimeOffset.UtcNow - tokenz.MeasuredAt > PlanStatus.StaleAfter
+                ? ("Reading from Tokenz, no recent update", $"Tokenz last updated {age}. Start Tokenz to keep the Claude bars current.")
+                : ("Reading from Tokenz", $"Last update {age}. Tokenz takes exact numbers from the Claude desktop app and estimates between them (shown with ~).");
+            PlanConnectButton.Visibility = Visibility.Collapsed;
+            PlanDisconnectButton.Visibility = Visibility.Collapsed;
+            return;
+        }
+
         var state = _isDemo ? PlanConnection.NotConnected : ClaudeStatusLineSetup.Inspect(ClaudeStatusLineSetup.SettingsPath());
         var usage = _isDemo ? null : new PlanUsageStore(AppPaths.ClaudePlan).Load();
         var data = PlanStatus.StateOf(state, usage, DateTimeOffset.UtcNow);

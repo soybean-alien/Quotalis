@@ -199,4 +199,51 @@ public class PlanStatusTests
         Assert.Equal(PlanDataState.OtherStatusLine, PlanStatus.StateOf(PlanConnection.OtherStatusLine, null, Now));
         Assert.Equal(PlanDataState.Unreadable, PlanStatus.StateOf(PlanConnection.Unreadable, null, Now));
     }
+
+    // Tokenz status file ------------------------------------------------------------------------------
+
+    private const string TokenzFile = """
+        {"codex":{"five_hour":{"percent":18,"estimated":false,"resets_at":"2026-10-17T02:16:11+00:00"}},
+         "claude":{"status":"live","plan":"Pro",
+          "five_hour":{"percent":16.4,"estimated":true,"resets_at":"2026-10-17T06:30:00.0000000+00:00","window_hours":5},
+          "weekly":{"percent":59,"estimated":false,"resets_at":"2026-10-22T06:00:00.0000000+00:00","window_hours":168}},
+         "written_at":"2026-10-17T01:36:38.5145098+00:00","pid":46340}
+        """;
+
+    [Fact]
+    public void Reads_claude_windows_and_estimate_flags_from_tokenz()
+    {
+        var usage = TokenzStatus.Extract(TokenzFile)!;
+
+        Assert.Equal(16.4, usage.Current!.UsedPercent);
+        Assert.True(usage.Current.IsEstimated);
+        Assert.Equal(new DateTimeOffset(2026, 10, 17, 6, 30, 0, TimeSpan.Zero), usage.Current.ResetsAt);
+        Assert.Equal(59, usage.Weekly!.UsedPercent);
+        Assert.False(usage.Weekly.IsEstimated);
+        Assert.Equal(new DateTimeOffset(2026, 10, 17, 1, 36, 38, TimeSpan.Zero), usage.MeasuredAt.AddTicks(-(usage.MeasuredAt.Ticks % TimeSpan.TicksPerSecond)));
+    }
+
+    [Theory]
+    [InlineData("""{"written_at":"2026-10-17T01:36:38+00:00"}""")]
+    [InlineData("""{"claude":{"five_hour":{"percent":null,"resets_at":null},"weekly":null},"written_at":"2026-10-17T01:36:38+00:00"}""")]
+    [InlineData("""{"claude":{"five_hour":{"percent":10,"resets_at":"2026-10-17T06:30:00+00:00"}}}""")]
+    [InlineData("""{"claude":{"five_hour":{"percent":1""")]
+    public void Tokenz_file_without_claude_numbers_gives_nothing(string json)
+    {
+        Assert.Null(TokenzStatus.Extract(json));
+    }
+
+    [Fact]
+    public void Missing_tokenz_file_gives_nothing()
+    {
+        Assert.Null(TokenzStatus.Load(Path.Combine(TestData.TempDirectory(), "tokenz_status.json")));
+    }
+
+    [Fact]
+    public void Tokenz_source_explains_itself_when_stale()
+    {
+        Assert.Equal(PlanDataState.Stale, PlanStatus.StateOf(PlanConnection.Tokenz, Measured(TimeSpan.FromHours(3), TimeSpan.FromHours(2)), Now));
+        Assert.Contains("Tokenz", PlanStatus.Reason(PlanDataState.Stale, PlanConnection.Tokenz));
+        Assert.DoesNotContain("Tokenz", PlanStatus.Reason(PlanDataState.Stale));
+    }
 }
