@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- Claudex by soybean_alien. Repo banner, rendered to docs/assets/banner.png (2560x1280) and
+     docs/assets/social-preview.png (1280x640) by tools/banner/render.ps1, from the app's own demo renders
+     (Claudex.exe --demo --snapshot=<dir> --culture=en-US; the script copies the ones it needs into shots/). -->
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root { --claude: #d97757; --codex: #3a9bff; --purple: #a78bfa; --ink: #f5f5f7; --grey: #86868b; --dim: #6e6e73; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 2560px; height: 1280px; overflow: hidden; background: #000; }
+  body { position: relative; color: var(--ink); -webkit-font-smoothing: antialiased;
+    font-family: 'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; }
+
+  /* The compact island, tucked under the top edge like it sits on a real screen. */
+  .notch { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); width: 520px; }
+
+  .copy { position: absolute; top: 236px; left: 0; right: 0; text-align: center; }
+  .name { display: inline-flex; align-items: center; gap: 18px; font-size: 44px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+  .name img { width: 60px; height: 60px; }
+  h1 { margin-top: 26px; font-size: 136px; font-weight: 700; letter-spacing: -0.035em; line-height: 1; }
+  h1 span { background: linear-gradient(90deg, var(--claude) 0%, var(--purple) 50%, var(--codex) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { margin-top: 34px; font-size: 40px; font-weight: 400; color: var(--grey); letter-spacing: -0.005em; }
+
+  /* The product, large and running off the bottom edge. */
+  .light { position: absolute; left: 50%; top: 760px; width: 1500px; height: 900px; transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(167, 139, 250, 0.16), rgba(167, 139, 250, 0) 100%); }
+  .product { position: absolute; left: 50%; top: 640px; width: 780px; transform: translateX(-50%); }
+
+  .credit { position: absolute; left: 90px; bottom: 64px; font-size: 24px; line-height: 1.55; color: var(--dim); }
+  .credit b { color: var(--grey); font-weight: 600; }
+  .by { position: absolute; right: 90px; bottom: 56px; display: flex; align-items: center; gap: 22px; font-size: 26px; font-weight: 600; color: var(--grey); }
+  .by img { width: 96px; height: 96px; border-radius: 50%; box-shadow: 0 0 0 2px #2a2a2d; }
+</style>
+</head>
+<body>
+  <img class="notch" src="shots/compact.png" alt="" />
+
+  <div class="copy">
+    <div class="name"><img src="../../src/Claudex/Assets/Claudex-256.png" alt="" />Claudex</div>
+    <h1>Every limit. <span>At a glance.</span></h1>
+    <div class="sub">Claude and Codex, music, focus and your PC, in one quiet capsule at the top of Windows.</div>
+  </div>
+
+  <div class="light"></div>
+  <img class="product" src="shots/usage.png" alt="" />
+
+  <div class="credit">Based on Developer Island by Maximilian Köhlenbeck · MIT</div>
+  <div class="by">by soybean_alien<img src="soybean_alien-logo.png" alt="" /></div>
+</body>
+</html>

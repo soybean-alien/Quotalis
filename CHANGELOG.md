@@ -4,6 +4,13 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-17
+
+### Changed
+
+- **New banner and social preview.** A black, Apple-style campaign banner ("Every limit. At a glance.") with the Claudex icon, the real compact capsule and expanded usage view from demo mode, the Developer Island credit and the soybean_alien emblem. `tools/banner/render.ps1` renders `docs/assets/banner.png` (2560 x 1280) and `social-preview.png` (1280 x 640) from `tools/banner/banner.html` with headless Chrome or Edge.
+- **New README animation.** `hero.gif` is 1270 x 840 on a black stage, about 22 s: the notch, the capsule, a Claude Code activity, Claude and Codex usage with the purple graph and the orange and blue day bars, Music, Focus, System and Awake, each with a one-line caption. Its palette is taken from every state, so the provider colors survive. The screenshots are re-rendered from the current app; Calendar and Git keep their earlier ones.
+
 ## [0.5.1] - 2026-10-17
 
 ### Fixed
