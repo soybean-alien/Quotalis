@@ -38,6 +38,3 @@ __pycache__/
 Thumbs.db
 Desktop.ini
 
-# Agent handoff notes (local only, mirrored to the Desktop backup)
-CODEX_HANDOFF.md
-AGENTS.md
