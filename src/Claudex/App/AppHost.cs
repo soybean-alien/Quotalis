@@ -844,6 +844,11 @@ internal sealed class AppHost : IDisposable
                 _viewModel.Usage.Claude.RefreshPlanClock();
                 _viewModel.Usage.Codex.RefreshPlanClock();
             }
+            else
+            {
+                // A day pinned in the usage graph stays until the island rolls back up.
+                _viewModel.Usage.ClearPin();
+            }
         };
         _viewModel.ModuleOpened += module =>
         {

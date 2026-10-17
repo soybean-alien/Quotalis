@@ -16,8 +16,10 @@ namespace Claudex.UI.Components;
 /// <summary>
 /// Contribution-style usage graph: one column per week, one row per weekday. Claude and Codex are
 /// pooled; the purple intensity (dim, brighter, brightest) follows thirds of the active days.
-/// Pointer hover, a click or tap, and arrow keys inspect a day; the readout (per-tool bars and the
-/// total) lives in the panel below the graph, so nothing pops up over it.
+/// Pointer hover and arrow keys inspect a day; a left click or tap (or Enter and Space) pins it, so the readout keeps
+/// that day after the pointer leaves, until another day is clicked or the island collapses. A fainter ring marks the
+/// pinned day while another one is hovered. The readout (per-tool bars and the total) lives in the panel below the
+/// graph, so nothing pops up over it.
 /// <para>The cells are not hit-testable; the canvas is, through its transparent background. A
 /// UserControl has no template, so a background set on the control itself is never drawn and
 /// gives no hit-test area: pointer input would go to the scroll viewer behind the graph instead.</para>
@@ -38,6 +40,7 @@ public sealed class UsageHeatmap : UserControl
 
     private readonly Canvas _canvas = new() { Background = new SolidColorBrush(Colors.Transparent) };
     private readonly Rectangle _ring;
+    private readonly Rectangle _pinRing;
     private readonly List<Rectangle> _cells = [];
     private readonly List<(int Column, int Row)> _positions = [];
     private Claudex.Core.Usage.HeatmapLayout _layout = Claudex.Core.Usage.HeatmapLayout.For([], DayOfWeek.Monday);
@@ -61,6 +64,17 @@ public sealed class UsageHeatmap : UserControl
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
         };
+        _pinRing = new Rectangle
+        {
+            Width = CellSize + 4,
+            Height = CellSize + 4,
+            RadiusX = 4,
+            RadiusY = 4,
+            Stroke = (Brush)Application.Current.Resources["TextTertiaryBrush"],
+            StrokeThickness = 1.5,
+            Visibility = Visibility.Collapsed,
+            IsHitTestVisible = false,
+        };
         Content = _canvas;
         AutomationProperties.SetLiveSetting(this, AutomationLiveSetting.Polite);
 
@@ -68,20 +82,20 @@ public sealed class UsageHeatmap : UserControl
         PointerPressed += OnPointerPressed;
         PointerExited += (_, _) =>
         {
-            // Arrow-key navigation keeps its day; a day inspected by the pointer ends with it.
+            // Arrow-key navigation keeps its day; a hovered day ends with the pointer, back to the pinned one.
             if (FocusState != FocusState.Keyboard)
             {
-                _viewModel?.Inspect(-1);
+                _viewModel?.EndHover();
             }
         };
         GotFocus += (_, _) =>
         {
             if (_viewModel is { } vm && !vm.IsInspecting && vm.Days.Count > 0)
             {
-                vm.Inspect(vm.Days.Count - 1);
+                vm.Inspect(vm.PinnedIndex >= 0 ? vm.PinnedIndex : vm.Days.Count - 1);
             }
         };
-        LostFocus += (_, _) => _viewModel?.Inspect(-1);
+        LostFocus += (_, _) => _viewModel?.EndHover();
     }
 
     public UsageViewModel? ViewModel
@@ -117,6 +131,13 @@ public sealed class UsageHeatmap : UserControl
         }
 
         var index = vm.IsInspecting ? vm.InspectedIndex : vm.Days.Count - 1;
+        if (e.Key is VirtualKey.Enter or VirtualKey.Space)
+        {
+            vm.Pin(index);
+            e.Handled = true;
+            return;
+        }
+
         var next = e.Key switch
         {
             VirtualKey.Left => index - 7,
@@ -140,7 +161,7 @@ public sealed class UsageHeatmap : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(UsageViewModel.InspectedIndex) or "" or null)
+        if (e.PropertyName is nameof(UsageViewModel.InspectedIndex) or nameof(UsageViewModel.PinnedIndex) or "" or null)
         {
             UpdateRing();
         }
@@ -195,6 +216,7 @@ public sealed class UsageHeatmap : UserControl
 
         _columns = _layout.Columns;
         _firstDay = vm.Days[0].Day;
+        _canvas.Children.Add(_pinRing);
         _canvas.Children.Add(_ring);
         Width = _columns * Pitch - Gap;
         Height = 7 * Pitch - Gap;
@@ -202,7 +224,7 @@ public sealed class UsageHeatmap : UserControl
     }
 
     /// <summary>
-    /// A click or tap inspects the day under it (touch and pen have no hover) and takes keyboard
+    /// A left click or tap pins the day under it (touch and pen have no hover) and takes keyboard
     /// focus, so the arrow keys continue from that day.
     /// </summary>
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
@@ -213,9 +235,10 @@ public sealed class UsageHeatmap : UserControl
             return;
         }
 
-        InspectAt(point.Position);
-        if (_viewModel.IsInspecting)
+        var index = _layout.IndexAt(point.Position.X, point.Position.Y, Pitch);
+        if (index >= 0 && index < _viewModel.Days.Count)
         {
+            _viewModel.Pin(index);
             Focus(FocusState.Pointer);
         }
 
@@ -234,6 +257,7 @@ public sealed class UsageHeatmap : UserControl
 
     private void UpdateRing()
     {
+        UpdatePinRing();
         if (_viewModel is not { IsInspecting: true } vm || vm.InspectedIndex >= _positions.Count)
         {
             _ring.Visibility = Visibility.Collapsed;
@@ -246,5 +270,21 @@ public sealed class UsageHeatmap : UserControl
         Canvas.SetTop(_ring, row * Pitch - 2);
         _ring.Visibility = Visibility.Visible;
         AutomationProperties.SetName(this, vm.InspectedAccessibleText);
+    }
+
+    /// <summary>The fainter ring on the pinned day, shown while another day is inspected.</summary>
+    private void UpdatePinRing()
+    {
+        var pinned = _viewModel?.PinnedIndex ?? -1;
+        if (pinned < 0 || pinned >= _positions.Count || pinned == _viewModel!.InspectedIndex)
+        {
+            _pinRing.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var (column, row) = _positions[pinned];
+        Canvas.SetLeft(_pinRing, column * Pitch - 2);
+        Canvas.SetTop(_pinRing, row * Pitch - 2);
+        _pinRing.Visibility = Visibility.Visible;
     }
 }

@@ -4,6 +4,12 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-10-17
+
+### Added
+
+- **Pin a day in the usage graph.** Left-click (or tap) a day, and its readout below the graph stays after the pointer leaves, marked "· pinned" next to the date, so you can copy the numbers down. Hovering other days still previews them, a fainter ring keeps marking the pinned day, and leaving the graph goes back to it. Clicking another day moves the pin; the pin clears when the island rolls back into the pill. Enter or Space pins the day chosen with the arrow keys. The pin follows the date, so live updates and midnight don't move it.
+
 ## [0.5.5] - 2026-10-17
 
 ### Changed
