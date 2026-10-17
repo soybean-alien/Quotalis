@@ -112,8 +112,9 @@ public static class UsageAggregator
     }
 
     /// <summary>
-    /// Maps a day's token total to an intensity level 0 to 4 for the contribution graph.
-    /// Levels follow quartiles of the non-empty days, so one heavy day does not flatten the rest.
+    /// Maps a day's token total to an intensity level 0 to 3 for the contribution graph (empty, dim,
+    /// brighter, brightest). Levels follow thirds of the non-empty days, so one heavy day does not
+    /// flatten the rest.
     /// </summary>
     public static int[] IntensityLevels(IReadOnlyList<long> totals)
     {
@@ -125,14 +126,13 @@ public static class UsageAggregator
         }
 
         long Quantile(double q) => nonZero[(int)Math.Clamp(Math.Ceiling(q * nonZero.Length) - 1, 0, nonZero.Length - 1)];
-        var q1 = Quantile(0.25);
-        var q2 = Quantile(0.5);
-        var q3 = Quantile(0.75);
+        var t1 = Quantile(1.0 / 3);
+        var t2 = Quantile(2.0 / 3);
 
         for (var i = 0; i < totals.Count; i++)
         {
             var t = totals[i];
-            levels[i] = t <= 0 ? 0 : t <= q1 ? 1 : t <= q2 ? 2 : t <= q3 ? 3 : 4;
+            levels[i] = t <= 0 ? 0 : t <= t1 ? 1 : t <= t2 ? 2 : 3;
         }
 
         return levels;
