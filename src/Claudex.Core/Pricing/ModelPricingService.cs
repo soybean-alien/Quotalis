@@ -36,14 +36,11 @@ public sealed record ModelPrice
 }
 
 /// <summary>Result of pricing a set of tokens.</summary>
-public readonly record struct PriceEstimate(decimal ValueEur, bool IsPriced);
+public readonly record struct PriceEstimate(decimal ValueUsd, bool IsPriced);
 
 /// <summary>User-editable pricing overrides (<c>pricing.json</c> next to the settings).</summary>
 public sealed class PricingOverrides
 {
-    [JsonPropertyName("usdToEur")]
-    public decimal? UsdToEur { get; set; }
-
     [JsonPropertyName("models")]
     public Dictionary<string, ModelPrice> Models { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
@@ -55,9 +52,6 @@ public sealed class PricingOverrides
 /// </summary>
 public sealed class ModelPricingService
 {
-    /// <summary>Default conversion used for the EUR display. Override it in pricing.json.</summary>
-    public const decimal DefaultUsdToEur = 0.86m;
-
     // Anthropic list prices (USD / MTok). Cache writes are 1.25x (5 min) and 2x (1 h) of input;
     // cache reads 0.1x unless a model publishes its own rate.
     private static readonly (string Prefix, ModelPrice Price)[] BuiltIn =
@@ -75,11 +69,14 @@ public sealed class ModelPricingService
         ("claude-opus-4-1", new ModelPrice { Input = 15m, Output = 75m }),
         ("claude-opus-4-0", new ModelPrice { Input = 15m, Output = 75m }),
         ("claude-opus-4", new ModelPrice { Input = 15m, Output = 75m }),
+        ("claude-sonnet-5-5", new ModelPrice { Input = 2m, Output = 10m, CacheRead = 0.20m }),
         ("claude-sonnet-5", new ModelPrice { Input = 2m, Output = 10m }),
         ("claude-sonnet-4-6", new ModelPrice { Input = 3m, Output = 15m }),
         ("claude-sonnet-4-5", new ModelPrice { Input = 3m, Output = 15m }),
         ("claude-sonnet-4-0", new ModelPrice { Input = 3m, Output = 15m }),
         ("claude-sonnet-4", new ModelPrice { Input = 3m, Output = 15m }),
+        // Haiku 5.5: prompts up to 100K tokens; longer prompts cost $0.50 / $2.50 and are not modelled here.
+        ("claude-haiku-5-5", new ModelPrice { Input = 0.10m, Output = 0.50m }),
         ("claude-haiku-4-5", new ModelPrice { Input = 1m, Output = 5m }),
         ("claude-3-5-haiku", new ModelPrice { Input = 0.8m, Output = 4m }),
         ("claude-3-haiku", new ModelPrice { Input = 0.25m, Output = 1.25m }),
@@ -106,10 +103,7 @@ public sealed class ModelPricingService
         _overrides = overrides?.Models is { } models
             ? new Dictionary<string, ModelPrice>(models, StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, ModelPrice>(StringComparer.OrdinalIgnoreCase);
-        UsdToEur = overrides?.UsdToEur is > 0 ? overrides.UsdToEur.Value : DefaultUsdToEur;
     }
-
-    public decimal UsdToEur { get; }
 
     /// <summary>Loads <c>pricing.json</c> if it exists; a broken file falls back to built-in prices.</summary>
     public static ModelPricingService Load(string? overridesPath)
@@ -173,7 +167,7 @@ public sealed class ModelPricingService
             + tokens.CacheRead * price.EffectiveCacheRead
             + tokens.CacheWrite5m * price.EffectiveCacheWrite5m
             + tokens.CacheWrite1h * price.EffectiveCacheWrite1h) / perMillion;
-        return new PriceEstimate(decimal.Round(usd * UsdToEur, 6), true);
+        return new PriceEstimate(decimal.Round(usd, 6), true);
     }
 
     /// <summary>Lower-cases and strips date and provider decorations, e.g. <c>anthropic.claude-sonnet-4-5-20250929-v1:0</c>.</summary>

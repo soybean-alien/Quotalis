@@ -87,7 +87,7 @@ public sealed class UsageHistoryService
             foreach (var ((day, provider), accumulator) in batch)
             {
                 var totals = accumulator.ToTotals();
-                _db.UpsertDaily(new DailyUsage(day, provider, totals.Tokens, totals.ApiValueEur, totals.HasUnpricedTokens, totals.Sessions));
+                _db.UpsertDaily(new DailyUsage(day, provider, totals.Tokens, totals.ApiValueUsd, totals.HasUnpricedTokens, totals.Sessions));
                 _cache[(day, provider)] = accumulator;
             }
 
@@ -175,7 +175,7 @@ internal sealed class UsageAccumulator
         var estimate = _pricing.Estimate(e.Model, e.Tokens);
         if (estimate.IsPriced)
         {
-            _value += estimate.ValueEur;
+            _value += estimate.ValueUsd;
             _priced = true;
         }
         else

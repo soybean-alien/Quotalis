@@ -6,7 +6,7 @@ namespace Claudex.Core.Usage;
 /// <summary>Summary of a set of usage events.</summary>
 public sealed record UsageTotals(
     TokenCounts Tokens,
-    decimal ApiValueEur,
+    decimal ApiValueUsd,
     bool HasPricedTokens,
     bool HasUnpricedTokens,
     int Sessions,
@@ -15,7 +15,7 @@ public sealed record UsageTotals(
     public static readonly UsageTotals Empty = new(TokenCounts.Zero, 0m, false, false, 0, null);
 
     /// <summary>API value to display: null when nothing could be priced.</summary>
-    public decimal? DisplayValueEur => HasPricedTokens || !HasUnpricedTokens ? ApiValueEur : null;
+    public decimal? DisplayValueUsd => HasPricedTokens || !HasUnpricedTokens ? ApiValueUsd : null;
 }
 
 /// <summary>Pure aggregation of usage events into totals and per-day statistics.</summary>
@@ -52,7 +52,7 @@ public static class UsageAggregator
             var estimate = pricing.Estimate(e.Model, e.Tokens);
             if (estimate.IsPriced)
             {
-                value += estimate.ValueEur;
+                value += estimate.ValueUsd;
                 priced = true;
             }
             else
@@ -82,7 +82,7 @@ public static class UsageAggregator
             .Select(g =>
             {
                 var totals = Summarize(g, pricing);
-                return new DailyUsage(g.Key.Day, g.Key.Provider, totals.Tokens, totals.ApiValueEur, totals.HasUnpricedTokens, totals.Sessions);
+                return new DailyUsage(g.Key.Day, g.Key.Provider, totals.Tokens, totals.ApiValueUsd, totals.HasUnpricedTokens, totals.Sessions);
             })
             .OrderBy(d => d.Day)
             .ThenBy(d => d.Provider)
@@ -102,8 +102,8 @@ public static class UsageAggregator
                     g.Key,
                     claude.Aggregate(TokenCounts.Zero, (sum, d) => sum + d.Tokens),
                     codex.Aggregate(TokenCounts.Zero, (sum, d) => sum + d.Tokens),
-                    claude.Sum(d => d.ApiValueEur),
-                    codex.Sum(d => d.ApiValueEur),
+                    claude.Sum(d => d.ApiValueUsd),
+                    codex.Sum(d => d.ApiValueUsd),
                     g.Sum(d => d.Sessions),
                     g.Any(d => d.ApiValuePartial));
             })

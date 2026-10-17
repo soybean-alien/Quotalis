@@ -62,7 +62,7 @@ AI coding tools spend tokens and plan limits where you can't see them, and the r
 - **Compact, live activity and expanded** states with interruptible spring animations.
 - **App-aware auto-hide:** while Chrome, Edge, Firefox or any app you list is in front, the island retracts into a 5 px notch in the screen edge (or hides), reliably even when you switch apps quickly.
 - **Camera and microphone indicators** in every state, as tiny dots in the notch.
-- **Anywhere you want it:** six anchors or a free position on any monitor, per-monitor DPI, a global shortcut (Ctrl + Alt + Space), tray menu and Start with Windows.
+- **Anywhere you want it:** six anchors or a free position on any monitor, per-monitor DPI, a global shortcut (Ctrl + Alt + C), tray menu and Start with Windows.
 
 All details per module: [docs/MODULES.md](docs/MODULES.md).
 
@@ -105,7 +105,7 @@ The installer is not code-signed yet, so Windows SmartScreen may ask you to conf
 | Do this | And you get |
 |---|---|
 | Hover the capsule | A peek at the most relevant live information |
-| Click it, or press **Ctrl + Alt + Space** | The expanded island; Esc or a click elsewhere closes it |
+| Click it, or press **Ctrl + Alt + C** | The expanded island; Esc or a click elsewhere closes it |
 | Click the ☆ next to a module's name | That module is featured in the compact capsule |
 | Drag the capsule | Move it; it snaps to the nearest anchor |
 | Settings, Modules, **Claude plan usage**, Connect | Claude's 5-hour and weekly usage (from Claude Code terminal sessions) |

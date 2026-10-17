@@ -64,7 +64,7 @@ Settings are JSON (`settings.json`, source-generated serializer) and are written
 
 ## Pricing
 
-`ModelPricingService` holds public list prices in USD per million tokens (input, output, cache read, 5-minute and 1-hour cache writes) and converts them to EUR. The rate defaults to 0.86 and is overridable.
+`ModelPricingService` holds public list prices in USD per million tokens (input, output, cache read, 5-minute and 1-hour cache writes). Estimates are shown in USD, the currency the list prices are published in.
 
 - **Name matching.** A price matches an exact model ID or a dated snapshot of it (`claude-sonnet-4-20250514`). Newer models (`claude-opus-5-7`, `gpt-5.2`) stay unpriced instead of borrowing a guess.
 - **Partial pricing.** Unpriced tokens mark the value as partial.

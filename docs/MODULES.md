@@ -15,7 +15,7 @@ What each module shows, where its data comes from and how it behaves. The [READM
 - **Auto-hide in apps.** A top-center island covers tabs and title bars. While an app you list is in front (Chrome, Edge and Firefox by default, or any app you add), the island retracts into a small notch in the screen edge (48 × 5 px). Hover it for 450 ms or click it to open. Choose per app, hide completely instead, or retract only while the app is maximized. This works the same whatever the island shows (Claude, Codex, Music, Focus, System, Calendar, or the open island). It reacts at once, also when you switch apps quickly: the app that is in front last always decides, and module updates (music, usage, system, focus, calendar) never bring the island back out. While a camera or microphone is in use, "hide completely" keeps the notch instead (same size) so its dot stays visible.
 - **Anywhere you want it.** It sits at Top Center by default. There are five more anchors, or you can drag it anywhere; near an anchor it snaps into place. Drag it onto another monitor, also one with a different scale; the point you hold stays under the cursor. The monitor, anchor and offset are saved. The monitor is recognized by its hardware id, so the island returns to the right display after docking or reconnecting, and it falls back to the primary monitor while that display is disconnected.
 - **Out of the way.** The window region follows the capsule, leaving the rest of the desktop clickable. Hovering or dragging does not activate the island. It steps aside while a fullscreen app is on its own monitor; one on another monitor does not move it.
-- **Keyboard.** **Ctrl + Alt + Space** opens or closes the island from anywhere; three other combinations are available if another app already uses it. Esc closes the island, and focus returns to where you were. Tab and the arrow keys move through the expanded view.
+- **Keyboard.** **Ctrl + Alt + C** opens or closes the island from anywhere; four other combinations are available if another app already uses it. Esc closes the island, and focus returns to where you were. Tab and the arrow keys move through the expanded view.
 - **Tray and autostart.** The notification-area menu offers Show, Hide, Start Focus, New Task, Stay Awake, Settings and Quit. Start with Windows is a native per-user setting, with no scripts.
 
 <p align="center">
@@ -58,7 +58,7 @@ Below it, **Today on this PC** keeps the full local breakdown. The compact islan
 </p>
  Cache reads repeat the whole conversation context on every turn, so in long agent sessions they are often 80–90 % of processed tokens; counting them as "usage" made earlier numbers look inflated. The usage graph is shaded by fresh tokens too.
 
-The **estimated API equivalent today** in euros prices every category at public list prices, including cache writes (1.25× or 2× input) and cache reads (0.1× input unless listed). If you use a subscription, it is not what you pay. Models without a known list price are reported as "partly priced" instead of being guessed. Codex also shows its latest primary rate-limit usage (usually a 5-hour window), with a live activity at 50, 75 and 90 %.
+The **estimated API equivalent today** in US dollars prices every category at public list prices, including cache writes (1.25× or 2× input) and cache reads (0.1× input unless listed). If you use a subscription, it is not what you pay. Models without a known list price are reported as "partly priced" instead of being guessed. Codex also shows its latest primary rate-limit usage (usually a 5-hour window), with a live activity at 50, 75 and 90 %.
 
 ### Music
 
@@ -157,7 +157,7 @@ Changes apply immediately.
 |---|---|
 | Hover the capsule | A peek at the most relevant live information |
 | Click | Opens the expanded island |
-| Ctrl + Alt + Space | Opens or closes the island from anywhere |
+| Ctrl + Alt + C | Opens or closes the island from anywhere |
 | Esc, or click elsewhere | Closes the expanded island |
 | Drag | Moves the island; it snaps to the nearest anchor when close |
 | Tray icon | Opens the island with keyboard focus; right-click for the menu |

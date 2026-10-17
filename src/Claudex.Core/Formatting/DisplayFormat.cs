@@ -30,11 +30,11 @@ public static class DisplayFormat
         };
     }
 
-    /// <summary>EUR in the user's number format, always two decimals: "€18.42" or "18,42 €".</summary>
-    public static string Euro(decimal value, CultureInfo? culture = null)
+    /// <summary>USD in the user's number format, always two decimals: "$18.42" or "18,42 $".</summary>
+    public static string Usd(decimal value, CultureInfo? culture = null)
     {
         var format = (NumberFormatInfo)(culture ?? CultureInfo.CurrentCulture).NumberFormat.Clone();
-        format.CurrencySymbol = "€";
+        format.CurrencySymbol = "$";
         return value.ToString("C2", format).Replace(' ', Nbsp);
     }
 

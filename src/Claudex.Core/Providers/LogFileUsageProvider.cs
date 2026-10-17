@@ -145,7 +145,7 @@ public abstract class LogFileUsageProvider : IAiUsageProvider
                 State = ProviderState.Ready,
                 Day = today,
                 Today = totals.Tokens,
-                ApiValueEur = totals.DisplayValueEur,
+                ApiValueUsd = totals.DisplayValueUsd,
                 ApiValuePartial = totals.HasPricedTokens && totals.HasUnpricedTokens,
                 SessionsToday = totals.Sessions,
                 CurrentModel = totals.Latest?.Model,

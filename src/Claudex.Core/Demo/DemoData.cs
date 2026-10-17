@@ -85,7 +85,7 @@ public static class DemoData
             State = ProviderState.Ready,
             Day = history.Today,
             Today = totals.Tokens,
-            ApiValueEur = totals.DisplayValueEur,
+            ApiValueUsd = totals.DisplayValueUsd,
             SessionsToday = totals.Sessions,
             CurrentModel = totals.Latest?.Model,
             LastActivity = totals.Latest?.Timestamp,

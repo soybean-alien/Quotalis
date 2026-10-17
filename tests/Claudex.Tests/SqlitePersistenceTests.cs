@@ -68,7 +68,7 @@ public class SqlitePersistenceTests
 
         var row = Assert.Single(db.GetDaily(day, day));
         Assert.Equal(150, row.Tokens.Processed);
-        Assert.Equal(6.02m, row.ApiValueEur);
+        Assert.Equal(6.02m, row.ApiValueUsd);
         Assert.True(row.ApiValuePartial);
         Assert.Equal(2, row.Sessions);
     }
