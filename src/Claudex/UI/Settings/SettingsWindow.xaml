@@ -509,11 +509,51 @@
                                     </StackPanel>
                                 </Grid>
                                 <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <!-- Updates come from the private soybean-alien/Claudex releases, through the signed-in GitHub CLI. -->
+                                <Grid Style="{StaticResource SettingsRowStyle}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Updates" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock x:Name="UpdateStatusText" Style="{StaticResource SettingsRowDescriptionStyle}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button x:Name="UpdateButton" Grid.Column="1" Content="Check for Updates" VerticalAlignment="Center" Click="OnUpdateClick"
+                                            AutomationProperties.Name="Check for updates">
+                                        <FlyoutBase.AttachedFlyout>
+                                            <Flyout x:Name="UpdateFlyout" Placement="BottomEdgeAlignedRight">
+                                                <StackPanel Spacing="12" MaxWidth="300">
+                                                    <TextBlock x:Name="UpdateConfirmTitle" Style="{StaticResource SettingsRowTitleStyle}" FontWeight="SemiBold" />
+                                                    <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}" TextWrapping="Wrap"
+                                                               Text="Claudex closes, the installer updates it in place (usage history, settings and hooks are kept) and starts it again." />
+                                                    <Button x:Name="ConfirmUpdateButton" Content="Update" HorizontalAlignment="Right" MinWidth="88" Click="OnConfirmUpdate"
+                                                            Style="{StaticResource AccentButtonStyle}" AutomationProperties.Name="Install the update now" />
+                                                </StackPanel>
+                                            </Flyout>
+                                        </FlyoutBase.AttachedFlyout>
+                                    </Button>
+                                </Grid>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <Grid Style="{StaticResource SettingsRowStyle}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Check for updates daily" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock Text="Asks GitHub for a newer release once a day, through the GitHub CLI you are signed in to. Nothing installs without your click."
+                                                   Style="{StaticResource SettingsRowDescriptionStyle}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="CheckUpdatesToggle" Grid.Column="1" Style="{StaticResource SettingsToggleStyle}"
+                                                  AutomationProperties.Name="Check for updates daily" Toggled="OnToggle" Tag="CheckForUpdates" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
                                 <Grid Style="{StaticResource SettingsRowStyle}">
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="Local-first" Style="{StaticResource SettingsRowTitleStyle}" />
                                         <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}"
-                                                   Text="Your prompts never leave your device. Claudex reads only usage metadata (tokens, model, time) from local logs and stores daily totals on this PC. It makes no network requests." />
+                                                   Text="Your prompts never leave your device. Claudex reads only usage metadata (tokens, model, time) from local logs and stores daily totals on this PC. Its only network request of its own is the update check, through the GitHub CLI." />
                                     </StackPanel>
                                 </Grid>
                                 <Rectangle Style="{StaticResource SettingsDividerStyle}" />
@@ -533,7 +573,7 @@
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="API equivalent" Style="{StaticResource SettingsRowTitleStyle}" />
                                         <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}"
-                                                   Text="Estimated from public API list prices, converted to euros. Subscriptions are billed differently, so this is not what you pay. Adjust prices or the exchange rate in pricing.json." />
+                                                   Text="Estimated from public API list prices, in US dollars. Subscriptions are billed differently, so this is not what you pay. Adjust or add prices in pricing.json." />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

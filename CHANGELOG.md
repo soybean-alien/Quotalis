@@ -4,6 +4,20 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-10-17
+
+### Added
+
+- **Self-updater** in Settings, About, Updates. Claudex is never public, so it updates from the private `soybean-alien/Claudex` releases through the GitHub CLI you are signed in to (`gh`); Claudex never sees or stores a token.
+  - **Check:** asks for the latest release and compares it with this build. "Check for updates daily" (on by default) repeats the check once a day, starting two minutes after launch.
+  - **Install:** when a newer release exists, the button becomes "Update to vX.Y.Z". Confirming downloads `Claudex-Setup-X.Y.Z.exe`, checks its SHA-256 against GitHub's digest or the release's `SHA256SUMS-X.Y.Z.txt` (it refuses to install without a match), starts the installer silently and closes Claudex. The installer updates in place, keeping usage history, settings, hooks and autostart, and starts the new version.
+  - A development build checks but never installs. Demo mode doesn't check.
+- `tools/publish-release.ps1` publishes a built release (installer, portable zip, `SHA256SUMS`, with this version's changelog section as notes) to the private repository, after the tag is pushed. Installed copies then find it.
+
+### Changed
+
+- Settings, About: the "Local-first" text names the update check as Claudex's only network request of its own, and the "API equivalent" text says US dollars (it still said euros).
+
 ## [0.5.3] - 2026-10-17
 
 ### Added

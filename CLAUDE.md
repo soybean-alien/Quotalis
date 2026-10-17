@@ -11,6 +11,7 @@ Personal fork of [Developer Island](https://github.com/maximilian467/Developer-I
 ## Workflow
 - Work locally for the whole session; track revisions only in CHANGELOG `[Unreleased]`. No commits, tags or pushes until the user asks, then one commit, tag and push for the batch.
 - Every change gets a `CHANGELOG.md` entry (Keep a Changelog), a SemVer bump in `Directory.Build.props` and a `vX.Y.Z` tag.
+- Releases feed the in-app updater. After the batch is pushed and tagged: `tools/build-release.ps1`, then `tools/publish-release.ps1` (a GitHub Release on the private repo with the installer and `SHA256SUMS`). Publishing is part of the batch only when the user asks.
 - The `upstream` remote has `tagOpt --no-tags`, because upstream's own `v0.x` tags collide with Claudex versions. Merge fixes with `git fetch upstream; git merge upstream/main`.
 - `CODEX_HANDOFF.md` (candid state for the next agent) and a short `AGENTS.md` pointing to it live in the root, gitignored. Keep the handoff current when work changes.
 - Build and test: `run.cmd` (or `run.cmd -Demo`), `dotnet test tests/Claudex.Tests`. Needs the .NET 10 SDK.

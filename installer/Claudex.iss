@@ -65,6 +65,8 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 ; Points the Claude Code status line and Stop hook, and the Codex Stop hook, at this copy (adding them if missing).
 Filename: "{app}\Claudex.exe"; Parameters: "--claudex-hooks connect"; Flags: runhidden waituntilterminated; Tasks: hooks
 Filename: "{app}\Claudex.exe"; Description: "Open Claudex"; Flags: nowait postinstall skipifsilent
+; A silent install is how the in-app updater runs this installer: start the updated Claudex again.
+Filename: "{app}\Claudex.exe"; Flags: nowait; Check: WizardSilent
 
 [UninstallRun]
 ; Removes only the hooks that run this copy, so Claude Code and Codex never call a missing program.
