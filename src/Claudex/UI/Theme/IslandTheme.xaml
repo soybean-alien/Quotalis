@@ -29,6 +29,12 @@
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="ProgressTrackBrush" Color="#33F5F5F7" />
 
+    <!-- Provider colors: Claude orange and Codex blue, on their marks, plan bars and usage bars. -->
+    <Color x:Key="ClaudeColor">#FFD97757</Color>
+    <Color x:Key="CodexColor">#FF3A9BFF</Color>
+    <SolidColorBrush x:Key="ClaudeBrush" Color="{StaticResource ClaudeColor}" />
+    <SolidColorBrush x:Key="CodexBrush" Color="{StaticResource CodexColor}" />
+
     <!-- Status colors: semantic only, used as small dots and icons, never as fills. -->
     <SolidColorBrush x:Key="SuccessBrush" Color="#FF30D158" />
     <SolidColorBrush x:Key="WarningBrush" Color="#FFFFD60A" />

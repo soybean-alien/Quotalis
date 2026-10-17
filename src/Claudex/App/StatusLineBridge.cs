@@ -33,7 +33,7 @@ internal static class StatusLineBridge
         return 0;
     }
 
-    private static string ReadInput()
+    internal static string ReadInput()
     {
         var reader = Console.In;
         var buffer = new char[8192];

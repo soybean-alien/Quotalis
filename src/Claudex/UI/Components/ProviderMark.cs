@@ -8,8 +8,8 @@ namespace Claudex.UI.Components;
 
 /// <summary>
 /// The mark of an AI tool: the Claude mark for Claude Code and the OpenAI mark for Codex (see
-/// <see cref="BrandMarks"/>), drawn monochrome in the island's foreground color like every other
-/// icon, on a 24-unit grid scaled to the control's size.
+/// <see cref="BrandMarks"/>), always in the provider's color (Claude orange, Codex blue), on a
+/// 24-unit grid scaled to the control's size.
 /// </summary>
 public sealed class ProviderMark : UserControl
 {
@@ -32,8 +32,8 @@ public sealed class ProviderMark : UserControl
 
     private void Render()
     {
-        var brush = Foreground ?? (Brush)Application.Current.Resources["TextPrimaryBrush"];
         var isCodex = string.Equals(Kind, "Codex", StringComparison.OrdinalIgnoreCase);
+        var brush = (Brush)Application.Current.Resources[isCodex ? "CodexBrush" : "ClaudeBrush"];
         var path = new Path
         {
             Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), isCodex ? BrandMarks.OpenAI : BrandMarks.Claude),

@@ -199,51 +199,235 @@ public class PlanStatusTests
         Assert.Equal(PlanDataState.OtherStatusLine, PlanStatus.StateOf(PlanConnection.OtherStatusLine, null, Now));
         Assert.Equal(PlanDataState.Unreadable, PlanStatus.StateOf(PlanConnection.Unreadable, null, Now));
     }
+}
 
-    // Tokenz status file ------------------------------------------------------------------------------
-
-    private const string TokenzFile = """
-        {"codex":{"five_hour":{"percent":18,"estimated":false,"resets_at":"2026-10-17T02:16:11+00:00"}},
-         "claude":{"status":"live","plan":"Pro",
-          "five_hour":{"percent":16.4,"estimated":true,"resets_at":"2026-10-17T06:30:00.0000000+00:00","window_hours":5},
-          "weekly":{"percent":59,"estimated":false,"resets_at":"2026-10-22T06:00:00.0000000+00:00","window_hours":168}},
-         "written_at":"2026-10-17T01:36:38.5145098+00:00","pid":46340}
-        """;
+public class PlanCalibrationTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 10, 17, 12, 25, 0, TimeSpan.Zero);
 
     [Fact]
-    public void Reads_claude_windows_and_estimate_flags_from_tokenz()
+    public void Reads_both_windows_from_the_usage_card_numbers()
     {
-        var usage = TokenzStatus.Extract(TokenzFile)!;
+        var usage = PlanCalibration.Parse(
+            ["--claudex-calibrate", "--five-hour", "51", "--weekly", "67", "--five-hour-reset", "2026-10-17T15:29:59.690Z",
+             "--weekly-reset", "1792648799", "--plan", "Pro", "--by", "claude-auto", "--source", "desktop usage card (auto hook)"], Now);
 
-        Assert.Equal(16.4, usage.Current!.UsedPercent);
-        Assert.True(usage.Current.IsEstimated);
-        Assert.Equal(new DateTimeOffset(2026, 10, 17, 6, 30, 0, TimeSpan.Zero), usage.Current.ResetsAt);
-        Assert.Equal(59, usage.Weekly!.UsedPercent);
-        Assert.False(usage.Weekly.IsEstimated);
-        Assert.Equal(new DateTimeOffset(2026, 10, 17, 1, 36, 38, TimeSpan.Zero), usage.MeasuredAt.AddTicks(-(usage.MeasuredAt.Ticks % TimeSpan.TicksPerSecond)));
+        Assert.Equal(51, usage.Current!.UsedPercent);
+        Assert.Equal(new DateTimeOffset(2026, 10, 17, 15, 29, 59, 690, TimeSpan.Zero), usage.Current.ResetsAt);
+        Assert.Equal(67, usage.Weekly!.UsedPercent);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1792648799), usage.Weekly.ResetsAt);
+        Assert.False(usage.Current.IsEstimated);
+        Assert.Equal(Now, usage.MeasuredAt);
+    }
+
+    [Fact]
+    public void A_missing_window_is_left_out_and_percentages_are_clamped()
+    {
+        var usage = PlanCalibration.Parse(["--five-hour", "120", "--five-hour-reset", "2026-10-17T15:30:00Z", "--weekly", "--", "--weekly-reset", "--"], Now);
+
+        Assert.Equal(100, usage.Current!.UsedPercent);
+        Assert.Null(usage.Weekly);
     }
 
     [Theory]
-    [InlineData("""{"written_at":"2026-10-17T01:36:38+00:00"}""")]
-    [InlineData("""{"claude":{"five_hour":{"percent":null,"resets_at":null},"weekly":null},"written_at":"2026-10-17T01:36:38+00:00"}""")]
-    [InlineData("""{"claude":{"five_hour":{"percent":10,"resets_at":"2026-10-17T06:30:00+00:00"}}}""")]
-    [InlineData("""{"claude":{"five_hour":{"percent":1""")]
-    public void Tokenz_file_without_claude_numbers_gives_nothing(string json)
+    [InlineData("--plan", "Pro")]                                      // no window at all
+    [InlineData("--five-hour", "51")]                                  // no reset time
+    [InlineData("--five-hour", "lots", "--five-hour-reset", "1792648799")] // not a number
+    [InlineData("--weekly", "67", "--weekly-reset", "soon")]           // unreadable reset
+    public void Incomplete_readings_are_refused(params string[] args)
     {
-        Assert.Null(TokenzStatus.Extract(json));
+        Assert.Throws<FormatException>(() => PlanCalibration.Parse(args, Now));
+    }
+}
+
+public class ClaudeStopHookTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 10, 17, 12, 25, 0, TimeSpan.Zero);
+
+    private static string Transcript(TimeSpan age, bool desktop)
+    {
+        var path = Path.Combine(TestData.TempDirectory(), "session.jsonl");
+        File.WriteAllLines(path,
+        [
+            $$"""{"type":"user","timestamp":"{{(Now - age).ToString("o")}}"{{(desktop ? ",\"entrypoint\":\"claude-desktop\"" : "")}}}""",
+            """{"type":"assistant","message":"hi"}""",
+        ]);
+        return path;
+    }
+
+    private static string Input(string transcript, bool active = false) =>
+        $$"""{"session_id":"s1","transcript_path":{{System.Text.Json.JsonSerializer.Serialize(transcript)}},"stop_hook_active":{{(active ? "true" : "false")}}}""";
+
+    [Fact]
+    public void Asks_for_a_reading_in_a_desktop_session_over_two_minutes_old()
+    {
+        var (reason, why) = ClaudeStopHook.Decide(Input(Transcript(TimeSpan.FromMinutes(5), desktop: true)), null, Now, @"C:\Apps\Claudex.exe");
+
+        Assert.Equal("due", why);
+        Assert.Contains("\"C:\\Apps\\Claudex.exe\" --claudex-calibrate", reason);
+        Assert.Contains("applied by Claudex", reason);
+        Assert.Contains("🟠 Usage: Claude 5h", reason);
+        Assert.DoesNotContain("Tokenz", reason);
+        Assert.Contains("\"decision\":\"block\"", ClaudeStopHook.Output(reason!));
     }
 
     [Fact]
-    public void Missing_tokenz_file_gives_nothing()
+    public void Stays_quiet_when_a_reading_is_not_needed_or_not_possible()
     {
-        Assert.Null(TokenzStatus.Load(Path.Combine(TestData.TempDirectory(), "tokenz_status.json")));
+        var desktop = Transcript(TimeSpan.FromMinutes(5), desktop: true);
+        var recent = new PlanUsage(new PlanWindow(51, Now.AddHours(3)), null, Now.AddSeconds(-10));
+
+        Assert.Null(ClaudeStopHook.Decide(Input(desktop, active: true), null, Now, "Claudex.exe").Reason);
+        Assert.Null(ClaudeStopHook.Decide(Input(desktop), recent, Now, "Claudex.exe").Reason);
+        Assert.Null(ClaudeStopHook.Decide(Input(Transcript(TimeSpan.FromMinutes(1), desktop: true)), null, Now, "Claudex.exe").Reason);
+        Assert.Null(ClaudeStopHook.Decide(Input(Transcript(TimeSpan.FromMinutes(5), desktop: false)), null, Now, "Claudex.exe").Reason);
+        Assert.Null(ClaudeStopHook.Decide(Input(Path.Combine(TestData.TempDirectory(), "missing.jsonl")), null, Now, "Claudex.exe").Reason);
+        Assert.Null(ClaudeStopHook.Decide("not json", null, Now, "Claudex.exe").Reason);
     }
 
     [Fact]
-    public void Tokenz_source_explains_itself_when_stale()
+    public void Setup_adds_the_hook_next_to_others_and_removes_only_ours()
     {
-        Assert.Equal(PlanDataState.Stale, PlanStatus.StateOf(PlanConnection.Tokenz, Measured(TimeSpan.FromHours(3), TimeSpan.FromHours(2)), Now));
-        Assert.Contains("Tokenz", PlanStatus.Reason(PlanDataState.Stale, PlanConnection.Tokenz));
-        Assert.DoesNotContain("Tokenz", PlanStatus.Reason(PlanDataState.Stale));
+        var path = Path.Combine(TestData.TempDirectory(), "settings.json");
+        File.WriteAllText(path, """
+            { "statusLine": { "type": "command", "command": "my-status.sh" },
+              "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "other-stop.sh" } ] } ] } }
+            """);
+
+        Assert.Equal(PlanConnection.Connected, ClaudePlanLink.Connect(path, @"C:\Apps\Claudex.exe"));
+        var text = File.ReadAllText(path);
+        Assert.Contains("--claudex-stop-hook", text);
+        Assert.Contains("other-stop.sh", text);
+        Assert.Contains("my-status.sh", text);
+
+        ClaudePlanLink.Connect(path, @"C:\Apps\Claudex.exe");
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(path), "--claudex-stop-hook"));
+
+        Assert.Equal(PlanConnection.OtherStatusLine, ClaudePlanLink.Disconnect(path));
+        text = File.ReadAllText(path);
+        Assert.DoesNotContain("--claudex-stop-hook", text);
+        Assert.Contains("other-stop.sh", text);
+        Assert.Contains("my-status.sh", text);
+    }
+}
+
+public class CodexStopHookTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 10, 17, 12, 25, 0, TimeSpan.Zero);
+
+    private static string Rollout(TimeSpan age, params string[] limits)
+    {
+        var path = Path.Combine(TestData.TempDirectory(), "rollout.jsonl");
+        var lines = new List<string> { $$$"""{"timestamp":"{{{(Now - age).ToString("o")}}}","type":"session_meta","payload":{}}""" };
+        lines.AddRange(limits.Select((l, i) => $$$"""{"timestamp":"{{{(Now - age + TimeSpan.FromSeconds(i + 1)).ToString("o")}}}","type":"event_msg","payload":{"type":"token_count","rate_limits":{{{l}}}}}"""));
+        File.WriteAllLines(path, lines);
+        return path;
+    }
+
+    private static string Input(string transcript, bool active = false) =>
+        $$$"""{"session_id":"s1","transcript_path":{{{System.Text.Json.JsonSerializer.Serialize(transcript)}}},"stop_hook_active":{{{(active ? "true" : "false")}}}}""";
+
+    private static string Limits(string id, double five, double week) =>
+        $$$"""{"limit_id":"{{{id}}}","primary":{"used_percent":{{{five}}},"window_minutes":300,"resets_at":{{{Now.AddHours(2).ToUnixTimeSeconds()}}}},"secondary":{"used_percent":{{{week}}},"window_minutes":10080,"resets_at":{{{Now.AddDays(3).ToUnixTimeSeconds()}}}},"plan_type":"plus"}""";
+
+    [Fact]
+    public void Reports_the_latest_codex_snapshot_with_the_numbers_filled_in()
+    {
+        var path = Rollout(TimeSpan.FromMinutes(5), Limits("codex", 4, 1), Limits("codex", 18.4, 40.6), Limits("codex_other", 90, 90));
+
+        var (reason, why) = CodexStopHook.Decide(Input(path), null, Now, @"C:\Apps\Claudex.exe");
+
+        Assert.Equal("due", why);
+        Assert.Contains("`🔵 Usage: Codex 5h 18% · wk 41%`", reason);
+        Assert.Contains("--claudex-calibrate", reason);
+        Assert.DoesNotContain("Tokenz", reason);
+    }
+
+    [Fact]
+    public void Missing_or_reset_windows_show_dashes()
+    {
+        var reset = $$$"""{"limit_id":"codex","primary":{"used_percent":30,"window_minutes":300,"resets_at":{{{Now.AddMinutes(-1).ToUnixTimeSeconds()}}}}}""";
+
+        Assert.Contains("5h -- · wk --", CodexStopHook.Decide(Input(Rollout(TimeSpan.FromMinutes(5), reset)), null, Now, "Claudex.exe").Reason);
+        Assert.Contains("5h -- · wk --", CodexStopHook.Decide(Input(Rollout(TimeSpan.FromMinutes(5))), null, Now, "Claudex.exe").Reason);
+    }
+
+    [Fact]
+    public void Stays_quiet_when_a_report_is_not_needed()
+    {
+        var path = Rollout(TimeSpan.FromMinutes(5), Limits("codex", 4, 1));
+
+        Assert.Null(CodexStopHook.Decide(Input(path, active: true), null, Now, "Claudex.exe").Reason);
+        Assert.Null(CodexStopHook.Decide(Input(path), Now.AddSeconds(-10), Now, "Claudex.exe").Reason);
+        Assert.NotNull(CodexStopHook.Decide(Input(path), Now.AddMinutes(-1), Now, "Claudex.exe").Reason);
+        Assert.Null(CodexStopHook.Decide(Input(Rollout(TimeSpan.FromMinutes(1), Limits("codex", 4, 1))), null, Now, "Claudex.exe").Reason);
+        Assert.Null(CodexStopHook.Decide(Input(Path.Combine(TestData.TempDirectory(), "missing.jsonl")), null, Now, "Claudex.exe").Reason);
+        Assert.Null(CodexStopHook.Decide("{", null, Now, "Claudex.exe").Reason);
+    }
+}
+
+public class HookInstallerTests
+{
+    private const string Dev = @"C:\src\Claudex\bin\Debug\Claudex.exe";
+    private const string Installed = @"C:\Users\me\AppData\Local\Programs\Claudex\Claudex.exe";
+
+    [Fact]
+    public void Connect_moves_every_claudex_entry_to_the_installed_copy_and_keeps_the_rest()
+    {
+        var dir = TestData.TempDirectory();
+        var claude = Path.Combine(dir, "settings.json");
+        var codex = Path.Combine(dir, "codex", "hooks.json");
+        File.WriteAllText(claude, $$"""
+            { "model": "opus", "statusLine": { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(ClaudeStatusLineSetup.CommandFor(Dev))}} },
+              "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "other.sh" } ] },
+                                   { "hooks": [ { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(ClaudeStopHookSetup.CommandFor(Dev))}}, "timeout": 15 } ] } ] } }
+            """);
+
+        HookInstaller.Connect(claude, codex, Installed);
+
+        var claudeText = File.ReadAllText(claude);
+        Assert.DoesNotContain("Debug", claudeText);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(claudeText, "--claudex-stop-hook"));
+        Assert.Contains("--claudex-statusline", claudeText);
+        Assert.Contains("other.sh", claudeText);
+        Assert.Contains("opus", claudeText);
+        Assert.Contains("--claudex-codex-stop-hook", File.ReadAllText(codex));
+
+        HookInstaller.Connect(claude, codex, Installed);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(codex), "--claudex-codex-stop-hook"));
+    }
+
+    [Fact]
+    public void Disconnect_removes_only_the_entries_of_that_copy()
+    {
+        var dir = TestData.TempDirectory();
+        var claude = Path.Combine(dir, "settings.json");
+        var codex = Path.Combine(dir, "hooks.json");
+        HookInstaller.Connect(claude, codex, Installed);
+        var root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(claude))!;
+        ((System.Text.Json.Nodes.JsonArray)root["hooks"]!["Stop"]!).Add(System.Text.Json.Nodes.JsonNode.Parse(
+            $$"""{ "hooks": [ { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(ClaudeStopHookSetup.CommandFor(Dev))}} } ] }""")); // a development build's hook next to it
+        File.WriteAllText(claude, root.ToJsonString());
+
+        HookInstaller.Disconnect(claude, codex, Installed);
+
+        var claudeText = File.ReadAllText(claude);
+        Assert.DoesNotContain("Programs", claudeText);
+        Assert.Contains("Debug", claudeText);
+        Assert.DoesNotContain("--claudex-codex-stop-hook", File.ReadAllText(codex));
+    }
+
+    [Fact]
+    public void A_status_line_of_someone_else_is_kept()
+    {
+        var dir = TestData.TempDirectory();
+        var claude = Path.Combine(dir, "settings.json");
+        File.WriteAllText(claude, """{ "statusLine": { "type": "command", "command": "tokenz statusline" } }""");
+
+        HookInstaller.Connect(claude, Path.Combine(dir, "hooks.json"), Installed);
+
+        var text = File.ReadAllText(claude);
+        Assert.Contains("tokenz statusline", text);
+        Assert.Contains("--claudex-stop-hook", text);
     }
 }

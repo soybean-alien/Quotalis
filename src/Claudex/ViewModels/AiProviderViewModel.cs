@@ -28,6 +28,10 @@ public sealed class AiProviderViewModel : ObservableObject
 
     public string ShortName => Kind == AiProviderKind.Claude ? "Claude" : "Codex";
 
+    /// <summary>Claude orange or Codex blue (theme resources), for this provider's bars and dots.</summary>
+    public Microsoft.UI.Xaml.Media.Brush BrandBrush =>
+        (Microsoft.UI.Xaml.Media.Brush)Microsoft.UI.Xaml.Application.Current.Resources[Kind == AiProviderKind.Claude ? "ClaudeBrush" : "CodexBrush"];
+
     public bool IsEnabled
     {
         get => _isEnabled;
@@ -207,7 +211,7 @@ public sealed class AiProviderViewModel : ObservableObject
 
     /// <summary>Why plan usage is missing, in one short line.</summary>
     public string PlanUnavailableReason => Kind == AiProviderKind.Claude
-        ? PlanStatus.Reason(PlanState, _planConnection)
+        ? PlanStatus.Reason(PlanState)
         : "Codex has not recorded a limit yet.";
 
     public bool CanConnectPlan => Kind == AiProviderKind.Claude && HasNoPlan && _planConnection == PlanConnection.NotConnected;

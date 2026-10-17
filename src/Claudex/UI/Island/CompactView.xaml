@@ -47,7 +47,7 @@
                         </Border.Background>
                     </Border>
                     <Grid x:Name="FeaturedIcon" Visibility="{x:Bind ViewModel.CompactPrimaryShowsIcon, Mode=OneWay}">
-                        <components:ProviderMark x:Name="FeaturedMark" Width="14" Height="14" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <components:ProviderMark x:Name="FeaturedMark" Width="14" Height="14" />
                         <components:ModuleIcon x:Name="FeaturedModuleIcon" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                 </Grid>
@@ -64,11 +64,13 @@
 
             <!-- Classic summary when nothing is featured. -->
             <StackPanel Orientation="Horizontal" Spacing="5" Visibility="{x:Bind ViewModel.CompactShowClaude, Mode=OneWay}">
+                <components:ProviderMark Kind="Claude" Width="13" Height="13" VerticalAlignment="Center" />
                 <TextBlock Text="Claude" Style="{StaticResource LabelTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" />
                 <components:StableText Text="{x:Bind ViewModel.Usage.Claude.CompactValue, Mode=OneWay}" VerticalAlignment="Center" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Spacing="5" Visibility="{x:Bind ViewModel.CompactShowCodex, Mode=OneWay}">
+                <components:ProviderMark Kind="Codex" Width="13" Height="13" VerticalAlignment="Center" />
                 <TextBlock Text="Codex" Style="{StaticResource LabelTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" />
                 <components:StableText Text="{x:Bind ViewModel.Usage.Codex.CompactValue, Mode=OneWay}" VerticalAlignment="Center" />
             </StackPanel>

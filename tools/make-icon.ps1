@@ -1,63 +1,106 @@
-# Generates Assets/Claudex.ico (multi-resolution, PNG frames) and a 256px PNG.
-# The mark is deliberately geometric: a near-black rounded square carrying a white capsule.
-param([string]$OutDir = "$PSScriptRoot\..\src\Claudex\Assets")
-Add-Type -AssemblyName System.Drawing
+# Generates the Claudex icon: Assets/Claudex.ico (multi-resolution PNG frames), Assets/Claudex-256.png,
+# and the installer's wizard images (installer/wizard-*.bmp).
+# The mark: on a black rounded square, the Claude mark's left half (Claude orange) and the OpenAI mark's right
+# half (Codex blue), ringed by an orange arc on the left and a blue arc on the right. Each size is drawn from
+# vectors; at 32 px and below the arcs get thicker so they survive the tray and taskbar.
+# Runs in Windows PowerShell (WPF): powershell -STA -ExecutionPolicy Bypass -File tools/make-icon.ps1
+param(
+    [string]$AssetsDir = "$PSScriptRoot\..\src\Claudex\Assets",
+    [string]$InstallerDir = "$PSScriptRoot\..\installer"
+)
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
 
-function New-RoundedPath([single]$x, [single]$y, [single]$w, [single]$h, [single]$r) {
-    $p = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $d = 2 * $r
-    $p.AddArc($x, $y, $d, $d, 180, 90)
-    $p.AddArc($x + $w - $d, $y, $d, $d, 270, 90)
-    $p.AddArc($x + $w - $d, $y + $h - $d, $d, $d, 0, 90)
-    $p.AddArc($x, $y + $h - $d, $d, $d, 90, 90)
-    $p.CloseFigure()
-    return $p
+$marks = Get-Content "$PSScriptRoot\..\src\Claudex\UI\Components\BrandMarks.cs" -Raw
+$claude = [regex]::Match($marks, 'Claude = "([^"]+)"').Groups[1].Value
+$openai = [regex]::Match($marks, 'OpenAI = "([^"]+)"').Groups[1].Value
+$orange = '#D97757'; $blue = '#3A9BFF'; $black = '#0A0A0B'
+
+# The icon on a 256-unit canvas. $small: thicker arcs and a slightly larger mark for 32 px and below.
+function Get-IconXaml([bool]$small, [string]$background = 'Transparent') {
+    $arc = if ($small) { 16 } else { 10 }
+    $r = if ($small) { 96 } else { 100 }
+    $s = if ($small) { 5.9 } else { 5.5 }
+    $o = 128 - 12 * $s
+    $top = 128 - $r; $bottom = 128 + $r
+    $half = { param($data, $fill, $clip) "<Canvas Clip='$clip'><Path Data='$data' Fill='$fill' RenderTransform='$s,0,0,$s,$o,$o'/></Canvas>" }
+    @"
+<Canvas xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Width='256' Height='256' Background='$background'>
+  <Rectangle Width='256' Height='256' RadiusX='58' RadiusY='58' Fill='$black'/>
+  $(& $half $claude $orange 'M0,0 H128 V256 H0 Z')
+  $(& $half $openai $blue 'M128,0 H256 V256 H128 Z')
+  <Path Data='M128,$top A$r,$r 0 0 0 128,$bottom' Stroke='$orange' StrokeThickness='$arc' StrokeStartLineCap='Round' StrokeEndLineCap='Round'/>
+  <Path Data='M128,$top A$r,$r 0 0 1 128,$bottom' Stroke='$blue' StrokeThickness='$arc' StrokeStartLineCap='Round' StrokeEndLineCap='Round'/>
+</Canvas>
+"@
 }
 
-function New-IconBitmap([int]$size) {
-    $bmp = New-Object System.Drawing.Bitmap $size, $size, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-    $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $g.SmoothingMode = 'AntiAlias'
-    $g.PixelOffsetMode = 'HighQuality'
-    $g.Clear([System.Drawing.Color]::Transparent)
-    $s = [single]$size
-    $inset = [single][Math]::Max(0.5, $s * 0.04)
-    $bg = New-RoundedPath $inset $inset ($s - 2 * $inset) ($s - 2 * $inset) ($s * 0.225)
-    $g.FillPath((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 10, 10, 11))), $bg)
-    $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(70, 255, 255, 255)), ([single][Math]::Max(1, $s / 64))
-    $g.DrawPath($pen, $bg)
-    # The capsule: 58% wide, 17% tall, sitting in the upper third (top-center, like the island).
-    $cw = $s * 0.58; $ch = [single][Math]::Max(3, $s * 0.17)
-    $cx = ($s - $cw) / 2; $cy = $s * 0.26
-    $pill = New-RoundedPath $cx $cy $cw $ch ($ch / 2)
-    $g.FillPath((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 245, 245, 247))), $pill)
-    $g.Dispose()
-    return $bmp
+function Render-Element($element, [int]$width, [int]$height) {
+    $element.Measure([Windows.Size]::new($width, $height))
+    $element.Arrange([Windows.Rect]::new(0, 0, $width, $height))
+    $element.UpdateLayout()
+    $bitmap = New-Object Windows.Media.Imaging.RenderTargetBitmap $width, $height, 96, 96, ([Windows.Media.PixelFormats]::Pbgra32)
+    $bitmap.Render($element)
+    $bitmap
 }
 
-$sizes = 16, 20, 24, 32, 40, 48, 64, 256
-$frames = @()
-foreach ($sz in $sizes) {
-    $bmp = New-IconBitmap $sz
-    $ms = New-Object System.IO.MemoryStream
-    $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
-    $frames += , @($sz, $ms.ToArray())
-    if ($sz -eq 256) { $bmp.Save("$OutDir\Claudex-256.png", [System.Drawing.Imaging.ImageFormat]::Png) }
-    $bmp.Dispose()
+function Get-Icon([int]$size, [string]$background = 'Transparent') {
+    $box = New-Object Windows.Controls.Viewbox
+    $box.Width = $size; $box.Height = $size
+    $box.Child = [Windows.Markup.XamlReader]::Parse((Get-IconXaml ($size -le 32) $background))
+    Render-Element $box $size $size
 }
-$out = New-Object System.IO.MemoryStream
-$w = New-Object System.IO.BinaryWriter $out
-$w.Write([UInt16]0); $w.Write([UInt16]1); $w.Write([UInt16]$frames.Count)
+
+function Save-Image($bitmap, [string]$path, [string]$format) {
+    $encoder = if ($format -eq 'bmp') { New-Object Windows.Media.Imaging.BmpBitmapEncoder } else { New-Object Windows.Media.Imaging.PngBitmapEncoder }
+    $source = if ($format -eq 'bmp') { New-Object Windows.Media.Imaging.FormatConvertedBitmap $bitmap, ([Windows.Media.PixelFormats]::Bgr24), $null, 0 } else { $bitmap }
+    $encoder.Frames.Add([Windows.Media.Imaging.BitmapFrame]::Create($source))
+    $stream = [IO.File]::Create($path)
+    try { $encoder.Save($stream) } finally { $stream.Dispose() }
+}
+
+function Get-PngBytes($bitmap) {
+    $encoder = New-Object Windows.Media.Imaging.PngBitmapEncoder
+    $encoder.Frames.Add([Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
+    $stream = New-Object IO.MemoryStream
+    $encoder.Save($stream)
+    , $stream.ToArray()
+}
+
+# Application icon: PNG frames in one .ico.
+$sizes = 16, 20, 24, 32, 40, 48, 64, 128, 256
+$frames = foreach ($size in $sizes) { , @($size, (Get-PngBytes (Get-Icon $size))) }
+$out = New-Object IO.MemoryStream
+$writer = New-Object IO.BinaryWriter $out
+$writer.Write([UInt16]0); $writer.Write([UInt16]1); $writer.Write([UInt16]$frames.Count)
 $offset = 6 + 16 * $frames.Count
-foreach ($f in $frames) {
-    $sz = $f[0]; $data = $f[1]
-    $b = if ($sz -ge 256) { 0 } else { $sz }
-    $w.Write([byte]$b); $w.Write([byte]$b); $w.Write([byte]0); $w.Write([byte]0)
-    $w.Write([UInt16]1); $w.Write([UInt16]32)
-    $w.Write([UInt32]$data.Length); $w.Write([UInt32]$offset)
+foreach ($frame in $frames) {
+    $size = $frame[0]; $data = $frame[1]
+    $b = if ($size -ge 256) { 0 } else { $size }
+    $writer.Write([byte]$b); $writer.Write([byte]$b); $writer.Write([byte]0); $writer.Write([byte]0)
+    $writer.Write([UInt16]1); $writer.Write([UInt16]32)
+    $writer.Write([UInt32]$data.Length); $writer.Write([UInt32]$offset)
     $offset += $data.Length
 }
-foreach ($f in $frames) { $w.Write([byte[]]$f[1]) }
-$w.Flush()
-[System.IO.File]::WriteAllBytes("$OutDir\Claudex.ico", $out.ToArray())
-Write-Output "Icon written to $OutDir"
+foreach ($frame in $frames) { $writer.Write([byte[]]$frame[1]) }
+$writer.Flush()
+[IO.File]::WriteAllBytes((Join-Path $AssetsDir 'Claudex.ico'), $out.ToArray())
+Save-Image (Get-Icon 256) (Join-Path $AssetsDir 'Claudex-256.png') 'png'
+
+# Installer wizard: the tall welcome panel (black, icon centred) and the small header image (icon on white),
+# each at 100 % and 200 % scale.
+foreach ($scale in 1, 2) {
+    $w = 164 * $scale; $h = 314 * $scale; $icon = 112 * $scale
+    $panel = New-Object Windows.Controls.Canvas
+    $panel.Width = $w; $panel.Height = $h; $panel.Background = [Windows.Media.BrushConverter]::new().ConvertFrom($black)
+    $box = New-Object Windows.Controls.Viewbox
+    $box.Width = $icon; $box.Height = $icon
+    $box.Child = [Windows.Markup.XamlReader]::Parse((Get-IconXaml $false))
+    [Windows.Controls.Canvas]::SetLeft($box, ($w - $icon) / 2); [Windows.Controls.Canvas]::SetTop($box, ($h - $icon) / 2 - 20 * $scale)
+    $panel.Children.Add($box) | Out-Null
+    $suffix = if ($scale -eq 1) { '' } else { '-200' }
+    Save-Image (Render-Element $panel $w $h) (Join-Path $InstallerDir "wizard-large$suffix.bmp") 'bmp'
+    Save-Image (Get-Icon (55 * $scale) 'White') (Join-Path $InstallerDir "wizard-small$suffix.bmp") 'bmp'
+}
+
+Write-Output "Icon written to $AssetsDir; wizard images to $InstallerDir"

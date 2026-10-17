@@ -42,9 +42,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Claude" Style="{StaticResource CaptionTextStyle}" Foreground="#FFD97757" />
+                    <TextBlock Text="Claude" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource ClaudeBrush}" />
                     <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
-                        <Rectangle Fill="#FFD97757" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                        <Rectangle Fill="{StaticResource ClaudeBrush}" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
                             <Rectangle.RenderTransform>
                                 <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedClaudeFraction, Mode=OneWay}" />
                             </Rectangle.RenderTransform>
@@ -58,9 +58,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Codex" Style="{StaticResource CaptionTextStyle}" Foreground="#FF3A9BFF" />
+                    <TextBlock Text="Codex" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource CodexBrush}" />
                     <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
-                        <Rectangle Fill="#FF3A9BFF" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                        <Rectangle Fill="{StaticResource CodexBrush}" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
                             <Rectangle.RenderTransform>
                                 <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedCodexFraction, Mode=OneWay}" />
                             </Rectangle.RenderTransform>

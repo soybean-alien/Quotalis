@@ -25,7 +25,7 @@
         <StackPanel Orientation="Horizontal" Spacing="7" Height="32" Margin="0,-8,0,-6">
             <components:ProviderMark Kind="{x:Bind ViewModel.ShortName, Mode=OneWay}" Width="13" Height="13" VerticalAlignment="Center" />
             <TextBlock Text="{x:Bind ViewModel.DisplayName, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" FontWeight="SemiBold" VerticalAlignment="Center" />
-            <Ellipse Width="6" Height="6" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"
+            <Ellipse Width="6" Height="6" Fill="{x:Bind ViewModel.BrandBrush}" VerticalAlignment="Center"
                      Visibility="{x:Bind ViewModel.IsActive, Mode=OneWay}"
                      AutomationProperties.Name="Session active" />
         </StackPanel>
@@ -48,7 +48,7 @@
                     <TextBlock Text="{x:Bind ViewModel.PlanWindowName, Mode=OneWay}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Bottom" Margin="0,0,0,5" />
                 </StackPanel>
                 <Grid Height="3" Margin="0,2,0,0" CornerRadius="1.5" Background="{StaticResource ProgressTrackBrush}">
-                    <Rectangle Fill="{StaticResource AccentBrush}" RadiusX="1.5" RadiusY="1.5" RenderTransformOrigin="0,0.5">
+                    <Rectangle Fill="{x:Bind ViewModel.BrandBrush}" RadiusX="1.5" RadiusY="1.5" RenderTransformOrigin="0,0.5">
                         <Rectangle.RenderTransform>
                             <ScaleTransform ScaleX="{x:Bind ViewModel.PlanFraction, Mode=OneWay}" />
                         </Rectangle.RenderTransform>
