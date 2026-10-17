@@ -47,9 +47,10 @@
             </StackPanel>
         </Grid>
 
-        <!-- Panels scroll instead of being clipped if one ever outgrows the island (max 700 DIP minus the header). -->
-        <ScrollViewer x:Name="PanelScroll" Grid.Row="1" MaxHeight="620" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled"
-                      VerticalScrollMode="Auto" IsTabStop="False">
+        <!-- Panels scroll instead of being clipped if one ever outgrows the island (max 780 DIP minus the header).
+             No scrollbar is shown: any bar covered the panel's numbers. The mouse wheel and touch still scroll. -->
+        <ScrollViewer x:Name="PanelScroll" Grid.Row="1" MaxHeight="700" VerticalScrollBarVisibility="Hidden" HorizontalScrollMode="Disabled"
+                      VerticalScrollMode="Enabled" IsTabStop="False">
         <Grid x:Name="PanelHost" Padding="4,0">
             <local:UsagePanel x:Name="UsageView" Visibility="Collapsed" />
             <local:MusicPanel x:Name="MusicView" Visibility="Collapsed" />

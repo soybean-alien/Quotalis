@@ -16,7 +16,35 @@
             <local:ProviderSummary x:Name="CodexSummary" Grid.Column="1" ViewModel="{x:Bind ViewModel.Codex}" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}" />
         </Grid>
 
-        <components:UsageHeatmap x:Name="Heatmap" Margin="0,22,0,0" HorizontalAlignment="Left" />
+        <!-- Running totals of Claude and Codex together, in gold: this week, this month, lifetime. -->
+        <StackPanel Margin="0,22,0,0" Spacing="2" AutomationProperties.Name="{x:Bind ViewModel.SpendAccessibleText, Mode=OneWay}">
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.WeekTotalText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" FontSize="22"
+                               Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="This week" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.MonthTotalText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" FontSize="22"
+                               Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="This month" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.LifetimeTotalText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" FontSize="22"
+                               Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="Lifetime" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Text="Partly priced: some tokens have no list price." Style="{StaticResource FineTextStyle}" HorizontalAlignment="Center"
+                       Visibility="{x:Bind ViewModel.SpendPartial, Mode=OneWay}" />
+        </StackPanel>
+
+        <components:UsageHeatmap x:Name="Heatmap" Margin="0,20,0,0" HorizontalAlignment="Left" />
 
         <!-- Readout: summary and legend at rest, the inspected day on hover or keyboard focus. -->
         <Grid Height="{x:Bind ViewModel.ReadoutHeight, Mode=OneWay}" Margin="0,10,0,0">

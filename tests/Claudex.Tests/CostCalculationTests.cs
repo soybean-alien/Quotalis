@@ -46,6 +46,10 @@ public class CostCalculationTests
     [InlineData("claude-haiku-5-5", 0.10)]
     [InlineData("claude-opus-5-5", 4)]
     [InlineData("claude-fable-5-1", 10)]
+    [InlineData("gpt-6.1-sol", 2)]
+    [InlineData("gpt-6-luna", 0.10)]
+    [InlineData("gpt-5.6-sol", 4)]
+    [InlineData("gpt-5.6-terra", 2)]
     public void Resolves_dated_and_decorated_model_ids(string model, double inputPrice)
     {
         var price = UsdPricing.FindPrice(model);
@@ -58,6 +62,7 @@ public class CostCalculationTests
     [InlineData("gpt-6-astra")]
     [InlineData("claude-opus-5-7")]
     [InlineData("gpt-5.2")]
+    [InlineData("codex-auto-review")] // Codex's review model has no published list price
     [InlineData("")]
     public void Unknown_models_stay_unpriced_instead_of_guessed(string model)
     {
@@ -65,6 +70,15 @@ public class CostCalculationTests
 
         Assert.False(estimate.IsPriced);
         Assert.Equal(0m, estimate.ValueUsd);
+    }
+
+    [Fact]
+    public void Prices_codex_models_with_their_own_cached_input_rates()
+    {
+        // GPT-6.1 Sol: $2 input, $0.10 cached input (5 %, not 10 %), $10 output per MTok.
+        var estimate = UsdPricing.Estimate("gpt-6.1-sol", new TokenCounts(1_000_000, 1_000_000, 0, 0, 10_000_000));
+
+        Assert.Equal(2m + 10m + 1m, estimate.ValueUsd);
     }
 
     [Fact]

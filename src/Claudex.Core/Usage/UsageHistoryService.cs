@@ -131,6 +131,81 @@ public sealed class UsageHistoryService
         return result;
     }
 
+    /// <summary>
+    /// Claude and Codex together: this week (from <paramref name="firstDayOfWeek"/>, the same start the usage graph
+    /// uses), this calendar month and every stored day, summed from the daily values the rest of the panel shows.
+    /// </summary>
+    public SpendTotals GetSpendTotals(DayOfWeek firstDayOfWeek)
+    {
+        var today = Today;
+        var weekStart = today.AddDays(-(((int)today.DayOfWeek - (int)firstDayOfWeek + 7) % 7));
+        var monthStart = new DateOnly(today.Year, today.Month, 1);
+
+        decimal week = 0m, month = 0m, lifetime = 0m;
+        bool weekPartial = false, monthPartial = false, lifetimePartial = false;
+        foreach (var row in _db.GetDaily(DateOnly.MinValue, today))
+        {
+            lifetime += row.ApiValueUsd;
+            lifetimePartial |= row.ApiValuePartial;
+            if (row.Day >= monthStart)
+            {
+                month += row.ApiValueUsd;
+                monthPartial |= row.ApiValuePartial;
+            }
+
+            if (row.Day >= weekStart)
+            {
+                week += row.ApiValueUsd;
+                weekPartial |= row.ApiValuePartial;
+            }
+        }
+
+        return new SpendTotals(decimal.Round(week, 2), decimal.Round(month, 2), decimal.Round(lifetime, 2), weekPartial, monthPartial, lifetimePartial);
+    }
+
+    /// <summary>
+    /// Recomputes the stored daily values from their events with the current prices, so days recorded before a
+    /// model got a list price (or before a price changed) show the right cost. Returns the number of changed rows.
+    /// </summary>
+    public int Reprice(int days = 400)
+    {
+        List<DateOnly> changed = [];
+        lock (_gate)
+        {
+            foreach (var row in _db.GetDaily(Today.AddDays(-(days - 1)), Today))
+            {
+                var accumulator = LoadAccumulator(row.Day, row.Provider);
+                var totals = accumulator.ToTotals();
+
+                // Only a day whose events are all still stored can be recomputed; otherwise (pruned events, a
+                // database rebuilt from logs that no longer exist) the stored total is the better record.
+                if (totals.Tokens != row.Tokens)
+                {
+                    continue;
+                }
+
+                // Values are stored as doubles; a sub-cent difference is a rounding artefact, not a price change.
+                if (Math.Abs(totals.ApiValueUsd - row.ApiValueUsd) < 0.0001m && totals.HasUnpricedTokens == row.ApiValuePartial)
+                {
+                    continue;
+                }
+
+                _db.UpsertDaily(new DailyUsage(row.Day, row.Provider, totals.Tokens, totals.ApiValueUsd, totals.HasUnpricedTokens, totals.Sessions));
+                _cache[(row.Day, row.Provider)] = accumulator;
+                changed.Add(row.Day);
+            }
+
+            Evict();
+        }
+
+        if (changed.Count > 0)
+        {
+            Changed?.Invoke(changed.Distinct().ToList());
+        }
+
+        return changed.Count;
+    }
+
     private UsageAccumulator LoadAccumulator(DateOnly day, AiProviderKind provider)
     {
         var accumulator = new UsageAccumulator(_pricing);

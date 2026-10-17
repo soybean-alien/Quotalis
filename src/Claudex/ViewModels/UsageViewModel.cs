@@ -105,10 +105,10 @@ public sealed class UsageViewModel : ObservableObject
 
     public double InspectedCodexFraction => Fraction(IsInspecting ? _days[_inspectedIndex].Codex.Fresh : 0);
 
-    /// <summary>"2.96M · $42.03", or tokens alone when the day is only partly priced.</summary>
-    public string InspectedClaudeText => IsInspecting ? ToolText(_days[_inspectedIndex].Claude.Fresh, _days[_inspectedIndex].ClaudeApiValueUsd) : string.Empty;
+    /// <summary>"2.96M · $42.03"; "2.96M · $42.03, partly priced" when some of the tool's models have no list price.</summary>
+    public string InspectedClaudeText => IsInspecting ? ToolText(_days[_inspectedIndex].Claude.Fresh, _days[_inspectedIndex].ClaudeApiValueUsd, _days[_inspectedIndex].ClaudePartial) : string.Empty;
 
-    public string InspectedCodexText => IsInspecting ? ToolText(_days[_inspectedIndex].Codex.Fresh, _days[_inspectedIndex].CodexApiValueUsd) : string.Empty;
+    public string InspectedCodexText => IsInspecting ? ToolText(_days[_inspectedIndex].Codex.Fresh, _days[_inspectedIndex].CodexApiValueUsd, _days[_inspectedIndex].CodexPartial) : string.Empty;
 
     public string InspectedSessions => IsInspecting && _days[_inspectedIndex].HasUsage
         ? DisplayFormat.Count(_days[_inspectedIndex].Sessions, "session", "sessions")
@@ -116,13 +116,17 @@ public sealed class UsageViewModel : ObservableObject
 
     private double Fraction(long fresh) => _maxProviderFresh <= 0 ? 0 : Math.Clamp((double)fresh / _maxProviderFresh, 0, 1);
 
-    private string ToolText(long fresh, decimal usd) => fresh <= 0 ? "None"
-        : _days[_inspectedIndex].ApiValuePartial ? DisplayFormat.Tokens(fresh)
-        : $"{DisplayFormat.Tokens(fresh)} · {DisplayFormat.Usd(usd)}";
+    // Unpriced tokens are never guessed: the priced part is shown and labelled, and a tool with no priced
+    // tokens at all says so instead of showing $0.00.
+    private static string ToolText(long fresh, decimal usd, bool partial) => fresh <= 0 ? "None"
+        : !partial ? $"{DisplayFormat.Tokens(fresh)} · {DisplayFormat.Usd(usd)}"
+        : usd > 0 ? $"{DisplayFormat.Tokens(fresh)} · {DisplayFormat.Usd(usd)}, partly priced"
+        : $"{DisplayFormat.Tokens(fresh)} · no list price";
 
     public string InspectedValue => !IsInspecting ? string.Empty
-        : _days[_inspectedIndex].ApiValuePartial ? "Unavailable"
-        : DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd);
+        : _days[_inspectedIndex].ApiValuePartial
+            ? (_days[_inspectedIndex].TotalApiValueUsd > 0 ? $"{DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd)}, partly priced" : "Unavailable")
+            : DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd);
 
     /// <summary>Spoken description of the inspected day.</summary>
     public string InspectedAccessibleText => IsInspecting
@@ -178,6 +182,37 @@ public sealed class UsageViewModel : ObservableObject
 
             return any ? $"{DisplayFormat.Usd(total)} estimated API equivalent today" : "Claude Code and Codex usage appears here";
         }
+    }
+
+    // Running cost totals of Claude and Codex together (estimated API equivalent, USD).
+
+    private SpendTotals _spend = SpendTotals.Zero;
+
+    public string WeekTotalText => DisplayFormat.Usd(_spend.Week);
+
+    public string MonthTotalText => DisplayFormat.Usd(_spend.Month);
+
+    public string LifetimeTotalText => DisplayFormat.Usd(_spend.Lifetime);
+
+    /// <summary>Some tokens in these totals have no list price; the totals cover the priced part.</summary>
+    public bool SpendPartial => _spend.LifetimePartial;
+
+    public string SpendAccessibleText =>
+        $"Estimated API equivalent: this week {WeekTotalText}, this month {MonthTotalText}, lifetime {LifetimeTotalText}{(SpendPartial ? ", partly priced" : string.Empty)}";
+
+    public void SetSpendTotals(SpendTotals totals)
+    {
+        if (totals == _spend)
+        {
+            return;
+        }
+
+        _spend = totals;
+        OnPropertyChanged(nameof(WeekTotalText));
+        OnPropertyChanged(nameof(MonthTotalText));
+        OnPropertyChanged(nameof(LifetimeTotalText));
+        OnPropertyChanged(nameof(SpendPartial));
+        OnPropertyChanged(nameof(SpendAccessibleText));
     }
 
     /// <summary>Plan usage peaks that were actually measured, per day (never backfilled).</summary>

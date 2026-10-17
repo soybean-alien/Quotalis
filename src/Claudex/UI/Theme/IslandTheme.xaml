@@ -33,6 +33,9 @@
     <Color x:Key="ClaudeColor">#FFD97757</Color>
     <Color x:Key="CodexColor">#FF3A9BFF</Color>
     <SolidColorBrush x:Key="ClaudeBrush" Color="{StaticResource ClaudeColor}" />
+    <!-- Gold for the running cost totals (week, month, lifetime). -->
+    <Color x:Key="GoldColor">#FFE8B84A</Color>
+    <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource GoldColor}" />
     <SolidColorBrush x:Key="CodexBrush" Color="{StaticResource CodexColor}" />
 
     <!-- Status colors: semantic only, used as small dots and icons, never as fills. -->

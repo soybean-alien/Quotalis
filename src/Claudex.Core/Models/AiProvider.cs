@@ -92,7 +92,18 @@ public sealed record DailyUsage(
     bool ApiValuePartial,
     int Sessions);
 
+/// <summary>
+/// Estimated API equivalent of Claude and Codex together, in USD, for the current week, the current month and
+/// every stored day. A flag is set when some tokens in that range have no list price (the value covers the rest).
+/// </summary>
+public sealed record SpendTotals(decimal Week, decimal Month, decimal Lifetime, bool WeekPartial, bool MonthPartial, bool LifetimePartial)
+{
+    public static readonly SpendTotals Zero = new(0m, 0m, 0m, false, false, false);
+}
+
 /// <summary>One cell of the usage history graph.</summary>
+/// <param name="ClaudePartial">Some of Claude's tokens that day have no list price; its value covers the priced ones.</param>
+/// <param name="CodexPartial">Some of Codex's tokens that day have no list price; its value covers the priced ones.</param>
 public sealed record UsageDay(
     DateOnly Day,
     TokenCounts Claude,
@@ -100,8 +111,11 @@ public sealed record UsageDay(
     decimal ClaudeApiValueUsd,
     decimal CodexApiValueUsd,
     int Sessions,
-    bool ApiValuePartial = false)
+    bool ClaudePartial = false,
+    bool CodexPartial = false)
 {
+    public bool ApiValuePartial => ClaudePartial || CodexPartial;
+
     /// <summary>Fresh tokens of both tools (drives the history graph intensity).</summary>
     public long FreshTokens => Claude.Fresh + Codex.Fresh;
 

@@ -39,8 +39,8 @@
             <TextBlock Text="Type a task and press Enter." Style="{StaticResource FineTextStyle}" Margin="2,10,0,0"
                        Visibility="{x:Bind ViewModel.HasNoItems, Mode=OneWay}" />
 
-            <ScrollViewer MaxHeight="196" Margin="0,8,0,0" Padding="0,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled"
-                          Visibility="{x:Bind ViewModel.HasItems, Mode=OneWay}">
+            <ScrollViewer MaxHeight="196" Margin="0,8,0,0" Padding="0,0,0,0" VerticalScrollBarVisibility="Hidden" VerticalScrollMode="Enabled"
+                          HorizontalScrollMode="Disabled" Visibility="{x:Bind ViewModel.HasItems, Mode=OneWay}">
                 <ItemsControl x:Name="List" ItemsSource="{x:Bind ViewModel.Items}" IsTabStop="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:TaskRowViewModel">

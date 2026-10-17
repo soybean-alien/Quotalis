@@ -81,7 +81,16 @@ public sealed class ModelPricingService
         ("claude-3-5-haiku", new ModelPrice { Input = 0.8m, Output = 4m }),
         ("claude-3-haiku", new ModelPrice { Input = 0.25m, Output = 1.25m }),
 
-        // OpenAI list prices for models Codex has used. Cached input is 10% of input.
+        // OpenAI list prices for models Codex has used (developers.openai.com/api/docs/pricing, October 2026),
+        // standard tier for prompts up to 272K input tokens; longer prompts cost more and are not modelled here.
+        // GPT-5.6 Sol is on promotional pricing until at least November 21, 2026.
+        ("gpt-6.1-sol", new ModelPrice { Input = 2m, Output = 10m, CacheRead = 0.10m }),
+        ("gpt-6-sol", new ModelPrice { Input = 2m, Output = 10m, CacheRead = 0.20m }),
+        ("gpt-6-luna", new ModelPrice { Input = 0.10m, Output = 0.50m, CacheRead = 0.01m }),
+        ("gpt-5.6-sol", new ModelPrice { Input = 4m, Output = 20m, CacheRead = 0.40m }),
+        ("gpt-5.6-terra", new ModelPrice { Input = 2m, Output = 12m, CacheRead = 0.20m }),
+        ("gpt-5.6-luna", new ModelPrice { Input = 0.20m, Output = 1.20m, CacheRead = 0.02m }),
+        ("gpt-5.3-codex", new ModelPrice { Input = 1.75m, Output = 14m, CacheRead = 0.175m }),
         ("gpt-5-mini", new ModelPrice { Input = 0.25m, Output = 2m, CacheRead = 0.025m }),
         ("gpt-5-nano", new ModelPrice { Input = 0.05m, Output = 0.4m, CacheRead = 0.005m }),
         ("gpt-5-codex", new ModelPrice { Input = 1.25m, Output = 10m, CacheRead = 0.125m }),

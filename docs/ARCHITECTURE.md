@@ -67,7 +67,7 @@ Settings are JSON (`settings.json`, source-generated serializer) and are written
 `ModelPricingService` holds public list prices in USD per million tokens (input, output, cache read, 5-minute and 1-hour cache writes). Estimates are shown in USD, the currency the list prices are published in.
 
 - **Name matching.** A price matches an exact model ID or a dated snapshot of it (`claude-sonnet-4-20250514`). Newer models (`claude-opus-5-7`, `gpt-5.2`) stay unpriced instead of borrowing a guess.
-- **Partial pricing.** Unpriced tokens mark the value as partial.
+- **Partial pricing.** Unpriced tokens mark the value as partial, per tool and day; the priced part is still shown and labelled "partly priced". `UsageHistoryService.Reprice` recomputes stored days from their events at startup, so new list prices apply to the past.
 - **Overrides.** `pricing.json` next to the settings can override prices and the rate.
 
 ## The island window
