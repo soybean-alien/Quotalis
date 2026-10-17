@@ -17,17 +17,17 @@ cd Claudex
 
 dotnet test tests/Claudex.Tests                 # restore, build and run the tests
 dotnet build src/Claudex -c Debug               # build the app
-.un.cmd -Demo                                         # build and start with demo data
+.\run.cmd -Demo                                         # build and start with demo data
 ```
 
-`run.cmd` builds and starts the app from source: `.un.cmd` uses your real data, `-Demo` invented data with separate demo settings, `-Release` an optimized build. The scripts find the .NET 10 SDK themselves, even when the `dotnet` on PATH is an older install without it.
+`run.cmd` builds and starts the app from source: `.\run.cmd` uses your real data, `-Demo` invented data with separate demo settings, `-Release` an optimized build. The scripts find the .NET 10 SDK themselves, even when the `dotnet` on PATH is an older install without it.
 
 The built app is at `src/Claudex/bin/x64/Debug/net10.0-windows10.0.22621.0/win-x64/Claudex.exe`. Useful switches:
 
 | Command | What it does |
 |---|---|
 | `Claudex.exe --demo` | Invented data only; real usage, tasks and repositories are never read or changed. Preferences are saved separately in `settings.demo.json`. |
-| `Claudex.exe --demo --snapshot=C:	emp\shots --culture=en-US` | Renders every state (compact, peek, activities, notch, each module, empty and error states, privacy marks, Settings) to PNG files offscreen, without touching the desktop, then exits. |
+| `Claudex.exe --demo --snapshot=C:\temp\shots --culture=en-US` | Renders every state (compact, peek, activities, notch, each module, empty and error states, privacy marks, Settings) to PNG files offscreen, without touching the desktop, then exits. |
 | `Claudex.exe --system-report` | Prints what the System module can read on this device (GPU, temperatures, fans, camera and microphone state) and exits. |
 | `Claudex.exe --settings=modules` | Opens Settings at a section (`general`, `position`, `modules`, `appearance`, `about`). |
 
@@ -46,8 +46,8 @@ See [RELEASING.md](RELEASING.md) for the full release checklist.
 The screenshots and the hero animation come from the app's own offscreen renders:
 
 ```powershell
-Claudex.exe --demo --snapshot=C:	emp\shots --culture=en-US
-python tools/make-readme-media.py C:	emp\shots          # needs Pillow: pip install pillow
+Claudex.exe --demo --snapshot=C:\temp\shots --culture=en-US
+python tools/make-readme-media.py C:\temp\shots          # needs Pillow: pip install pillow
 ```
 
 To record the live app instead (real spring motion), follow [RECORDING.md](RECORDING.md).

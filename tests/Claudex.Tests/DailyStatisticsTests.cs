@@ -73,7 +73,71 @@ public class DailyStatisticsTests
         history.Ingest([TestData.Event(AiProviderKind.Claude, "known", time.GetUtcNow(), 1000)]);
         var mixed = Assert.Single(history.GetHistory(1));
         Assert.True(mixed.ApiValuePartial);
+        Assert.True(mixed.CodexPartial);
+        Assert.False(mixed.ClaudePartial); // Claude's own cost stays complete next to an unpriced Codex model
         Assert.True(mixed.TotalApiValueUsd > 0);
+    }
+
+    [Fact]
+    public void Reprice_updates_days_stored_before_a_model_had_a_price()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero));
+        using var db = UsageDatabase.OpenInMemory();
+        var before = new UsageHistoryService(db, new ModelPricingService(), time, TimeZoneInfo.Utc);
+        before.Ingest([TestData.Event(AiProviderKind.Codex, "late", time.GetUtcNow().AddDays(-3), 1_000_000, model: "gpt-7-nova")]);
+        Assert.True(before.GetHistory(4)[0].CodexPartial);
+
+        var priced = new ModelPricingService(new PricingOverrides { Models = { ["gpt-7-nova"] = new ModelPrice { Input = 1m, Output = 1m } } });
+        var after = new UsageHistoryService(db, priced, time, TimeZoneInfo.Utc);
+
+        Assert.Equal(1, after.Reprice());
+        var day = after.GetHistory(4)[0];
+        Assert.False(day.CodexPartial);
+        Assert.True(day.CodexApiValueUsd > 0);
+        Assert.Equal(0, after.Reprice()); // nothing left to change
+    }
+
+    [Fact]
+    public void Spend_totals_sum_both_tools_for_this_week_this_month_and_lifetime()
+    {
+        // Monday 2026-09-28. Opus 5.5 input is $4 per million tokens.
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero));
+        using var db = UsageDatabase.OpenInMemory();
+        var history = new UsageHistoryService(db, new ModelPricingService(), time, TimeZoneInfo.Utc);
+        history.Ingest(
+        [
+            TestData.Event(AiProviderKind.Claude, "today", new DateTimeOffset(2026, 9, 28, 9, 0, 0, TimeSpan.Zero), 1_000_000),
+            TestData.Event(AiProviderKind.Codex, "today-codex", new DateTimeOffset(2026, 9, 28, 10, 0, 0, TimeSpan.Zero), 1_000_000, model: "gpt-6.1-sol"),
+            TestData.Event(AiProviderKind.Claude, "sunday", new DateTimeOffset(2026, 9, 27, 9, 0, 0, TimeSpan.Zero), 1_000_000),
+            TestData.Event(AiProviderKind.Claude, "august", new DateTimeOffset(2026, 8, 31, 9, 0, 0, TimeSpan.Zero), 1_000_000),
+        ]);
+
+        var mondayWeeks = history.GetSpendTotals(DayOfWeek.Monday);
+        Assert.Equal(4m + 2m, mondayWeeks.Week);          // today only: Claude $4 + Codex $2
+        Assert.Equal(4m + 2m + 4m, mondayWeeks.Month);    // plus Sunday the 27th
+        Assert.Equal(4m + 2m + 4m + 4m, mondayWeeks.Lifetime);
+        Assert.False(mondayWeeks.LifetimePartial);
+
+        Assert.Equal(10m, history.GetSpendTotals(DayOfWeek.Sunday).Week); // a Sunday-first week includes the 27th
+
+        history.Ingest([TestData.Event(AiProviderKind.Codex, "unpriced", new DateTimeOffset(2026, 9, 28, 11, 0, 0, TimeSpan.Zero), 500, model: "gpt-7-nova")]);
+        var partial = history.GetSpendTotals(DayOfWeek.Monday);
+        Assert.True(partial.WeekPartial && partial.MonthPartial && partial.LifetimePartial);
+        Assert.Equal(6m, partial.Week);
+    }
+
+    [Fact]
+    public void Reprice_keeps_a_day_whose_events_are_no_longer_all_stored()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero));
+        using var db = UsageDatabase.OpenInMemory();
+        var day = new DateOnly(2026, 9, 25);
+        db.UpsertDaily(new DailyUsage(day, AiProviderKind.Claude, new TokenCounts(5_000_000, 0, 0, 0, 0), 20m, false, 3));
+        db.InsertEvents([TestData.Event(AiProviderKind.Claude, "only-one-left", new DateTimeOffset(2026, 9, 25, 12, 0, 0, TimeSpan.Zero), 1000)], TimeZoneInfo.Utc);
+        var history = new UsageHistoryService(db, new ModelPricingService(), time, TimeZoneInfo.Utc);
+
+        Assert.Equal(0, history.Reprice());
+        Assert.Equal(20m, history.GetHistory(4)[0].ClaudeApiValueUsd);
     }
 
     [Fact]

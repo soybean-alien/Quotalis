@@ -42,3 +42,7 @@ Desktop.ini
 # Reference screenshots kept in the project root (not part of the repo)
 /Claudex-*.png
 /image-*.png
+
+# Agent handoff notes (local working notes, see CLAUDE.md)
+CODEX_HANDOFF.md
+AGENTS.md

@@ -685,6 +685,13 @@ internal sealed class AppHost : IDisposable
                 await WhenDispatcherIdleAsync();
                 await Task.Delay(TimeSpan.FromSeconds(2), _shutdown.Token);
                 await SyncProvidersAsync(_settings.Current);
+
+                // Days stored before a model had a list price (or before a price changed) get today's prices.
+                var repriced = await Task.Run(() => _history.Reprice());
+                if (repriced > 0)
+                {
+                    Log.Info("pricing", "History repriced", new { rows = repriced });
+                }
             }
 
             await _media.StartAsync();
@@ -1296,6 +1303,8 @@ internal sealed class AppHost : IDisposable
             var days = UsageViewModel.HistoryWeeks * 7 + todayRow + 1;
             var history = await Task.Run(() => _history.GetHistory(days));
             _viewModel.Usage.SetHistory(history);
+            var totals = await Task.Run(() => _history.GetSpendTotals(firstDay));
+            _viewModel.Usage.SetSpendTotals(totals);
             if (history.Count > 0)
             {
                 var peaks = await Task.Run(() => _database.GetPlanPeaks(AiProviderKind.Claude, history[0].Day, history[^1].Day));

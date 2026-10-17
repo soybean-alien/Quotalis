@@ -4,6 +4,25 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-17
+
+### Added
+
+- **List prices for the current Codex models**, from OpenAI's pricing page: GPT-6.1 Sol ($2 / $10, cached input $0.10), GPT-6 Sol ($2 / $10, $0.20), GPT-6 Luna ($0.10 / $0.50, $0.01), GPT-5.6 Sol ($4 / $20, $0.40, promotional until at least November 21, 2026), GPT-5.6 Terra ($2 / $12, $0.20), GPT-5.6 Luna ($0.20 / $1.20, $0.02) and GPT-5.3 Codex ($1.75 / $14, $0.175), standard tier for prompts up to 272K tokens. Codex days now show their estimated API cost. `codex-auto-review` has no published price and stays unpriced.
+- **Running cost totals.** Above the usage graph, three gold figures show the estimated API equivalent of Claude and Codex together: **This week** (from the first day of the week the graph uses), **This month** (calendar month) and **Lifetime** (every stored day). They are summed from the same daily values as the rest of the panel and refresh with every new usage, like the other figures. A line says "Partly priced" when some tokens have no list price. The open island is 80 DIP taller (up to 780) to make room.
+- **Past days are re-priced at startup.** After the first log scan, every stored day is recomputed from its events with the current prices, so days recorded before a model had a list price show their cost. A day whose events are no longer all stored (pruned, or a database rebuilt from logs that are gone) keeps its stored total instead of shrinking.
+
+### Changed
+
+- **No scrollbar on the open island.** The panel area and the Tasks list no longer show a scrollbar; it appeared on hover and covered numbers at the right edge. The mouse wheel and touch still scroll. Settings keeps its standard bar.
+- **Partly priced days show their cost.** The usage graph readout used to say "Unavailable" for any day with one unpriced model, hiding even a fully priced Claude cost. "Partly priced" is now tracked per tool: each tool shows its priced cost, a tool with unpriced models adds ", partly priced", one with none priced says "no list price", and the total reads, for example, "$4.39, partly priced".
+
+### Fixed
+
+- `docs/DEVELOPMENT.md` shows `.\run.cmd` and `C:\temp\shots` again; the fork's rename had turned `\r` and `\t` in those paths into control characters.
+un.cmd` and `C:	emp\shots` again; the fork's rename had turned `
+` and `	` in those paths into control characters.
+
 ## [0.5.2] - 2026-10-17
 
 ### Changed

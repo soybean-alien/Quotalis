@@ -105,7 +105,8 @@ public static class UsageAggregator
                     claude.Sum(d => d.ApiValueUsd),
                     codex.Sum(d => d.ApiValueUsd),
                     g.Sum(d => d.Sessions),
-                    g.Any(d => d.ApiValuePartial));
+                    claude.Any(d => d.ApiValuePartial),
+                    codex.Any(d => d.ApiValuePartial));
             })
             .OrderBy(d => d.Day)
             .ToList();

@@ -28,7 +28,7 @@ public sealed partial class IslandWindow : Window
 
     /// <summary>Largest capsule the window must hold, in DIPs.</summary>
     public const double MaxCapsuleWidth = 420;
-    public const double MaxCapsuleHeight = 700;
+    public const double MaxCapsuleHeight = 780;
 
     public static double WindowWidth => MaxCapsuleWidth + 2 * EdgeMargin;
 
