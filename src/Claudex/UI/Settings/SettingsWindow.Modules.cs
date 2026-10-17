@@ -115,22 +115,10 @@ public sealed partial class SettingsWindow
 
     // Claude plan usage --------------------------------------------------------------------------------
 
-    /// <summary>Shows whether Claude Code hands plan usage to Claudex (its status line).</summary>
+    /// <summary>Shows whether Claude Code hands plan usage to Claudex (its status line and Stop hook).</summary>
     private void UpdatePlanConnection()
     {
-        if (!_isDemo && TokenzStatus.Load(TokenzStatus.DefaultPath()) is { } tokenz)
-        {
-            // Tokenz feeds plan usage; the status line link is not needed.
-            var age = Core.Formatting.DisplayFormat.Ago(DateTimeOffset.UtcNow - tokenz.MeasuredAt);
-            (PlanStatusTitle.Text, PlanStatusText.Text) = DateTimeOffset.UtcNow - tokenz.MeasuredAt > PlanStatus.StaleAfter
-                ? ("Reading from Tokenz, no recent update", $"Tokenz last updated {age}. Start Tokenz to keep the Claude bars current.")
-                : ("Reading from Tokenz", $"Last update {age}. Tokenz takes exact numbers from the Claude desktop app and estimates between them, marked as estimated next to the reset time.");
-            PlanConnectButton.Visibility = Visibility.Collapsed;
-            PlanDisconnectButton.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        var state = _isDemo ? PlanConnection.NotConnected : ClaudeStatusLineSetup.Inspect(ClaudeStatusLineSetup.SettingsPath());
+        var state = _isDemo ? PlanConnection.NotConnected : ClaudePlanLink.Inspect(ClaudeStatusLineSetup.SettingsPath());
         var usage = _isDemo ? null : new PlanUsageStore(AppPaths.ClaudePlan).Load();
         var data = PlanStatus.StateOf(state, usage, DateTimeOffset.UtcNow);
         var lastUpdate = usage is null ? string.Empty : Core.Formatting.DisplayFormat.Ago(DateTimeOffset.UtcNow - usage.MeasuredAt);
@@ -139,15 +127,15 @@ public sealed partial class SettingsWindow
         (PlanStatusTitle.Text, PlanStatusText.Text) = (_isDemo, data) switch
         {
             (true, _) => ("Not available in demo mode", "Demo mode never changes Claude Code's settings."),
-            (_, PlanDataState.Receiving) => ("Connected, receiving plan usage", $"Last update {lastUpdate}. It refreshes with every reply in a Claude Code terminal session."),
-            (_, PlanDataState.Stale) => ("Connected, no recent update", $"Last update {lastUpdate}. Plan usage refreshes with your next reply in a Claude Code terminal session."),
-            (_, PlanDataState.WaitingForData) => ("Connected, plan usage unavailable so far", "Claude Code hands over plan usage only in terminal sessions, after a reply (its status line is part of the terminal view; the VS Code extension does not run it). Claude subscriptions only."),
-            (_, PlanDataState.OtherStatusLine) => ("Your own status line is in use", "Claude Code already runs a status line, which Claudex leaves alone. To combine both, pipe its input to: " + ClaudeStatusLineSetup.CommandFor(Environment.ProcessPath ?? "Claudex.exe")),
+            (_, PlanDataState.Receiving) => ("Connected, receiving plan usage", $"Last update {lastUpdate}. It refreshes with every reply in a Claude Code terminal session, and from the usage card in Claude desktop sessions over 2 minutes old."),
+            (_, PlanDataState.Stale) => ("Connected, no recent update", $"Last update {lastUpdate}. Plan usage refreshes with your next reply in a Claude Code session."),
+            (_, PlanDataState.WaitingForData) => ("Connected, plan usage unavailable so far", "Plan usage arrives after a reply in a Claude Code terminal session (its status line), or at the end of a turn in a Claude desktop session over 2 minutes old (its Stop hook reads the usage card). Claude subscriptions only."),
+            (_, PlanDataState.OtherStatusLine) => ("Your own status line is in use", "Claude Code already runs a status line, which Claudex leaves alone. Connect adds only the Stop hook for desktop sessions. For terminal sessions, pipe the status line input to: " + ClaudeStatusLineSetup.CommandFor(Environment.ProcessPath ?? "Claudex.exe")),
             (_, PlanDataState.Unreadable) => ("Claude Code settings unreadable", "Its settings.json could not be read, so nothing was changed."),
-            _ => ("Not connected", "Shows your current and weekly Claude plan usage. Claudex becomes Claude Code's status line, which Claude Code uses to hand over these two percentages. Nothing else is read or sent."),
+            _ => ("Not connected", "Shows your current and weekly Claude plan usage. Claudex becomes Claude Code's status line (terminal sessions) and adds a Stop hook (desktop sessions, where Claude reads its usage card). Only these two percentages and their reset times are kept. Nothing else is read or sent."),
         };
         PlanConnectButton.Visibility = state == PlanConnection.Connected ? Visibility.Collapsed : Visibility.Visible;
-        PlanConnectButton.IsEnabled = !_isDemo && state == PlanConnection.NotConnected && Environment.ProcessPath is not null;
+        PlanConnectButton.IsEnabled = !_isDemo && state is PlanConnection.NotConnected or PlanConnection.OtherStatusLine && Environment.ProcessPath is not null;
         PlanDisconnectButton.Visibility = state == PlanConnection.Connected ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -160,7 +148,7 @@ public sealed partial class SettingsWindow
 
         try
         {
-            var result = ClaudeStatusLineSetup.Connect(ClaudeStatusLineSetup.SettingsPath(), exe);
+            var result = ClaudePlanLink.Connect(ClaudeStatusLineSetup.SettingsPath(), exe);
             Log.Info("settings", "Claude plan usage connect", new { result = result.ToString() });
         }
         catch (Exception ex)
@@ -175,7 +163,7 @@ public sealed partial class SettingsWindow
     {
         try
         {
-            var result = ClaudeStatusLineSetup.Disconnect(ClaudeStatusLineSetup.SettingsPath());
+            var result = ClaudePlanLink.Disconnect(ClaudeStatusLineSetup.SettingsPath());
             Log.Info("settings", "Claude plan usage disconnect", new { result = result.ToString() });
         }
         catch (Exception ex)

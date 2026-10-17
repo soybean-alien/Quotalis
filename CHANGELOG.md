@@ -4,6 +4,29 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-17
+
+### Added
+
+- **Claude desktop calibration moved from Tokenz into Claudex.** `Claudex.exe --claudex-calibrate --five-hour X --five-hour-reset T --weekly Y --weekly-reset T [--plan P] [--by NAME] [--source TEXT]` saves exact plan usage from the Claude desktop app's usage card into Claudex's own plan file and prints "applied by Claudex". Reset times take ISO 8601 or Unix seconds; `--` marks a missing window.
+- **Stop hook** `Claudex.exe --claudex-stop-hook`, the same rule Tokenz used: in a Claude desktop session over 2 minutes old it asks Claude to read `get_usage`, run the calibration and end with `🟠 Usage: Claude 5h <x>% · wk <y>%`. It skips a turn when a reading arrived in the last 30 seconds. Readings go to `%LOCALAPPDATA%\Claudex\calibration-log.jsonl`, the last decision to `stop-hook-last.json`.
+- **Codex Stop hook moved from Tokenz into Claudex.** `Claudex.exe --claudex-codex-stop-hook` (in `~/.codex/hooks.json`), in Codex sessions over 2 minutes old, reads that session's latest exact `codex` rate-limit snapshot from its rollout log and asks Codex to end its reply with `🔵 Usage: Codex 5h <x>% · wk <y>%`, numbers already filled in, so Codex runs nothing for it. A window that has reset, or a session without a snapshot yet, shows `--`. It skips a turn within 30 seconds of the last report, and tells Codex to pass Claude numbers you give it from claude.ai to `--claudex-calibrate`. Its last decision goes to `%LOCALAPPDATA%\Claudex\codex-stop-hook-last.json`.
+- **Installer hooks.** `Claudex.exe --claudex-hooks connect` points the Claude Code status line and Stop hook, and the Codex Stop hook, at that copy of Claudex (moving them from wherever an earlier copy put them, adding missing ones, leaving your own status line alone). The installer runs it as a task, "Connect Claude Code and Codex usage", on by default. `--claudex-hooks disconnect` removes only the entries that run that copy, and the uninstaller runs it first, so Claude Code and Codex never call a missing program.
+- The installer offers a **desktop shortcut** and shows the new icon in its wizard.
+- Settings, Modules, "Connect" adds the Stop hook next to the status line (and adds only the hook when you already have your own status line). "Disconnect" removes both, and nothing else.
+
+### Removed
+
+- **Tokenz is no longer read.** The `tokenz_status.json` reader, the "Reading from Tokenz" Settings text and Tokenz's stale and waiting messages are gone. Plan bars come only from Claudex's status line and its Stop hook.
+
+### Changed
+
+- **New icon.** A black rounded square with the Claude mark's left half in Claude orange and the OpenAI mark's right half in Codex blue, ringed by an orange and a blue arc. It is the app, tray, taskbar, desktop shortcut and installer icon. `tools/make-icon.ps1` draws every size from vectors (thicker arcs at 32 px and below) and also writes the installer's wizard images.
+- **Provider colors.** The Claude logo is drawn in Claude orange and the Codex logo in Codex blue (transparent marks, not app icons) everywhere they appear: the resting island, peeks, the Usage tab icon and the panel headers.
+- Each provider's plan bar and live-session dot use its color, and the usage readout bars use the same theme colors.
+- The classic resting state shows each tool's logo before its name.
+
+
 ## [0.4.0] - 2026-10-17
 
 ### Changed

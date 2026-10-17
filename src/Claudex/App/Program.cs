@@ -14,6 +14,29 @@ public static class Program
             return StatusLineBridge.Run();
         }
 
+        // Plan usage from the Claude desktop app's usage card: the Stop hook, and the calibration it asks Claude to run;
+        // and Codex's Stop hook, which reports that session's exact limits.
+        if (CalibrationCommand.IsStopHook(args))
+        {
+            return CalibrationCommand.StopHook();
+        }
+
+        if (CalibrationCommand.IsCodexStopHook(args))
+        {
+            return CalibrationCommand.CodexStop();
+        }
+
+        // Installer and uninstaller: point the Claude Code and Codex hooks at this copy, or remove them.
+        if (CalibrationCommand.IsHooks(args))
+        {
+            return CalibrationCommand.Hooks(args);
+        }
+
+        if (CalibrationCommand.IsCalibrate(args))
+        {
+            return CalibrationCommand.Calibrate(args);
+        }
+
         // Awake backstop (a scheduled task): undo an ended session's lid change if the island is not running.
         if (AwakeRestore.IsRequested(args))
         {

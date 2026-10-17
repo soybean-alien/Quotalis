@@ -179,7 +179,7 @@ More, including offscreen snapshots and the hardware report: [docs/DEVELOPMENT.m
 ## Known limitations
 
 - **Hardware sensors vary by device.** CPU temperatures need administrator rights on many machines, and many laptops expose no fan speed to applications; such readings are hidden, not estimated.
-- **Claude plan usage** arrives only from Claude Code terminal sessions (its status line); the VS Code extension does not provide it. Token usage works either way.
+- **Claude plan usage** arrives from Claude Code terminal sessions (its status line) and from Claude desktop sessions over 2 minutes old (a Stop hook has Claude read its usage card); the VS Code extension provides neither. Token usage works either way.
 - **Codex limits** appear once Codex has recorded them in its logs.
 - The installer is **not code-signed** yet. Only **x64** is built and tested.
 - More in [docs/STATUS.md](docs/STATUS.md).

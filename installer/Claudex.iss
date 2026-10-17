@@ -35,6 +35,8 @@ UninstallDisplayName=Claudex
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
+WizardImageFile=wizard-large.bmp,wizard-large-200.bmp
+WizardSmallImageFile=wizard-small.bmp,wizard-small-200.bmp
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
@@ -42,7 +44,9 @@ CloseApplications=force
 RestartApplications=no
 
 [Tasks]
+Name: "desktopicon"; Description: "Create a desktop shortcut"
 Name: "autostart"; Description: "Start Claudex when I sign in"
+Name: "hooks"; Description: "Connect Claude Code and Codex usage (status line and Stop hooks)"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
@@ -50,6 +54,7 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdi
 [Icons]
 Name: "{autoprograms}\Claudex"; Filename: "{app}\Claudex.exe"
 Name: "{autoprograms}\Claudex (Demo)"; Filename: "{app}\Claudex.exe"; Parameters: "--demo"
+Name: "{autodesktop}\Claudex"; Filename: "{app}\Claudex.exe"; Tasks: desktopicon
 
 [Registry]
 ; Same entry the app writes for "Start with Windows"; the app adopts it on first launch.
@@ -57,9 +62,13 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
     ValueData: """{app}\Claudex.exe"" --autostart"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
+; Points the Claude Code status line and Stop hook, and the Codex Stop hook, at this copy (adding them if missing).
+Filename: "{app}\Claudex.exe"; Parameters: "--claudex-hooks connect"; Flags: runhidden waituntilterminated; Tasks: hooks
 Filename: "{app}\Claudex.exe"; Description: "Open Claudex"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
+; Removes only the hooks that run this copy, so Claude Code and Codex never call a missing program.
+Filename: "{app}\Claudex.exe"; Parameters: "--claudex-hooks disconnect"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveHooks"
 Filename: "{sys}\taskkill.exe"; Parameters: "/IM Claudex.exe /F"; Flags: runhidden; RunOnceId: "StopClaudex"
 Filename: "{sys}\reg.exe"; Parameters: "delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Claudex /f"; Flags: runhidden; RunOnceId: "RemoveAutostart"
 
