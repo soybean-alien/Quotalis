@@ -50,7 +50,7 @@ public sealed class ClaudeUsageProvider : LogFileUsageProvider
             {
                 events.Add(e);
             }
-        }, cancellationToken);
+        }, ClaudeLogParser.RequiredMarkers, cancellationToken);
         return new ParseResult(newOffset, null);
     }
 

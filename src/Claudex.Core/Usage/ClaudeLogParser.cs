@@ -15,6 +15,9 @@ namespace Claudex.Core.Usage;
 /// </remarks>
 public static class ClaudeLogParser
 {
+    /// <summary>Text every usage line contains; the tail reader skips other lines before decoding them.</summary>
+    public static readonly string[] RequiredMarkers = ["\"usage\"", "\"assistant\""];
+
     public static bool TryParse(string line, out UsageEvent usageEvent)
     {
         usageEvent = null!;

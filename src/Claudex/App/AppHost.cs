@@ -679,6 +679,11 @@ internal sealed class AppHost : IDisposable
             }
             else
             {
+                // The first log scan allocates a lot. A full garbage collection while WinUI is still building and
+                // releasing the island's first visual tree can deadlock the UI thread (seen right after a reboot),
+                // so the scan waits until the island has rendered and the dispatcher is idle.
+                await WhenDispatcherIdleAsync();
+                await Task.Delay(TimeSpan.FromSeconds(2), _shutdown.Token);
                 await SyncProvidersAsync(_settings.Current);
             }
 
@@ -690,6 +695,18 @@ internal sealed class AppHost : IDisposable
         {
             Log.Error("startup", "Background start failed", ex);
         }
+    }
+
+    /// <summary>Completes once the UI thread has run everything queued ahead of low-priority work.</summary>
+    private Task WhenDispatcherIdleAsync()
+    {
+        var idle = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_dispatcher.TryEnqueue(DispatcherQueuePriority.Low, () => idle.TrySetResult()))
+        {
+            idle.TrySetResult();
+        }
+
+        return idle.Task;
     }
 
     private void WireEvents()
