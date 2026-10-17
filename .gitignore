@@ -38,3 +38,7 @@ __pycache__/
 Thumbs.db
 Desktop.ini
 
+
+# Reference screenshots kept in the project root (not part of the repo)
+/Claudex-*.png
+/image-*.png

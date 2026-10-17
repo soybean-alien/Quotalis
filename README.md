@@ -1,5 +1,7 @@
 # Claudex
 
+![Claudex: every limit, at a glance](docs/assets/banner.png)
+
 > Personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT), renamed and tuned by **soybean_alien**. Upstream is tracked as the `upstream` remote; see [CHANGELOG.md](CHANGELOG.md) for what changed in Claudex.
 
 > **The developer status bar Windows never had.**
@@ -13,7 +15,7 @@ Claudex is a native, floating capsule at the top of your Windows screen. It show
 ![.NET 10, WinUI 3](https://img.shields.io/badge/.NET%2010-WinUI%203-512BD4.svg)
 
 <p align="center">
-  <img src="docs/assets/hero.gif" alt="Claudex in demo mode: the compact capsule, a Claude Code live activity, the expanded usage view with plan usage and a token breakdown, then Music and System" width="440">
+  <img src="docs/assets/hero.gif" alt="Claudex in action (sample data): the notch, the compact capsule, a Claude Code live activity, Claude and Codex plan usage with the usage graph, then Music, Focus, System and Awake" width="760">
 </p>
 
 <p align="center"><sub>Demo mode with invented data, rendered by the app itself (<code>--snapshot</code>). In the live app, the states morph with springs.</sub></p>

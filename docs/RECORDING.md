@@ -1,10 +1,11 @@
 # Recording the island
 
-The README media (`docs/assets/hero.gif`, the screenshots and `social-preview.png`) are generated from the app's own offscreen renders, so they are reproducible and never show personal data:
+The README media (`docs/assets/hero.gif`, the screenshots, `banner.png` and `social-preview.png`) are generated from the app's own offscreen renders, so they are reproducible and never show personal data:
 
 ```powershell
 Claudex.exe --demo --snapshot=C:\temp\shots --culture=en-US
 python tools/make-readme-media.py C:\temp\shots     # pip install pillow
+powershell -ExecutionPolicy Bypass -File tools/banner/render.ps1 -Shots C:\temp\shots   # needs Chrome or Edge
 ```
 
 The hero animation joins those renders with short crossfades. The live app morphs between states with springs instead. To show that motion, record the running app as below.
