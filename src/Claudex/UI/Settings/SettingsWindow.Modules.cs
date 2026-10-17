@@ -124,7 +124,7 @@ public sealed partial class SettingsWindow
             var age = Core.Formatting.DisplayFormat.Ago(DateTimeOffset.UtcNow - tokenz.MeasuredAt);
             (PlanStatusTitle.Text, PlanStatusText.Text) = DateTimeOffset.UtcNow - tokenz.MeasuredAt > PlanStatus.StaleAfter
                 ? ("Reading from Tokenz, no recent update", $"Tokenz last updated {age}. Start Tokenz to keep the Claude bars current.")
-                : ("Reading from Tokenz", $"Last update {age}. Tokenz takes exact numbers from the Claude desktop app and estimates between them (shown with ~).");
+                : ("Reading from Tokenz", $"Last update {age}. Tokenz takes exact numbers from the Claude desktop app and estimates between them, marked as estimated next to the reset time.");
             PlanConnectButton.Visibility = Visibility.Collapsed;
             PlanDisconnectButton.Visibility = Visibility.Collapsed;
             return;

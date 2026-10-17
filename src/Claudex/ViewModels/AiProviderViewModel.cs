@@ -174,8 +174,8 @@ public sealed class AiProviderViewModel : ObservableObject
 
     public string PlanPercentText => ShownWindow is { } w ? PercentText(w) : "Unavailable";
 
-    /// <summary>"72%", or "~72%" for an estimate between exact readings (Tokenz's convention).</summary>
-    private static string PercentText(PlanWindow w) => $"{(w.IsEstimated ? "~" : string.Empty)}{Math.Round(w.UsedPercent):0}%";
+    /// <summary>"72%". Estimates are flagged in the reset line instead.</summary>
+    private static string PercentText(PlanWindow w) => $"{Math.Round(w.UsedPercent):0}%";
 
     public double PlanFraction => ShownWindow is { } w ? Math.Clamp(w.UsedPercent / 100, 0, 1) : 0;
 

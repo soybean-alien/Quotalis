@@ -48,7 +48,7 @@ Tokens are counted the way the providers bill them:
 Each provider shows its **plan usage** first, when it is known:
 
 - **Claude Code:** the current (5-hour) and weekly (7-day) windows with their reset times, as Claude Code reports them to its status line. Connect it once in Settings, Modules, "Claude plan usage": Claudex becomes Claude Code's status line command, receives only those two percentages and reset times, shows nothing in the terminal, and leaves an existing status line of yours alone. Plan usage exists for Claude subscriptions only. Claude Code runs its status line only in terminal sessions, after a reply; the VS Code extension does not run it. Settings therefore tells "connected" apart from "receiving plan usage", and the island shows when the last figure was measured.
-- **Claude via Tokenz:** when Tokenz is installed, Claudex reads its status file instead. Tokenz takes exact numbers from the Claude desktop app's usage card and estimates between them, and estimates show with a `~`.
+- **Claude via Tokenz:** when Tokenz is installed, Claudex reads its status file instead. Tokenz takes exact numbers from the Claude desktop app's usage card and estimates between them; estimates say "estimated" next to the reset time.
 - **Codex:** the 5-hour and weekly windows from its own logs.
 - A **Current / Weekly** switch picks the window. Without data the block says "Unavailable" and why. Percentages are never computed from token counts.
 
