@@ -48,7 +48,10 @@ public sealed class UsageViewModel : ObservableObject
 
     public bool IsNotInspecting => !IsInspecting;
 
-    public string InspectedDate => IsInspecting ? DisplayFormat.ShortDay(_days[_inspectedIndex].Day) : string.Empty;
+    /// <summary>"Jul 24", or "Jul 24 · pinned" when that day was clicked.</summary>
+    public string InspectedDate => IsInspecting
+        ? DisplayFormat.ShortDay(_days[_inspectedIndex].Day) + (IsShowingPinned ? " · pinned" : string.Empty)
+        : string.Empty;
 
     public string InspectedClaude => IsInspecting ? DisplayFormat.Tokens(_days[_inspectedIndex].Claude.Fresh) : string.Empty;
 
@@ -226,10 +229,26 @@ public sealed class UsageViewModel : ObservableObject
 
     public void SetHistory(IReadOnlyList<UsageDay> days)
     {
+        var showingPinned = IsShowingPinned;
         _days = days;
         // Intensity follows fresh tokens: cache reads would let one long session flatten every other day.
         _levels = UsageAggregator.IntensityLevels(days.Select(d => d.FreshTokens).ToList());
         _maxProviderFresh = days.Count == 0 ? 0 : days.Max(d => Math.Max(d.Claude.Fresh, d.Codex.Fresh));
+
+        // The pinned day is kept by date: live reloads (and the new day at midnight) shift indexes, not the pin.
+        if (_pinnedDay is { } pinned)
+        {
+            var index = IndexOfDay(pinned);
+            if (index < 0)
+            {
+                _pinnedDay = null;
+            }
+            else if (showingPinned || _inspectedIndex < 0)
+            {
+                _inspectedIndex = index;
+            }
+        }
+
         if (_inspectedIndex >= days.Count)
         {
             _inspectedIndex = -1;
@@ -237,6 +256,66 @@ public sealed class UsageViewModel : ObservableObject
 
         OnAllPropertiesChanged();
         HistoryChanged?.Invoke();
+    }
+
+    // A clicked day stays in the readout ("pinned") until another day is clicked or the island collapses; hovering
+    // other days previews them and leaving the graph returns to the pinned day.
+
+    private DateOnly? _pinnedDay;
+
+    /// <summary>The pinned day's index in <see cref="Days"/>, or -1.</summary>
+    public int PinnedIndex => _pinnedDay is { } day ? IndexOfDay(day) : -1;
+
+    /// <summary>The readout shows the pinned day (not a hovered one).</summary>
+    public bool IsShowingPinned => _pinnedDay is { } day && IsInspecting && _days[_inspectedIndex].Day == day;
+
+    /// <summary>Pins the day at <paramref name="index"/> and shows it.</summary>
+    public void Pin(int index)
+    {
+        if (index < 0 || index >= _days.Count)
+        {
+            return;
+        }
+
+        _pinnedDay = _days[index].Day;
+        Inspect(index);
+        OnPinChanged();
+    }
+
+    /// <summary>The pointer left the graph (or it lost focus): back to the pinned day, or to the summary.</summary>
+    public void EndHover() => Inspect(PinnedIndex);
+
+    /// <summary>The island collapsed: forget the pin.</summary>
+    public void ClearPin()
+    {
+        if (_pinnedDay is null)
+        {
+            return;
+        }
+
+        _pinnedDay = null;
+        Inspect(-1);
+        OnPinChanged();
+    }
+
+    private void OnPinChanged()
+    {
+        OnPropertyChanged(nameof(PinnedIndex));
+        OnPropertyChanged(nameof(IsShowingPinned));
+        OnPropertyChanged(nameof(InspectedDate));
+    }
+
+    private int IndexOfDay(DateOnly day)
+    {
+        for (var i = 0; i < _days.Count; i++)
+        {
+            if (_days[i].Day == day)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public void Inspect(int index)
@@ -249,6 +328,7 @@ public sealed class UsageViewModel : ObservableObject
 
         _inspectedIndex = next;
         OnPropertyChanged(nameof(InspectedIndex));
+        OnPropertyChanged(nameof(IsShowingPinned));
         OnPropertyChanged(nameof(IsInspecting));
         OnPropertyChanged(nameof(IsNotInspecting));
         OnPropertyChanged(nameof(InspectedDate));
