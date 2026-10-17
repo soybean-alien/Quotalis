@@ -169,6 +169,10 @@ public sealed class AppSettings
     /// <summary>One of <see cref="ShortcutGesture.Presets"/>, by its text.</summary>
     public string GlobalShortcut { get; set; } = ShortcutGesture.Default.Text;
 
+    // Updates
+    /// <summary>Look for a new Claudex release once a day (through the signed-in GitHub CLI).</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
     // Home Cloud (drop files onto the island to copy them to the home server)
     public bool HomeCloudEnabled { get; set; }
 

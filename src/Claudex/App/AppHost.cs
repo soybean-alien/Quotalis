@@ -212,6 +212,11 @@ internal sealed class AppHost : IDisposable
 
         ScheduleMidnight();
         _ = StartBackgroundAsync();
+        if (!_options.IsDemo && !IsSnapshot)
+        {
+            AppUpdater.Shared = new AppUpdater();
+            _ = RunUpdateChecksAsync(_shutdown.Token);
+        }
         if (IsSnapshot)
         {
             _ = RunSnapshotsAsync(_options.SnapshotDirectory!);
@@ -701,6 +706,30 @@ internal sealed class AppHost : IDisposable
         catch (Exception ex)
         {
             Log.Error("startup", "Background start failed", ex);
+        }
+    }
+
+    /// <summary>
+    /// Looks for a new release once a day when "Check for updates daily" is on, starting a couple of minutes after
+    /// launch so it never competes with the first log scan. Results only show in Settings, About.
+    /// </summary>
+    private async Task RunUpdateChecksAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromMinutes(2), token);
+            while (!token.IsCancellationRequested)
+            {
+                if (_settings.Current.CheckForUpdates && AppUpdater.Shared is { } updater)
+                {
+                    await updater.CheckQuietlyAsync();
+                }
+
+                await Task.Delay(AppUpdater.CheckInterval, token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 

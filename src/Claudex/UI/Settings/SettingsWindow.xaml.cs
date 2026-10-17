@@ -67,6 +67,7 @@ public sealed partial class SettingsWindow : Window
 
         VersionText.Text = $"Version {typeof(SettingsWindow).Assembly.GetName().Version?.ToString(3)}{(isDemo ? ", demo mode" : string.Empty)}";
         DataPathText.Text = AppPaths.Root;
+        InitUpdates();
 
         _store.Changed += OnStoreChanged;
         Closed += (_, _) => _store.Changed -= OnStoreChanged;
@@ -181,6 +182,8 @@ public sealed partial class SettingsWindow : Window
             StartWithWindowsToggle.IsOn = s.StartWithWindows;
             StartWithWindowsToggle.IsEnabled = !_isDemo;
             AlwaysOnTopToggle.IsOn = s.AlwaysOnTop;
+            CheckUpdatesToggle.IsOn = s.CheckForUpdates;
+            CheckUpdatesToggle.IsEnabled = !_isDemo;
             LaunchHiddenToggle.IsOn = s.LaunchHidden;
             BuildModuleRows(s);
             UpdatePlanConnection();
@@ -302,6 +305,7 @@ public sealed partial class SettingsWindow : Window
             {
                 case "StartWithWindows": s.StartWithWindows = on; break;
                 case "AlwaysOnTop": s.AlwaysOnTop = on; break;
+                case "CheckForUpdates": s.CheckForUpdates = on; break;
                 case "LaunchHidden": s.LaunchHidden = on; break;
                 case var module when module.StartsWith("Module:", StringComparison.Ordinal)
                     && Enum.TryParse<ModuleId>(module["Module:".Length..], out var id):
