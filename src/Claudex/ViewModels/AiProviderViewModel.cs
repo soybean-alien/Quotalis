@@ -122,6 +122,12 @@ public sealed class AiProviderViewModel : ObservableObject
 
     public string CacheWriteText => DisplayFormat.Tokens(_snapshot.Today.CacheWrite);
 
+    /// <summary>
+    /// Only Claude reports cache writes. Codex logs a <c>cache_write_input_tokens</c> field, but OpenAI caches prompts
+    /// automatically without a separate write charge, and the field is always 0, so Codex shows no such row.
+    /// </summary>
+    public bool ShowsCacheWrite => Kind == AiProviderKind.Claude;
+
     public string OutputText => DisplayFormat.Tokens(_snapshot.Today.Output);
 
     public string CacheReadText => DisplayFormat.Tokens(_snapshot.Today.CacheRead);
@@ -299,7 +305,11 @@ public sealed class AiProviderViewModel : ObservableObject
 
             lines.Add(string.Empty);
             lines.Add($"Input            {N(t.Input)}");
-            lines.Add($"Cache write   {N(t.CacheWrite)}");
+            if (ShowsCacheWrite)
+            {
+                lines.Add($"Cache write   {N(t.CacheWrite)}");
+            }
+
             lines.Add($"Output          {N(t.Output)}");
             lines.Add($"Cache read    {N(t.CacheRead)}");
             lines.Add($"Processed     {N(t.Processed)}");
