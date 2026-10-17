@@ -8,7 +8,7 @@ What this changes and why.
 
 ## Testing
 
-- [ ] `dotnet test tests/DeveloperIsland.Tests` passes
+- [ ] `dotnet test tests/Claudex.Tests` passes
 - [ ] Tried in the app (normal or `--demo`)
 
 ## Screenshots

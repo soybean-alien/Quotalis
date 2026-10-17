@@ -1,10 +1,10 @@
-# Contributing to Developer Island
+# Contributing to Claudex
 
-Thanks for your interest! Developer Island is an early-stage project; bug reports from real setups (other laptops, monitors, AI tools) are especially valuable.
+Thanks for your interest! Claudex is an early-stage project; bug reports from real setups (other laptops, monitors, AI tools) are especially valuable.
 
 ## Issues
 
-- **Bugs:** use the bug report form. It asks for the Developer Island and Windows versions, the module, your monitor setup and the relevant log lines (`%LOCALAPPDATA%\DeveloperIsland\logs`).
+- **Bugs:** use the bug report form. It asks for the Claudex and Windows versions, the module, your monitor setup and the relevant log lines (`%LOCALAPPDATA%\Claudex\logs`).
 - **Ideas:** use the feature request form. For larger changes, please open an issue first so we can agree on the approach before you invest time.
 - **Security problems:** report them privately, see [SECURITY.md](SECURITY.md).
 
@@ -15,9 +15,9 @@ Never post calendar links, tokens, prompts or private paths. Demo mode (`--demo`
 Requirements: Windows 10 2004 or later (Windows 11 recommended), the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and Git.
 
 ```powershell
-git clone https://github.com/maximilian467/Developer-Island.git
-cd Developer-Island
-dotnet test tests/DeveloperIsland.Tests
+git clone https://github.com/soybean-alien/Claudex.git
+cd Claudex
+dotnet test tests/Claudex.Tests
 .\run.cmd -Demo
 ```
 
@@ -28,10 +28,10 @@ More in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 1. Branch from `main` (`fix/notch-hover`, `feat/calendar-colors`) and keep a pull request to one change.
 2. Run the same checks as CI:
    ```powershell
-   dotnet test tests/DeveloperIsland.Tests
-   dotnet build src/DeveloperIsland -c Release -p:Platform=x64
+   dotnet test tests/Claudex.Tests
+   dotnet build src/Claudex -c Release -p:Platform=x64
    ```
-3. Add tests for logic. Behavior lives in `DeveloperIsland.Core` so it can be tested without UI (state machine, policies, parsers, formatting).
+3. Add tests for logic. Behavior lives in `Claudex.Core` so it can be tested without UI (state machine, policies, parsers, formatting).
 4. UI changes need a before/after screenshot or a short recording. `--demo --snapshot=<folder> --culture=en-US` renders every state offscreen.
 5. Update the docs when behavior changes (README, `docs/`), and add a line to `CHANGELOG.md` under "Unreleased".
 6. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org): `fix: keep the notch size when the microphone is on`.

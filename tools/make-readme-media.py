@@ -1,6 +1,6 @@
 """Builds the README media from the app's own offscreen renders (demo data only).
 
-    DeveloperIsland.exe --demo --snapshot=<dir>       # renders every state to PNG
+    Claudex.exe --demo --snapshot=<dir>       # renders every state to PNG
     python tools/make-readme-media.py <dir>           # needs Pillow (pip install pillow)
 
 Writes to docs/assets/:
@@ -110,7 +110,7 @@ def social_preview(snaps, out):
     canvas.alpha_composite(island, (1280 - island.width - 70, 20))
 
     draw = ImageDraw.Draw(canvas)
-    draw.text((90, 230), "Developer Island", font=font(["seguisb.ttf", "segoeuib.ttf"], 64), fill=INK)
+    draw.text((90, 230), "Claudex", font=font(["seguisb.ttf", "segoeuib.ttf"], 64), fill=INK)
     draw.text((92, 320), "The developer status bar Windows never had.", font=font(["segoeui.ttf"], 30), fill=MUTED)
     draw.text((92, 380), "AI usage, music, focus and system telemetry", font=font(["segoeui.ttf"], 24), fill=MUTED)
     draw.text((92, 414), "in one native capsule for Windows.", font=font(["segoeui.ttf"], 24), fill=MUTED)

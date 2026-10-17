@@ -3,7 +3,7 @@
 The README media (`docs/assets/hero.gif`, the screenshots and `social-preview.png`) are generated from the app's own offscreen renders, so they are reproducible and never show personal data:
 
 ```powershell
-DeveloperIsland.exe --demo --snapshot=C:\temp\shots --culture=en-US
+Claudex.exe --demo --snapshot=C:\temp\shots --culture=en-US
 python tools/make-readme-media.py C:\temp\shots     # pip install pillow
 ```
 
@@ -19,10 +19,10 @@ The hero animation joins those renders with short crossfades. The live app morph
    powershell -ExecutionPolicy Bypass -File tools/backdrop.ps1 -Seconds 120
    ```
 
-2. **Start demo mode** (invented data, nothing of yours): the **Developer Island (Demo)** Start menu shortcut, or
+2. **Start demo mode** (invented data, nothing of yours): the **Claudex (Demo)** Start menu shortcut, or
 
    ```powershell
-   DeveloperIsland.exe --demo
+   Claudex.exe --demo
    ```
 
    In demo mode the normal island can keep running; demo runs as a separate instance. Quit the normal island anyway, so only one capsule is on screen.

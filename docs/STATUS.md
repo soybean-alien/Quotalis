@@ -10,7 +10,7 @@ What was verified, how, and what is still open. Updated 2026-10-01.
 | Release build | `tools/build-release.ps1` builds tests, publish, portable zip and installer in a shell whose PATH has no .NET 10 SDK (the script finds it). |
 | Every island state | Rendered offscreen with `--demo --snapshot` (41 renders) and compared with the previous build: compact, peek, activities, notch, each expanded module, the usage-graph tooltip, empty and error states, each featured module, favorite rotation, camera and microphone marks in compact, notch, activity and expanded, every Settings page. |
 | Camera and microphone | `--system-report` reads the consent store on this machine (both "not in use" at the time). The in-use rule and the island behavior (marks in every state, dots in the notch, notch instead of hide, never opening) are covered by tests. |
-| Claude plan bridge | `--claude-statusline` fed with a sample in the documented format: exit 0, no output, only percentages and reset times stored (no path, model, cost or session). |
+| Claude plan bridge | `--claudex-statusline` fed with a sample in the documented format: exit 0, no output, only percentages and reset times stored (no path, model, cost or session). |
 | Hardware detection | `--system-report` on a Lenovo laptop without admin rights: CPU, memory, Intel GPU load, battery and two ACPI thermal zones detected; no CPU temperature, no fans, so those are hidden. |
 | Auto-hide | Earlier iteration: Chrome maximized in front retracted the island live. Fast switching (Chrome, VS Code, Chrome; a five-app chain; late stale events; missed events) is covered by tests of `AutoHideCoordinator`; it was not re-checked by hand, since input is never simulated. One rule for every module: tests cover Claude, Codex, Music, Focus, System, Calendar and the open island with Chrome and VS Code in front. |
 | Performance | See [PERFORMANCE.md](PERFORMANCE.md). |
@@ -31,6 +31,6 @@ What was verified, how, and what is still open. Updated 2026-10-01.
 - CPU package temperatures need LibreHardwareMonitor's driver and administrator rights; without them the CPU tile shows its load only.
 - ACPI thermal zones are real sensors, but Windows does not say what they measure, so they are labelled "Thermal zone" and not attributed to the CPU.
 - Plan usage updates when Claude Code sends a status line update (after replies in a terminal session), not on its own and not from the VS Code extension; after a window resets, the island shows no percentage until the next update.
-- When Claude Code already has a status line, Developer Island does not replace it; plan usage then needs a manual pipe into `DeveloperIsland.exe --claude-statusline`.
+- When Claude Code already has a status line, Claudex does not replace it; plan usage then needs a manual pipe into `Claudex.exe --claudex-statusline`.
 - The camera and microphone marks disappear while the island is hidden from the tray or for a fullscreen app (both are hides you asked for); Smart Auto-Hide keeps the notch instead.
 - One placement is saved, not a layout per display. ARM64, Windows 10 and clean-machine installation still need independent validation.

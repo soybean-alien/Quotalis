@@ -32,7 +32,7 @@ Every module has the same four honest states: working; **empty** (nothing to sho
 
 ### Claude Code and Codex
 
-Developer Island reads usage metadata from Claude Code's local transcripts (`~/.claude/projects`, or `CLAUDE_CONFIG_DIR`) and Codex rollout files (`~/.codex/sessions`, or `CODEX_HOME`).
+Claudex reads usage metadata from Claude Code's local transcripts (`~/.claude/projects`, or `CLAUDE_CONFIG_DIR`) and Codex rollout files (`~/.codex/sessions`, or `CODEX_HOME`).
 
 Tokens are counted the way the providers bill them:
 
@@ -47,7 +47,7 @@ Tokens are counted the way the providers bill them:
 
 Each provider shows its **plan usage** first, when it is known:
 
-- **Claude Code:** the current (5-hour) and weekly (7-day) windows with their reset times, as Claude Code reports them to its status line. Connect it once in Settings, Modules, "Claude plan usage": Developer Island becomes Claude Code's status line command, receives only those two percentages and reset times, shows nothing in the terminal, and leaves an existing status line of yours alone. Plan usage exists for Claude subscriptions only. Claude Code runs its status line only in terminal sessions, after a reply; the VS Code extension does not run it. Settings therefore tells "connected" apart from "receiving plan usage", and the island shows when the last figure was measured.
+- **Claude Code:** the current (5-hour) and weekly (7-day) windows with their reset times, as Claude Code reports them to its status line. Connect it once in Settings, Modules, "Claude plan usage": Claudex becomes Claude Code's status line command, receives only those two percentages and reset times, shows nothing in the terminal, and leaves an existing status line of yours alone. Plan usage exists for Claude subscriptions only. Claude Code runs its status line only in terminal sessions, after a reply; the VS Code extension does not run it. Settings therefore tells "connected" apart from "receiving plan usage", and the island shows when the last figure was measured.
 - **Codex:** the 5-hour and weekly windows from its own logs.
 - A **Current / Weekly** switch picks the window. Without data the block says "Unavailable" and why. Percentages are never computed from token counts.
 
@@ -70,7 +70,7 @@ Works with anything that uses Windows media sessions (Spotify, Apple Music, brow
   <img src="assets/expanded-git.png" alt="Git module: repository, branch, uncommitted changes, push state and last commit" width="480">
 </p>
 
-The repository of your latest Claude Code or Codex session, plus any you add in Settings: branch, uncommitted changes (staged, modified, new), commits to push or pull, and the last commit. Up to three other recent repositories are one click away. Developer Island never searches your disk: it only walks up from a session's folder to find its repository. Git runs only when you open the panel or when you commit, check out or fetch.
+The repository of your latest Claude Code or Codex session, plus any you add in Settings: branch, uncommitted changes (staged, modified, new), commits to push or pull, and the last commit. Up to three other recent repositories are one click away. Claudex never searches your disk: it only walks up from a session's folder to find its repository. Git runs only when you open the panel or when you commit, check out or fetch.
 
 ### GitHub
 
@@ -108,8 +108,8 @@ A small local to-do list. Type and press Enter to add a task; click the circle t
 Keeps the PC awake for a set time or until you end it, also with the lid closed, so coding agents (Claude Code in the terminal, the Claude app or VS Code, Codex, anything else) keep working. It works system-wide and needs no admin rights.
 
 - Presets of 1, 4 and 8 hours, a custom length (30 minutes to 24 hours) and **Always**. A timed session can get one more hour (+1 h); End stops it. The capsule shows a coffee cup and the countdown (∞ for Always); the tray menu has **Stay Awake…** and **End Stay Awake**.
-- **How:** a power request (listed by `powercfg /requests` as "Developer Island: Awake session") keeps Windows out of idle sleep, and the lid-close action of the active power plan (`LIDACTION`, on mains and on battery) is set to "Do nothing". Windows still turns the built-in display off when the lid closes.
-- **Putting it back:** the original lid values go into `awake-session.json` before anything changes. At the end each value is restored only while it still reads "Do nothing", so a value you changed during the session stays. A running session survives a restart of the app or of Windows (Always included); one that ended while the app was closed is put back at the next start. For a timed session, a one-time task in Task Scheduler ("DeveloperIsland Awake Restore") runs `DeveloperIsland.exe --awake-restore` at its end time, which puts the setting back if the app is not running; Windows deletes the task a week later at the latest. **Quit** always ends the session.
+- **How:** a power request (listed by `powercfg /requests` as "Claudex: Awake session") keeps Windows out of idle sleep, and the lid-close action of the active power plan (`LIDACTION`, on mains and on battery) is set to "Do nothing". Windows still turns the built-in display off when the lid closes.
+- **Putting it back:** the original lid values go into `awake-session.json` before anything changes. At the end each value is restored only while it still reads "Do nothing", so a value you changed during the session stays. A running session survives a restart of the app or of Windows (Always included); one that ended while the app was closed is put back at the next start. For a timed session, a one-time task in Task Scheduler ("Claudex Awake Restore") runs `Claudex.exe --awake-restore` at its end time, which puts the setting back if the app is not running; Windows deletes the task a week later at the latest. **Quit** always ends the session.
 - **Battery:** on battery, a session ends below 10 % (Settings, Modules, Awake: off, 5 to 30 %). If Windows refuses the lid setting, the session still prevents idle sleep and the panel says that closing the lid will sleep the PC.
 - Use it on a stable, well-ventilated surface, never in a bag.
 
@@ -119,7 +119,7 @@ Keeps the PC awake for a set time or until you end it, also with the lid closed,
   <img src="assets/expanded-system.png" alt="System module (demo data): CPU, memory and GPU with 60-second graphs colored by load, battery, a storage temperature and a fan" width="480">
 </p>
 
-CPU, memory, GPU and battery, each with its last 60 seconds as a quiet graph (green, orange or red by load: CPU and GPU from 60 % and 85 %, memory from 75 % and 90 %, averaged over five seconds), plus the temperatures and fans this device exposes (CPU and GPU temperatures in their tiles, storage, board and ACPI thermal zones and fan speeds as rows below; a temperature turns orange or red only above its own threshold, for example CPU 85 / 95 °C, SSD 60 / 70 °C). Fan speeds appear only when the hardware reports them: many laptops, including the development machine, expose no fan RPM to Windows applications, and no value is ever estimated. Hardware that does not exist, or that Windows does not expose without administrator rights, is not shown at all; the tiles re-flow. Readings come from Windows and [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor), read-only. Manual fan control is not offered: no supported interface guarantees that fans return to firmware control if the app crashes. Run `DeveloperIsland.exe --system-report` to see what your device exposes.
+CPU, memory, GPU and battery, each with its last 60 seconds as a quiet graph (green, orange or red by load: CPU and GPU from 60 % and 85 %, memory from 75 % and 90 %, averaged over five seconds), plus the temperatures and fans this device exposes (CPU and GPU temperatures in their tiles, storage, board and ACPI thermal zones and fan speeds as rows below; a temperature turns orange or red only above its own threshold, for example CPU 85 / 95 °C, SSD 60 / 70 °C). Fan speeds appear only when the hardware reports them: many laptops, including the development machine, expose no fan RPM to Windows applications, and no value is ever estimated. Hardware that does not exist, or that Windows does not expose without administrator rights, is not shown at all; the tiles re-flow. Readings come from Windows and [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor), read-only. Manual fan control is not offered: no supported interface guarantees that fans return to firmware control if the app crashes. Run `Claudex.exe --system-report` to see what your device exposes.
 
 The compact island speaks up only when something needs attention: a battery at 20 % or less that is not charging, or a CPU busy above 85 % for 15 seconds. Featured, it shows "CPU 38% · 54°" (or GPU or memory, whatever exists).
 
@@ -132,7 +132,7 @@ Not a tab, but a drop zone of the island: drop files or folders onto it and they
 - **Feedback.** On entering, the target is checked for reachability (2 s). "Saving to Home Cloud" shows progress such as "3/5 · 42 %"; success shows a check mark for 1.5 s ("Saved to Home Cloud"), a failure shows "Home Cloud not reachable" with the reason for 4 s. A running upload keeps the zone open; afterwards the island returns to where it rested (compact, notch or hidden).
 - **Upload.** Files are copied one after another through a `.part` file that is renamed atomically when complete, so the target never holds half files. A name that exists gets `name (1).ext`. Folders are copied recursively.
 - **Emergency stop.** **Home Cloud** off in Settings removes the drop handlers and the mouse hook; the island behaves as before.
-- **Debug.** `DeveloperIsland.exe --homecloud-upload=<path>` sends a file through the same pipeline without dragging (own instance, reads settings without writing them). Exit code 0 on success, 1 on failure, 2 when Home Cloud is off or has no target folder, 3 when another debug run is active. It combines with `--demo`.
+- **Debug.** `Claudex.exe --homecloud-upload=<path>` sends a file through the same pipeline without dragging (own instance, reads settings without writing them). Exit code 0 on success, 1 on failure, 2 when Home Cloud is off or has no target folder, 3 when another debug run is active. It combines with `--demo`.
 
 ## Settings
 
@@ -143,7 +143,7 @@ Not a tab, but a drop zone of the island: drop files or folders onto it and they
 
 | Section | Settings |
 |---|---|
-| General | Start with Windows, always on top, launch hidden, keyboard shortcut; Quit Developer Island (ends the app, its tray icon and all background work) |
+| General | Start with Windows, always on top, launch hidden, keyboard shortcut; Quit Claudex (ends the app, its tray icon and all background work) |
 | Position | Monitor, anchor, custom position; Auto-hide in apps (on or off, notch or hide, only when maximized, an app list with icons and Add application or Browse) |
 | Modules | Every module on or off and in which order; Claude plan usage (connect or disconnect); Git repositories; calendars |
 | Home Cloud | Home Cloud on or off (`HomeCloudEnabled`, default off), target folder (`HomeCloudTargetPath`, default empty; the zone works only once it is set), side of the drop zone (`HomeCloudDropSide`, Left or Right, default Right) |

@@ -1,6 +1,6 @@
 # Performance
 
-Developer Island runs all day, so idle cost matters more than peak speed.
+Claudex runs all day, so idle cost matters more than peak speed.
 
 ## Measurements
 
@@ -61,7 +61,7 @@ Measured with `Get-Process` over the stated window, after the startup scan.
 ## Reproduce
 
 ```powershell
-$p = Start-Process .\DeveloperIsland.exe -PassThru; Start-Sleep 25
+$p = Start-Process .\Claudex.exe -PassThru; Start-Sleep 25
 $c1 = $p.TotalProcessorTime; Start-Sleep 60; $p.Refresh()
 "{0:N1} MB, CPU {1} ms" -f ($p.WorkingSet64/1MB), ($p.TotalProcessorTime - $c1).TotalMilliseconds
 ```
