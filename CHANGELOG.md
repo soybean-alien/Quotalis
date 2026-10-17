@@ -4,6 +4,10 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+
+- **Flaky GitHub module test.** `Without_gh_the_module_explains_how_to_connect` sometimes saw `Loading` instead of `Unavailable`: the module's first refresh ran on a real timer, held the fetch lock, and the test's own refresh returned before the status changed. The test now uses a fake clock, so that first refresh runs inside `Configure`. Test-only; the app is unchanged.
+
 ## [0.5.6] - 2026-10-17
 
 ### Added

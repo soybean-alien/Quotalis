@@ -166,7 +166,9 @@ public class GitHubModuleTests
     [Fact]
     public async Task Without_gh_the_module_explains_how_to_connect()
     {
-        using var service = new GitHubService(findGh: () => null);
+        // A fake clock fires the first refresh inside Configure. With the system clock it ran on the
+        // thread pool, held the fetch lock, and the RefreshAsync below returned while still Loading.
+        using var service = new GitHubService(findGh: () => null, time: new FakeTimeProvider());
         service.Configure(true);
         await service.RefreshAsync();
 
