@@ -143,11 +143,11 @@ public class UsageAggregationTests
             TestData.Event(AiProviderKind.Codex, "b", T0, 1_000_000, model: "gpt-6-astra"),
         };
 
-        var totals = UsageAggregator.Summarize(events, new ModelPricingService(new PricingOverrides { UsdToEur = 1m }));
+        var totals = UsageAggregator.Summarize(events, new ModelPricingService(new PricingOverrides()));
 
         Assert.True(totals.HasPricedTokens);
         Assert.True(totals.HasUnpricedTokens);
-        Assert.Equal(1.25m, totals.DisplayValueEur);
+        Assert.Equal(1.25m, totals.DisplayValueUsd);
         Assert.Equal(2_000_000, totals.Tokens.Processed);
     }
 
@@ -156,7 +156,7 @@ public class UsageAggregationTests
     {
         var totals = UsageAggregator.Summarize([TestData.Event(AiProviderKind.Codex, "a", T0, 10, model: "gpt-6-astra")], new ModelPricingService());
 
-        Assert.Null(totals.DisplayValueEur);
+        Assert.Null(totals.DisplayValueUsd);
     }
 
     [Fact]

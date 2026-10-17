@@ -17,7 +17,7 @@ What Claudex reads, what it stores and what leaves your PC. The short version is
 - The API equivalent uses a static price catalog and exchange rate. You can adjust both in `%LOCALAPPDATA%\Claudex\pricing.json`, for example:
 
   ```json
-  { "usdToEur": 0.86, "models": { "your-model-id": { "input": 2.0, "output": 8.0 } } }
+  { "models": { "your-model-id": { "input": 2.0, "output": 8.0 } } }
   ```
 
   These are illustrative values, not a current price quote. Prices are USD per million tokens and load on startup.

@@ -79,8 +79,8 @@ public sealed class AiProviderViewModel : ObservableObject
         _ => string.Empty,
     };
 
-    /// <summary>"€8.42": today's estimated API equivalent for the compact island, when there is usage to value.</summary>
-    public string CompactEuro => IsReady && HasUsageToday && _snapshot.ApiValueEur is { } value ? DisplayFormat.Euro(value) : string.Empty;
+    /// <summary>"$8.42": today's estimated API equivalent for the compact island, when there is usage to value.</summary>
+    public string CompactUsd => IsReady && HasUsageToday && _snapshot.ApiValueUsd is { } value ? DisplayFormat.Usd(value) : string.Empty;
 
     /// <summary>
     /// The featured value in the compact island: today's fresh tokens and, when known, the current
@@ -126,7 +126,7 @@ public sealed class AiProviderViewModel : ObservableObject
 
     public string SessionsText => _snapshot.SessionsToday.ToString(System.Globalization.CultureInfo.CurrentCulture);
 
-    public string ValueText => _snapshot.ApiValueEur is { } value ? DisplayFormat.Euro(value) : "Unavailable";
+    public string ValueText => _snapshot.ApiValueUsd is { } value ? DisplayFormat.Usd(value) : "Unavailable";
 
     public string ValueCaption => _snapshot.ApiValuePartial ? "estimated API equivalent today, partly priced" : "estimated API equivalent today";
 

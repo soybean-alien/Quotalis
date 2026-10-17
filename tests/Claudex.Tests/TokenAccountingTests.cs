@@ -46,12 +46,12 @@ public class TokenAccountingTests
     [Fact]
     public void Cache_tokens_are_priced_at_cache_rates_not_the_input_rate()
     {
-        var pricing = new ModelPricingService(new PricingOverrides { UsdToEur = 1m });
+        var pricing = new ModelPricingService(new PricingOverrides());
 
         // Opus 5.5: input $4, cache read $0.20, 1 h cache write 2 x input = $8 per MTok.
-        var read = pricing.Estimate("claude-opus-5-5", new TokenCounts(0, 0, 0, 0, 1_000_000)).ValueEur;
-        var write1h = pricing.Estimate("claude-opus-5-5", new TokenCounts(0, 0, 0, 1_000_000, 0)).ValueEur;
-        var input = pricing.Estimate("claude-opus-5-5", new TokenCounts(1_000_000, 0, 0, 0, 0)).ValueEur;
+        var read = pricing.Estimate("claude-opus-5-5", new TokenCounts(0, 0, 0, 0, 1_000_000)).ValueUsd;
+        var write1h = pricing.Estimate("claude-opus-5-5", new TokenCounts(0, 0, 0, 1_000_000, 0)).ValueUsd;
+        var input = pricing.Estimate("claude-opus-5-5", new TokenCounts(1_000_000, 0, 0, 0, 0)).ValueUsd;
 
         Assert.Equal(0.20m, read);
         Assert.Equal(8m, write1h);

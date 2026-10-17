@@ -108,7 +108,7 @@ public sealed class UsageViewModel : ObservableObject
             var d = _days[_inspectedIndex];
             var parts = new List<string>();
             if (d.Sessions > 0) parts.Add(DisplayFormat.Count(d.Sessions, "session", "sessions"));
-            parts.Add(d.ApiValuePartial ? "API equivalent unavailable" : $"{DisplayFormat.Euro(d.TotalApiValueEur)} API equivalent");
+            parts.Add(d.ApiValuePartial ? "API equivalent unavailable" : $"{DisplayFormat.Usd(d.TotalApiValueUsd)} API equivalent");
             return string.Join(" · ", parts);
         }
     }
@@ -118,7 +118,7 @@ public sealed class UsageViewModel : ObservableObject
 
     public string InspectedValue => !IsInspecting ? string.Empty
         : _days[_inspectedIndex].ApiValuePartial ? "Unavailable"
-        : DisplayFormat.Euro(_days[_inspectedIndex].TotalApiValueEur);
+        : DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd);
 
     /// <summary>Spoken description of the inspected day.</summary>
     public string InspectedAccessibleText => IsInspecting
@@ -165,14 +165,14 @@ public sealed class UsageViewModel : ObservableObject
             var any = false;
             foreach (var p in new[] { Claude, Codex })
             {
-                if (p.IsEnabled && p.IsReady && p.Snapshot.ApiValueEur is { } v)
+                if (p.IsEnabled && p.IsReady && p.Snapshot.ApiValueUsd is { } v)
                 {
                     total += v;
                     any = true;
                 }
             }
 
-            return any ? $"{DisplayFormat.Euro(total)} estimated API equivalent today" : "Claude Code and Codex usage appears here";
+            return any ? $"{DisplayFormat.Usd(total)} estimated API equivalent today" : "Claude Code and Codex usage appears here";
         }
     }
 

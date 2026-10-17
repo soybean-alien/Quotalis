@@ -4,6 +4,18 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-17
+
+### Changed
+
+- The default global shortcut is **Ctrl + Alt + C**. Ctrl + Alt + Space was already taken by another app on this PC; it stays available as a preset in Settings.
+- The estimated API equivalent is shown in **US dollars**, the currency the list prices are published in. The EUR conversion and the `usdToEur` override in `pricing.json` are gone.
+- Git and Calendar are off by default until they are set up (turn them on in Settings, Modules).
+
+### Added
+
+- List prices for Claude Sonnet 5.5 ($2 / $10, cache reads $0.20) and Claude Haiku 5.5 ($0.10 / $0.50 for prompts up to 100K tokens), so their usage is no longer "partly priced".
+
 ## [0.1.0] - 2026-10-17
 
 Forked from Developer Island 0.3.0 (upstream commit `ada8ef6`).

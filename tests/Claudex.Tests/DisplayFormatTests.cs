@@ -28,10 +28,10 @@ public class DisplayFormatTests
     }
 
     [Fact]
-    public void Euro_is_shown_with_two_decimals_in_the_user_format()
+    public void Usd_is_shown_with_two_decimals_in_the_user_format()
     {
-        Assert.Equal("€18.42", DisplayFormat.Euro(18.4213m, En));
-        Assert.Equal("18,42 €", DisplayFormat.Euro(18.4213m, De));
+        Assert.Equal("$18.42", DisplayFormat.Usd(18.4213m, En));
+        Assert.Equal("18,42 $", DisplayFormat.Usd(18.4213m, De));
     }
 
     [Theory]
@@ -80,7 +80,7 @@ public class DisplayFormatTests
             DisplayFormat.Duration(TimeSpan.FromMinutes(75)),
             DisplayFormat.LimitWindow(300),
             DisplayFormat.ShortDay(new DateOnly(2026, 9, 24), En),
-            DisplayFormat.Euro(-3m, En),
+            DisplayFormat.Usd(-3m, En),
         };
 
         Assert.All(samples, s => Assert.DoesNotContain(s, c => c is '–' or '—'));

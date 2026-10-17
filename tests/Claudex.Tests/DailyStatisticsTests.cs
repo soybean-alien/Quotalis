@@ -57,7 +57,7 @@ public class DailyStatisticsTests
 
         var single = Assert.Single(merged);
         Assert.Equal(2_440_000, single.ProcessedTokens);
-        Assert.Equal(18.42m, single.TotalApiValueEur);
+        Assert.Equal(18.42m, single.TotalApiValueUsd);
         Assert.Equal(5, single.Sessions);
     }
 
@@ -73,7 +73,7 @@ public class DailyStatisticsTests
         history.Ingest([TestData.Event(AiProviderKind.Claude, "known", time.GetUtcNow(), 1000)]);
         var mixed = Assert.Single(history.GetHistory(1));
         Assert.True(mixed.ApiValuePartial);
-        Assert.True(mixed.TotalApiValueEur > 0);
+        Assert.True(mixed.TotalApiValueUsd > 0);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class DailyStatisticsTests
     {
         var time = new FakeTimeProvider(new DateTimeOffset(2026, 9, 28, 20, 0, 0, TimeSpan.Zero));
         using var db = UsageDatabase.OpenInMemory();
-        var pricing = new ModelPricingService(new PricingOverrides { UsdToEur = 1m });
+        var pricing = new ModelPricingService(new PricingOverrides());
         var history = new UsageHistoryService(db, pricing, time, TimeZoneInfo.Utc);
         var random = new Random(7);
         var all = new List<UsageEvent>();
@@ -157,10 +157,10 @@ public class DailyStatisticsTests
                 var stored = db.GetDaily(day, day).SingleOrDefault(d => d.Provider == provider);
 
                 Assert.Equal(expected.Tokens, actual.Tokens);
-                Assert.Equal(expected.ApiValueEur, actual.ApiValueEur);
+                Assert.Equal(expected.ApiValueUsd, actual.ApiValueUsd);
                 Assert.Equal(expected.Sessions, actual.Sessions);
                 Assert.Equal(expected.Tokens.Processed, stored?.Tokens.Processed ?? 0);
-                Assert.Equal(expected.ApiValueEur, stored?.ApiValueEur ?? 0m);
+                Assert.Equal(expected.ApiValueUsd, stored?.ApiValueUsd ?? 0m);
             }
         }
     }
@@ -170,7 +170,7 @@ public class DailyStatisticsTests
     {
         var time = new FakeTimeProvider(new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero));
         using var db = UsageDatabase.OpenInMemory();
-        var history = new UsageHistoryService(db, new ModelPricingService(new PricingOverrides { UsdToEur = 1m }), time, TimeZoneInfo.Utc);
+        var history = new UsageHistoryService(db, new ModelPricingService(new PricingOverrides()), time, TimeZoneInfo.Utc);
         IReadOnlyCollection<DateOnly>? changed = null;
         history.Changed += days => changed = days;
         var t = new DateTimeOffset(2026, 9, 28, 9, 0, 0, TimeSpan.Zero);
@@ -180,8 +180,8 @@ public class DailyStatisticsTests
 
         var today = history.GetTodayTotals(AiProviderKind.Claude);
         Assert.Equal(2_000_000, today.Tokens.Processed);
-        Assert.Equal(8m, today.ApiValueEur); // 2M input tokens of Opus 5.5 at $4
+        Assert.Equal(8m, today.ApiValueUsd); // 2M input tokens of Opus 5.5 at $4
         Assert.Equal([new DateOnly(2026, 9, 28)], changed);
-        Assert.Equal(8m, history.GetHistory(1)[0].ClaudeApiValueEur);
+        Assert.Equal(8m, history.GetHistory(1)[0].ClaudeApiValueUsd);
     }
 }

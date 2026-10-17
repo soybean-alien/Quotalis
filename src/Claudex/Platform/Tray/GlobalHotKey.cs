@@ -5,7 +5,7 @@ using Claudex.Core.Settings;
 namespace Claudex.Platform.Tray;
 
 /// <summary>
-/// System-wide shortcut (default Ctrl+Alt+Space) that toggles the island. Registered on the hidden
+/// System-wide shortcut (default Ctrl+Alt+C) that toggles the island. Registered on the hidden
 /// host window. If another app already owns the combination, registration fails, is logged and
 /// reported through <see cref="IsInUse"/> so Settings can suggest another preset.
 /// </summary>

@@ -6,11 +6,12 @@ namespace Claudex.Core.Settings;
 /// </summary>
 public sealed record ShortcutGesture(string Text, bool Ctrl, bool Alt, bool Shift, uint VirtualKey)
 {
-    public static readonly ShortcutGesture Default = new("Ctrl + Alt + Space", Ctrl: true, Alt: true, Shift: false, 0x20);
+    public static readonly ShortcutGesture Default = new("Ctrl + Alt + C", Ctrl: true, Alt: true, Shift: false, 'C');
 
     public static readonly IReadOnlyList<ShortcutGesture> Presets =
     [
         Default,
+        new("Ctrl + Alt + Space", Ctrl: true, Alt: true, Shift: false, 0x20),
         new("Ctrl + Shift + Space", Ctrl: true, Alt: false, Shift: true, 0x20),
         new("Alt + Shift + Space", Ctrl: false, Alt: true, Shift: true, 0x20),
         new("Ctrl + Alt + I", Ctrl: true, Alt: true, Shift: false, 'I'),

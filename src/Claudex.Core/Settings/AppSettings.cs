@@ -98,11 +98,11 @@ public sealed class AppSettings
 
     public bool FocusEnabled { get; set; } = true;
 
-    public bool GitEnabled { get; set; } = true;
+    public bool GitEnabled { get; set; }
 
     public bool GitHubEnabled { get; set; } = true;
 
-    public bool CalendarEnabled { get; set; } = true;
+    public bool CalendarEnabled { get; set; }
 
     public bool TasksEnabled { get; set; } = true;
 

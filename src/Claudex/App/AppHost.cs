@@ -1126,7 +1126,7 @@ internal sealed class AppHost : IDisposable
         ApplySmartHide();
     }
 
-    /// <summary>Ctrl+Alt+Space: open from anywhere (including hidden), close when expanded.</summary>
+    /// <summary>Ctrl+Alt+C (default): open from anywhere (including hidden), close when expanded.</summary>
     private void OnShortcut()
     {
         _hiddenByUser = false;

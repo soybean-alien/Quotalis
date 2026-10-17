@@ -46,8 +46,8 @@ public sealed record AiUsageSnapshot
 
     public TokenCounts Today { get; init; }
 
-    /// <summary>Estimated API equivalent for today in EUR; null when no model could be priced.</summary>
-    public decimal? ApiValueEur { get; init; }
+    /// <summary>Estimated API equivalent for today in USD; null when no model could be priced.</summary>
+    public decimal? ApiValueUsd { get; init; }
 
     /// <summary>True when some of today's tokens came from models without a known price.</summary>
     public bool ApiValuePartial { get; init; }
@@ -88,7 +88,7 @@ public sealed record DailyUsage(
     DateOnly Day,
     AiProviderKind Provider,
     TokenCounts Tokens,
-    decimal ApiValueEur,
+    decimal ApiValueUsd,
     bool ApiValuePartial,
     int Sessions);
 
@@ -97,8 +97,8 @@ public sealed record UsageDay(
     DateOnly Day,
     TokenCounts Claude,
     TokenCounts Codex,
-    decimal ClaudeApiValueEur,
-    decimal CodexApiValueEur,
+    decimal ClaudeApiValueUsd,
+    decimal CodexApiValueUsd,
     int Sessions,
     bool ApiValuePartial = false)
 {
@@ -109,5 +109,5 @@ public sealed record UsageDay(
 
     public bool HasUsage => ProcessedTokens > 0;
 
-    public decimal TotalApiValueEur => ClaudeApiValueEur + CodexApiValueEur;
+    public decimal TotalApiValueUsd => ClaudeApiValueUsd + CodexApiValueUsd;
 }
