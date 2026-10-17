@@ -4,6 +4,12 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-17
+
+### Fixed
+
+- **Claudex could freeze right after a reboot** (no island, a tray icon that did nothing). The first scan of the Claude logs turned every line, including huge tool outputs, into a string. That forced full garbage collections while WinUI was still building the island, and the two deadlocked: the collection waited on WinUI's reference tracker, and the UI thread waited on the collection. The scan now starts once the island has rendered and the UI thread is idle, and lines without `"usage"` and `"assistant"` are skipped before they are decoded, so a full scan barely touches the large object heap.
+
 ## [0.5.0] - 2026-10-17
 
 ### Added

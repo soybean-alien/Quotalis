@@ -186,4 +186,19 @@ public class UsageAggregationTests
 
         Assert.Single(lines);
     }
+
+    [Fact]
+    public void Tail_reader_skips_lines_without_the_markers_but_keeps_counting_them()
+    {
+        var path = Path.Combine(TestData.TempDirectory(), "t.jsonl");
+        var huge = "{\"type\":\"user\",\"content\":\"" + new string('x', 200_000) + "\"}";
+        var usage = "{\"type\":\"assistant\",\"message\":{\"usage\":{}}}";
+        File.WriteAllText(path, huge + "\n" + usage + "\r\n{\"type\":\"assistant\"}\n");
+        var lines = new List<string>();
+
+        var offset = JsonlTailReader.ReadLines(path, 0, lines.Add, ClaudeLogParser.RequiredMarkers, TestContext.Current.CancellationToken);
+
+        Assert.Equal([usage], lines);
+        Assert.Equal(new FileInfo(path).Length, offset);
+    }
 }
