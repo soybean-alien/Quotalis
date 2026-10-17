@@ -4,6 +4,13 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-17
+
+### Changed
+
+- Plan percentages never show a `~`. An estimate between exact readings says "estimated" next to its reset time instead.
+
+
 ## [0.3.0] - 2026-10-17
 
 ### Added
