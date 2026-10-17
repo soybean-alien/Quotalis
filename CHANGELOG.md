@@ -4,6 +4,16 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-10-17
+
+### Changed
+
+- **No "Cache write" row for Codex.** Codex's logs carry a `cache_write_input_tokens` field, and Claudex reads it, but it is always 0 (all 10,005 records on the development PC). OpenAI caches prompts automatically and has no separate cache-write charge, so a permanent "0" only looked like a bug. Claude keeps the row (its cache writes are real and priced at 1.25× or 2× input). Codex's cached input still shows as "Cache read".
+
+### Fixed
+
+- `tools/publish-release.ps1` works in Windows PowerShell 5.1: its `gh` probes ("is the tag pushed?", "does the release exist?") no longer stop the script when `gh` writes to stderr.
+
 ## [0.5.4] - 2026-10-17
 
 ### Added

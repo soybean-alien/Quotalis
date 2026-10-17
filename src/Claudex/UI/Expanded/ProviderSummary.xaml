@@ -87,8 +87,10 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="Input" Style="{StaticResource BreakdownLabel}" />
                 <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.InputText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
-                <TextBlock Grid.Row="1" Text="Cache write" Style="{StaticResource BreakdownLabel}" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.CacheWriteText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                <!-- Claude only: Codex always reports 0 cache writes (see AiProviderViewModel.ShowsCacheWrite). -->
+                <TextBlock Grid.Row="1" Text="Cache write" Style="{StaticResource BreakdownLabel}" Visibility="{x:Bind ViewModel.ShowsCacheWrite}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.CacheWriteText, Mode=OneWay}" Style="{StaticResource BreakdownValue}"
+                           Visibility="{x:Bind ViewModel.ShowsCacheWrite}" />
                 <TextBlock Grid.Row="2" Text="Output" Style="{StaticResource BreakdownLabel}" />
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.OutputText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
                 <TextBlock Grid.Row="3" Text="Cache read" Style="{StaticResource BreakdownLabel}" />

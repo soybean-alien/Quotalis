@@ -26,8 +26,15 @@ if (-not $listed -or ($listed -split '\s+')[0] -ne $actual) { throw "SHA256SUMS 
 
 $gh = Get-Command gh -ErrorAction SilentlyContinue
 if (-not $gh) { throw "GitHub CLI not found. Install it with: winget install GitHub.cli" }
-& gh api "repos/$repo/git/ref/tags/$tag" --silent 2>$null
-if ($LASTEXITCODE -ne 0) { throw "Tag $tag is not on GitHub yet. Push it first: git push origin $tag" }
+
+# Windows PowerShell turns a native tool's stderr into a terminating error under "Stop"; probes expect stderr.
+function Test-Gh([string[]]$GhArgs) {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try { & gh @GhArgs *> $null; return $LASTEXITCODE -eq 0 } finally { $ErrorActionPreference = $previous }
+}
+
+if (-not (Test-Gh @("api", "repos/$repo/git/ref/tags/$tag", "--silent"))) { throw "Tag $tag is not on GitHub yet. Push it first: git push origin $tag" }
 
 # Release notes: this version's section of the changelog.
 $changelog = Get-Content (Join-Path $root "CHANGELOG.md") -Raw
@@ -36,8 +43,7 @@ $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "Claudex $Version"
 $notesFile = Join-Path $env:TEMP "claudex-release-notes-$Version.md"
 Set-Content -Path $notesFile -Value $notes -Encoding utf8
 
-& gh release view $tag --repo $repo *> $null
-if ($LASTEXITCODE -eq 0) {
+if (Test-Gh @("release", "view", $tag, "--repo", $repo)) {
     & gh release upload $tag $installer $zip $sums --repo $repo --clobber
 } else {
     & gh release create $tag $installer $zip $sums --repo $repo --title "Claudex $Version" --notes-file $notesFile --latest
