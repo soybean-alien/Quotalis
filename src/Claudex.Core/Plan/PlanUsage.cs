@@ -8,7 +8,8 @@ namespace Claudex.Core.Plan;
 
 /// <summary>One usage window of a Claude subscription, as Claude Code reports it.</summary>
 /// <param name="UsedPercent">0 to 100.</param>
-public sealed record PlanWindow(double UsedPercent, DateTimeOffset ResetsAt);
+/// <param name="IsEstimated">True when the figure is an estimate between exact readings (Tokenz), not a measurement.</param>
+public sealed record PlanWindow(double UsedPercent, DateTimeOffset ResetsAt, bool IsEstimated = false);
 
 /// <summary>
 /// Claude plan usage, measured by Claude Code and handed to its status line: the 5-hour window
@@ -68,6 +69,84 @@ public static class ClaudeStatusLine
     }
 }
 
+/// <summary>
+/// Reads Claude plan usage from Tokenz (soybean_alien's usage widget), which keeps
+/// <c>%LOCALAPPDATA%\Tokenz\tokenz_status.json</c> current while it runs. Tokenz gets exact readings
+/// from the Claude desktop app's usage card and estimates between them; each window says which.
+/// Only <c>claude.five_hour</c>, <c>claude.weekly</c> and <c>written_at</c> are read.
+/// </summary>
+public static class TokenzStatus
+{
+    public static string DefaultPath() =>
+        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tokenz", "tokenz_status.json");
+
+    public static PlanUsage? Load(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return Extract(reader.ReadToEnd());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Debug("plan", "Tokenz status unreadable", new { error = ex.GetType().Name });
+            return null;
+        }
+    }
+
+    public static PlanUsage? Extract(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object
+                || !root.TryGetProperty("claude", out var claude) || claude.ValueKind != JsonValueKind.Object
+                || !TryTime(root, "written_at", out var writtenAt))
+            {
+                return null;
+            }
+
+            var current = Window(claude, "five_hour");
+            var weekly = Window(claude, "weekly");
+            return current is null && weekly is null ? null : new PlanUsage(current, weekly, writtenAt);
+        }
+        catch (JsonException)
+        {
+            // Tokenz rewrites the file in place; a half-written read is skipped until the next change.
+            return null;
+        }
+    }
+
+    private static PlanWindow? Window(JsonElement claude, string name)
+    {
+        if (!claude.TryGetProperty(name, out var window) || window.ValueKind != JsonValueKind.Object
+            || !window.TryGetProperty("percent", out var used) || used.ValueKind != JsonValueKind.Number || !used.TryGetDouble(out var percent)
+            || !double.IsFinite(percent)
+            || !TryTime(window, "resets_at", out var resetsAt))
+        {
+            return null;
+        }
+
+        var estimated = window.TryGetProperty("estimated", out var e) && e.ValueKind == JsonValueKind.True;
+        return new PlanWindow(Math.Clamp(percent, 0, 100), resetsAt, estimated);
+    }
+
+    private static bool TryTime(JsonElement element, string name, out DateTimeOffset value)
+    {
+        value = default;
+        return element.TryGetProperty(name, out var raw)
+            && raw.ValueKind == JsonValueKind.String
+            && DateTimeOffset.TryParse(raw.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out value);
+    }
+}
+
 /// <summary>The last plan usage Claude Code reported, kept in a small file (numbers only).</summary>
 public sealed class PlanUsageStore(string path)
 {
@@ -108,6 +187,9 @@ public enum PlanConnection
 
     /// <summary>Claude Code's settings could not be read.</summary>
     Unreadable,
+
+    /// <summary>Plan usage comes from Tokenz instead of Claude Code's status line.</summary>
+    Tokenz,
 }
 
 /// <summary>
@@ -215,18 +297,26 @@ public static class ClaudeStatusLineSetup
 }
 
 /// <summary>
-/// Follows the plan usage file (written by the status line bridge) with a file watcher; no polling.
+/// Follows a plan usage file (the status line bridge's, or Tokenz's status file) with a file watcher;
+/// no polling.
 /// </summary>
 public sealed class PlanUsageService : IDisposable
 {
-    private readonly PlanUsageStore _store;
+    private readonly string _path;
+    private readonly Func<PlanUsage?> _load;
     private FileSystemWatcher? _watcher;
     private PlanUsage? _usage;
     private bool _enabled;
 
     public PlanUsageService(PlanUsageStore store)
+        : this(store.Path, store.Load)
     {
-        _store = store;
+    }
+
+    public PlanUsageService(string path, Func<PlanUsage?> load)
+    {
+        _path = path;
+        _load = load;
     }
 
     /// <summary>Raised on a background thread when new plan usage arrived.</summary>
@@ -251,12 +341,12 @@ public sealed class PlanUsageService : IDisposable
             return;
         }
 
-        _usage = _store.Load();
+        _usage = _load();
         try
         {
-            var dir = System.IO.Path.GetDirectoryName(_store.Path)!;
+            var dir = System.IO.Path.GetDirectoryName(_path)!;
             Directory.CreateDirectory(dir);
-            _watcher = new FileSystemWatcher(dir, System.IO.Path.GetFileName(_store.Path))
+            _watcher = new FileSystemWatcher(dir, System.IO.Path.GetFileName(_path))
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
             };
@@ -282,7 +372,7 @@ public sealed class PlanUsageService : IDisposable
 
     private void Reload()
     {
-        var usage = _store.Load();
+        var usage = _load();
         if (usage is null || usage == _usage)
         {
             return;
@@ -328,7 +418,14 @@ public static class PlanStatus
     };
 
     /// <summary>Why the plan block says "Unavailable" (or that it may be out of date), in one line.</summary>
-    public static string Reason(PlanDataState state) => state switch
+    public static string Reason(PlanDataState state, PlanConnection connection = PlanConnection.Connected) => (state, connection) switch
+    {
+        (PlanDataState.WaitingForData, PlanConnection.Tokenz) => "Tokenz has no Claude reading yet. It gets one from the desktop app's usage card.",
+        (PlanDataState.Stale, PlanConnection.Tokenz) => "Tokenz has not updated for over an hour. Is it running?",
+        _ => ReasonFor(state),
+    };
+
+    private static string ReasonFor(PlanDataState state) => state switch
     {
         PlanDataState.WaitingForData => "Connected, no data yet. Claude Code sends plan usage from terminal sessions, after a reply; the VS Code extension does not.",
         PlanDataState.Stale => "No recent update. Plan usage refreshes with your next reply in a Claude Code terminal session.",

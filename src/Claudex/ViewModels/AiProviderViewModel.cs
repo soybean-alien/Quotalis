@@ -72,7 +72,7 @@ public sealed class AiProviderViewModel : ObservableObject
     /// </summary>
     public string CompactValue => State switch
     {
-        ProviderState.Ready when CurrentWindow is { } w => $"{Math.Round(w.UsedPercent):0}%",
+        ProviderState.Ready when CurrentWindow is { } w => PercentText(w),
         ProviderState.Ready when _snapshot.LimitPercent is { } p => $"{Math.Round(p):0}%",
         ProviderState.Ready => DisplayFormat.Tokens(_snapshot.Today.Fresh),
         ProviderState.Error => "Error",
@@ -88,7 +88,7 @@ public sealed class AiProviderViewModel : ObservableObject
     /// equivalent lives in the expanded view.
     /// </summary>
     public string CompactPrimaryValue => !IsReady ? string.Empty
-        : CurrentWindow is { } w ? $"{DisplayFormat.Tokens(_snapshot.Today.Fresh)} · {Math.Round(w.UsedPercent):0}%"
+        : CurrentWindow is { } w ? $"{DisplayFormat.Tokens(_snapshot.Today.Fresh)} · {PercentText(w)}"
         : _snapshot.LimitPercent is { } p ? $"{DisplayFormat.Tokens(_snapshot.Today.Fresh)} · {Math.Round(p):0}%"
         : $"{DisplayFormat.Tokens(_snapshot.Today.Fresh)} tokens";
 
@@ -99,7 +99,7 @@ public sealed class AiProviderViewModel : ObservableObject
             : $"{DisplayFormat.Tokens(_snapshot.Today.Fresh)} fresh tokens today";
 
     public string PlanPeekTrailing => IsReady && (CurrentWindow ?? (_snapshot.LimitPercent is { } p ? new PlanWindow(p, DateTimeOffset.MaxValue) : null)) is { } window
-        ? $"{Math.Round(window.UsedPercent):0}%"
+        ? PercentText(window)
         : string.Empty;
 
     public string CompactAccessibleText => State == ProviderState.Ready
@@ -172,7 +172,10 @@ public sealed class AiProviderViewModel : ObservableObject
 
     private PlanWindow? ShownWindow => ShowWeekly ? WeeklyWindow : CurrentWindow;
 
-    public string PlanPercentText => ShownWindow is { } w ? $"{Math.Round(w.UsedPercent):0}%" : "Unavailable";
+    public string PlanPercentText => ShownWindow is { } w ? PercentText(w) : "Unavailable";
+
+    /// <summary>"72%", or "~72%" for an estimate between exact readings (Tokenz's convention).</summary>
+    private static string PercentText(PlanWindow w) => $"{(w.IsEstimated ? "~" : string.Empty)}{Math.Round(w.UsedPercent):0}%";
 
     public double PlanFraction => ShownWindow is { } w ? Math.Clamp(w.UsedPercent / 100, 0, 1) : 0;
 
@@ -184,6 +187,11 @@ public sealed class AiProviderViewModel : ObservableObject
         get
         {
             var reset = ShownWindow is { } w && w.ResetsAt != DateTimeOffset.MaxValue ? ResetText(w.ResetsAt, DateTimeOffset.UtcNow) : string.Empty;
+            if (ShownWindow is { IsEstimated: true })
+            {
+                reset = reset.Length > 0 ? $"{reset} · estimated" : "Estimated";
+            }
+
             if (Kind == AiProviderKind.Claude && _plan is { } plan && DateTimeOffset.UtcNow - plan.MeasuredAt > TimeSpan.FromMinutes(15))
             {
                 var age = $"as of {DisplayFormat.Ago(DateTimeOffset.UtcNow - plan.MeasuredAt)}";
@@ -199,7 +207,7 @@ public sealed class AiProviderViewModel : ObservableObject
 
     /// <summary>Why plan usage is missing, in one short line.</summary>
     public string PlanUnavailableReason => Kind == AiProviderKind.Claude
-        ? PlanStatus.Reason(PlanState)
+        ? PlanStatus.Reason(PlanState, _planConnection)
         : "Codex has not recorded a limit yet.";
 
     public bool CanConnectPlan => Kind == AiProviderKind.Claude && HasNoPlan && _planConnection == PlanConnection.NotConnected;

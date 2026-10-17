@@ -61,6 +61,7 @@ internal sealed class AppHost : IDisposable
     private UiStateStore _uiState = null!;
     private DispatcherQueueTimer? _rotation;
     private PlanUsageService? _plan;
+    private bool _planFromTokenz;
     private DispatcherQueueTimer? _planReset;
     private DispatcherQueueTimer? _historyDebounce;
     private DispatcherQueueTimer? _displaySettle;
@@ -139,7 +140,14 @@ internal sealed class AppHost : IDisposable
         }
         else
         {
-            _plan = new PlanUsageService(new PlanUsageStore(AppPaths.ClaudePlan));
+            // Tokenz (when installed) reads exact numbers from the desktop app's usage card, which
+            // Claude Code's status line never sees outside the terminal; prefer it over the bridge.
+            var tokenz = TokenzStatus.DefaultPath();
+            _planFromTokenz = File.Exists(tokenz);
+            _plan = _planFromTokenz
+                ? new PlanUsageService(tokenz, () => TokenzStatus.Load(tokenz))
+                : new PlanUsageService(new PlanUsageStore(AppPaths.ClaudePlan));
+            Log.Info("plan", "Claude plan usage source", new { source = _planFromTokenz ? "Tokenz" : "status line" });
             _plan.Changed += usage => _dispatcher.TryEnqueue(() => OnPlanUsage(usage));
             _plan.Configure(settings.ClaudeEnabled);
         }
@@ -841,7 +849,7 @@ internal sealed class AppHost : IDisposable
     /// </summary>
     private void OnPlanUsage(PlanUsage? usage)
     {
-        var connection = ClaudeStatusLineSetup.Inspect(ClaudeStatusLineSetup.SettingsPath());
+        var connection = _planFromTokenz ? PlanConnection.Tokenz : ClaudeStatusLineSetup.Inspect(ClaudeStatusLineSetup.SettingsPath());
         _viewModel.Usage.Claude.SetPlan(usage, connection);
         if (usage is null)
         {
@@ -852,8 +860,9 @@ internal sealed class AppHost : IDisposable
         var day = DateOnly.FromDateTime(usage.MeasuredAt.ToLocalTime().DateTime);
         try
         {
-            if (usage.CurrentAt(now) is { } current) _database.RecordPlanPeak(day, AiProviderKind.Claude, "five_hour", current.UsedPercent, usage.MeasuredAt);
-            if (usage.WeeklyAt(now) is { } weekly) _database.RecordPlanPeak(day, AiProviderKind.Claude, "seven_day", weekly.UsedPercent, usage.MeasuredAt);
+            // Peaks are measured values only; Tokenz's estimates between readings are not recorded.
+            if (usage.CurrentAt(now) is { IsEstimated: false } current) _database.RecordPlanPeak(day, AiProviderKind.Claude, "five_hour", current.UsedPercent, usage.MeasuredAt);
+            if (usage.WeeklyAt(now) is { IsEstimated: false } weekly) _database.RecordPlanPeak(day, AiProviderKind.Claude, "seven_day", weekly.UsedPercent, usage.MeasuredAt);
         }
         catch (Exception ex)
         {
