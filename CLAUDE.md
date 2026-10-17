@@ -14,3 +14,4 @@ Personal fork of [Developer Island](https://github.com/maximilian467/Developer-I
 - No `CODEX_HANDOFF.md` / `AGENTS.md` for this project.
 - Build and test: `run.cmd` (or `run.cmd -Demo`), `dotnet test tests/Claudex.Tests`. Needs the .NET 10 SDK.
 - The Claude status line argument is `--claudex-statusline`, which keeps it apart from Developer Island's `--claude-statusline`.
+- UX: never show "~" before numbers; estimates are marked in words (e.g. "estimated" next to the reset time).
