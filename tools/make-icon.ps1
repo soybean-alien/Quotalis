@@ -1,6 +1,6 @@
-# Generates Assets/DeveloperIsland.ico (multi-resolution, PNG frames) and a 256px PNG.
+# Generates Assets/Claudex.ico (multi-resolution, PNG frames) and a 256px PNG.
 # The mark is deliberately geometric: a near-black rounded square carrying a white capsule.
-param([string]$OutDir = "$PSScriptRoot\..\src\DeveloperIsland\Assets")
+param([string]$OutDir = "$PSScriptRoot\..\src\Claudex\Assets")
 Add-Type -AssemblyName System.Drawing
 
 function New-RoundedPath([single]$x, [single]$y, [single]$w, [single]$h, [single]$r) {
@@ -42,7 +42,7 @@ foreach ($sz in $sizes) {
     $ms = New-Object System.IO.MemoryStream
     $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
     $frames += , @($sz, $ms.ToArray())
-    if ($sz -eq 256) { $bmp.Save("$OutDir\DeveloperIsland-256.png", [System.Drawing.Imaging.ImageFormat]::Png) }
+    if ($sz -eq 256) { $bmp.Save("$OutDir\Claudex-256.png", [System.Drawing.Imaging.ImageFormat]::Png) }
     $bmp.Dispose()
 }
 $out = New-Object System.IO.MemoryStream
@@ -59,5 +59,5 @@ foreach ($f in $frames) {
 }
 foreach ($f in $frames) { $w.Write([byte[]]$f[1]) }
 $w.Flush()
-[System.IO.File]::WriteAllBytes("$OutDir\DeveloperIsland.ico", $out.ToArray())
+[System.IO.File]::WriteAllBytes("$OutDir\Claudex.ico", $out.ToArray())
 Write-Output "Icon written to $OutDir"

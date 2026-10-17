@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Claudex.UI.Expanded.UsagePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Claudex.UI.Expanded"
+    xmlns:components="using:Claudex.UI.Components">
+
+    <StackPanel>
+        <Grid x:Name="ProvidersGrid" ColumnSpacing="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <local:ProviderSummary x:Name="ClaudeSummary" ViewModel="{x:Bind ViewModel.Claude}" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}" />
+            <local:ProviderSummary x:Name="CodexSummary" Grid.Column="1" ViewModel="{x:Bind ViewModel.Codex}" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}" />
+        </Grid>
+
+        <components:UsageHeatmap x:Name="Heatmap" Margin="0,22,0,0" HorizontalAlignment="Left" />
+
+        <!-- Readout: summary and legend at rest, the inspected day on hover or keyboard focus. -->
+        <Grid Height="{x:Bind ViewModel.ReadoutHeight, Mode=OneWay}" Margin="0,10,0,0">
+            <Grid Visibility="{x:Bind ViewModel.IsNotInspecting, Mode=OneWay}" Height="18" VerticalAlignment="Top">
+                <TextBlock Text="{x:Bind ViewModel.HistorySummary, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                    <TextBlock Text="Less" Style="{StaticResource FineTextStyle}" Margin="0,0,4,0" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#16FFFFFF" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#4D2997FF" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#802997FF" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#B82997FF" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FF2997FF" />
+                    <TextBlock Text="More" Style="{StaticResource FineTextStyle}" Margin="4,0,0,0" />
+                </StackPanel>
+            </Grid>
+            <Grid Visibility="{x:Bind ViewModel.IsInspecting, Mode=OneWay}" ColumnSpacing="16" RowSpacing="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{x:Bind ViewModel.InspectedDate, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock Grid.Column="1" Style="{StaticResource CaptionTextStyle}" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}">
+                    <Run Text="Claude" /><Run Text=" " /><Run Text="{x:Bind ViewModel.InspectedClaude, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </TextBlock>
+                <TextBlock Grid.Column="2" Style="{StaticResource CaptionTextStyle}" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}">
+                    <Run Text="Codex" /><Run Text=" " /><Run Text="{x:Bind ViewModel.InspectedCodex, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </TextBlock>
+                <TextBlock Grid.Column="3" HorizontalAlignment="Right" Style="{StaticResource CaptionTextStyle}">
+                    <Run Text="{x:Bind ViewModel.InspectedValue, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" /><Run Text=" API" />
+                </TextBlock>
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="4" Text="{x:Bind ViewModel.InspectedDetail, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
+                <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Text="{x:Bind ViewModel.InspectedPlan, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
+                           Visibility="{x:Bind ViewModel.HasInspectedPlan, Mode=OneWay}" />
+            </Grid>
+        </Grid>
+
+        <TextBlock Margin="0,12,0,0" Style="{StaticResource FineTextStyle}"
+                   Text="Fresh tokens exclude context re-read from the cache. The estimated API equivalent uses list prices; it is not what you pay." TextWrapping="Wrap" TextTrimming="None" />
+    </StackPanel>
+</UserControl>

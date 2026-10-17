@@ -1,8 +1,23 @@
 # Changelog
 
-All notable changes to Developer Island are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
+All notable changes to Claudex are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-10-17
+
+Forked from Developer Island 0.3.0 (upstream commit `ada8ef6`).
+
+### Changed
+
+- Renamed to **Claudex**: namespaces, projects, solution, executable, tray, Settings and installer.
+- Own identity, so Claudex runs side by side with Developer Island: data folder `%LOCALAPPDATA%\Claudex`, single-instance mutex, autostart entry, Awake restore task and a new installer AppId.
+- The Claude status line bridge uses its own argument, `--claudex-statusline`, so a status line owned by Developer Island counts as someone else's and is never reported as connected or removed.
+- Version restarts at 0.1.0.
+
+---
+
+Developer Island history (upstream, before the fork):
 
 ## [0.3.0] - 2026-10-15
 

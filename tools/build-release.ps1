@@ -1,4 +1,4 @@
-# Builds a Developer Island release: tests, self-contained publish, portable zip and installer.
+# Builds a Claudex release: tests, self-contained publish, portable zip and installer.
 #   powershell -ExecutionPolicy Bypass -File tools/build-release.ps1 [-Version 0.1.0] [-Runtime win-x64] [-SkipTests] [-SkipInstaller]
 # Requirements: .NET 10 SDK. Installer: Inno Setup 6 (ISCC.exe), e.g. `winget install JRSoftware.InnoSetup`.
 param(
@@ -19,20 +19,20 @@ if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'Version must have thr
 $platform = if ($Runtime -eq "win-arm64") { "ARM64" } else { "x64" }
 $artifacts = Join-Path $root "artifacts"
 $publish = Join-Path $artifacts "publish\$Runtime"
-Write-Host "Developer Island $Version ($Runtime)" -ForegroundColor Cyan
+Write-Host "Claudex $Version ($Runtime)" -ForegroundColor Cyan
 
 . "$PSScriptRoot\dotnet-sdk.ps1"
 $dotnet = Use-DotnetSdk
 Write-Host "Using $dotnet"
 
 # A running copy of the published app locks its files.
-$running = Get-Process DeveloperIsland -ErrorAction SilentlyContinue | Where-Object {
+$running = Get-Process Claudex -ErrorAction SilentlyContinue | Where-Object {
     $_.Path -and $_.Path.StartsWith([IO.Path]::GetFullPath($publish), [StringComparison]::OrdinalIgnoreCase)
 }
-if ($running) { throw "Developer Island is running from $publish. Quit it (tray icon, Quit) and run the script again." }
+if ($running) { throw "Claudex is running from $publish. Quit it (tray icon, Quit) and run the script again." }
 
 if (-not $SkipTests) {
-    & $dotnet test "$root\tests\DeveloperIsland.Tests" -c Release
+    & $dotnet test "$root\tests\Claudex.Tests" -c Release
     if ($LASTEXITCODE -ne 0) { throw "Tests failed" }
 }
 
@@ -48,7 +48,7 @@ if (Test-Path -LiteralPath $publish) {
     }
     Remove-Item -LiteralPath $publish -Recurse -Force
 }
-& $dotnet publish "$root\src\DeveloperIsland\DeveloperIsland.csproj" -c Release -r $Runtime -p:Platform=$platform `
+& $dotnet publish "$root\src\Claudex\Claudex.csproj" -c Release -r $Runtime -p:Platform=$platform `
     -p:Version=$Version -p:PublishReadyToRun=true -o $publish
 if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
 
@@ -59,7 +59,7 @@ Get-ChildItem $publish -Filter *.pdb -Recurse | Remove-Item -Force
 Copy-Item (Join-Path $root "LICENSE") (Join-Path $publish "LICENSE.txt")
 Copy-Item (Join-Path $root "THIRD_PARTY_NOTICES.md") (Join-Path $publish "THIRD_PARTY_NOTICES.md")
 
-$zip = Join-Path $artifacts "DeveloperIsland-$Version-$Runtime-portable.zip"
+$zip = Join-Path $artifacts "Claudex-$Version-$Runtime-portable.zip"
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path "$publish\*" -DestinationPath $zip
 Write-Host "Portable: $zip"
@@ -73,13 +73,13 @@ if (-not $SkipInstaller) {
         "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
     ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     if (-not $iscc) { throw "Inno Setup (ISCC.exe) not found. Install it with: winget install JRSoftware.InnoSetup" }
-    & $iscc "/DAppVersion=$Version" "/DSourceDir=$publish" "/DOutputDir=$artifacts" "$root\installer\DeveloperIsland.iss"
+    & $iscc "/DAppVersion=$Version" "/DSourceDir=$publish" "/DOutputDir=$artifacts" "$root\installer\Claudex.iss"
     if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
-    Write-Host "Installer: $(Join-Path $artifacts "DeveloperIsland-Setup-$Version.exe")"
+    Write-Host "Installer: $(Join-Path $artifacts "Claudex-Setup-$Version.exe")"
 }
 
 # Checksums for the release page.
-$files = @($zip) + @(Get-ChildItem $artifacts -Filter "DeveloperIsland-Setup-$Version.exe" | ForEach-Object FullName)
+$files = @($zip) + @(Get-ChildItem $artifacts -Filter "Claudex-Setup-$Version.exe" | ForEach-Object FullName)
 $sums = Join-Path $artifacts "SHA256SUMS-$Version.txt"
 $files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLowerInvariant(), (Split-Path $_ -Leaf) } | Set-Content -Encoding ascii $sums
 Write-Host "Checksums: $sums"

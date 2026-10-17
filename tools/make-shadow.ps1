@@ -1,7 +1,7 @@
 # Renders the island's soft shadow as a nine-grid texture (Assets/island-shadow.png).
 # A rounded rectangle (radius 28) casts an ambient (wide, soft) and a key (tight) shadow layer.
 # The runtime stretches the middle of the texture, so the corners stay exact at any size.
-param([string]$OutDir = "$PSScriptRoot\..\src\DeveloperIsland\Assets")
+param([string]$OutDir = "$PSScriptRoot\..\src\Claudex\Assets")
 Add-Type -AssemblyName System.Drawing
 
 $size = 176; $inset = 40; $radius = 28

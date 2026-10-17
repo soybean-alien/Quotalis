@@ -1,0 +1,99 @@
+using Claudex.Core.Calendar;
+using Claudex.Core.Git;
+using Claudex.Core.GitHub;
+using Claudex.Core.SystemInfo;
+using Claudex.Core.Tasks;
+
+namespace Claudex.Core.Demo;
+
+/// <summary>
+/// Believable module content for demo mode (<c>--demo</c>) and screenshots. Never used otherwise:
+/// in normal mode every module shows only real data or an honest empty state.
+/// </summary>
+public static class DemoModules
+{
+    public static IReadOnlyList<GitRepoStatus> Repositories(DateTimeOffset now) =>
+    [
+        new GitRepoStatus
+        {
+            Root = @"C:\code\claudex",
+            Branch = "feature/browser-notch",
+            HasUpstream = true,
+            Ahead = 2,
+            Modified = 3,
+            Untracked = 1,
+            LastCommitSubject = "Retract into a notch over maximized browsers",
+            LastCommitAt = now.AddMinutes(-38),
+            GitHubRepository = "soybean-alien/Claudex",
+            UpdatedAt = now,
+        },
+        new GitRepoStatus { Root = @"C:\code\robotics-lab", Branch = "main", HasUpstream = true, UpdatedAt = now },
+        new GitRepoStatus { Root = @"C:\code\thesis", Branch = "draft", HasUpstream = true, Modified = 5, Staged = 2, UpdatedAt = now },
+    ];
+
+    public static GitHubSnapshot GitHub(DateTimeOffset now) => new()
+    {
+        Login = "soybean-alien",
+        Notifications = 4,
+        MyOpenPullRequests = 2,
+        ReviewRequests = 1,
+        Repository = new GitHubRepo("soybean-alien/Claudex", 128, 6, 2),
+        Ci = new CiRun(CiState.Passed, "CI", "feature/browser-notch", now.AddMinutes(-31)),
+        UpdatedAt = now,
+    };
+
+    /// <summary>Today's agenda around <paramref name="now"/>: the next event starts in 25 minutes.</summary>
+    public static IReadOnlyList<CalendarEvent> Events(DateTimeOffset now, TimeZoneInfo zone)
+    {
+        var local = TimeZoneInfo.ConvertTime(now, zone);
+        var next = local.DateTime.AddMinutes(25);
+        next = next.AddMinutes(-(next.Minute % 5)).AddSeconds(-next.Second).AddMilliseconds(-next.Millisecond);
+        DateTimeOffset At(DateTime wall) => IcsParser.ToOffset(wall, zone);
+        var day = local.Date;
+        return
+        [
+            new CalendarEvent("Stand-up", At(day.AddHours(9)), At(day.AddHours(9).AddMinutes(15)), false, null, "Demo"),
+            new CalendarEvent("Robotics", At(next), At(next.AddMinutes(90)), false, "Lab 2", "Demo"),
+            new CalendarEvent("Thesis review", At(next.AddHours(3)), At(next.AddHours(4)), false, "Room 114", "Demo"),
+            new CalendarEvent("Robotics", At(day.AddDays(1).AddHours(10)), At(day.AddDays(1).AddHours(11)), false, "Lab 2", "Demo"),
+        ];
+    }
+
+    public static void SeedTasks(TaskStore store)
+    {
+        var review = store.Add("Review Codex pull request");
+        store.Add("Write notch release notes");
+        store.Add("Book lab for Thursday");
+        if (review is not null)
+        {
+            store.SetDone(review.Id, true);
+        }
+    }
+
+    public static SystemSample System => new(23, 11_400UL * 1024 * 1024, 32UL * 1024 * 1024 * 1024, 84, true);
+
+    /// <summary>A calm minute of a laptop with a GPU, a CPU temperature and one fan (demo only).</summary>
+    public static IReadOnlyList<SystemSample> SystemHistory(DateTimeOffset now)
+    {
+        var samples = new List<SystemSample>();
+        for (var i = 0; i < 60; i++)
+        {
+            var wave = Math.Sin(i / 6.0) * 8 + Math.Sin(i / 2.3) * 4;
+            var burst = i is > 38 and < 46 ? 30 : 0;
+            samples.Add(System with
+            {
+                CpuPercent = Math.Clamp(21 + wave + burst, 2, 100),
+                MemoryUsedBytes = (ulong)((11_200 + i * 3) * 1024L * 1024),
+                GpuPercent = Math.Clamp(9 + wave / 2 + burst / 3, 0, 100),
+                Temperatures =
+                [
+                    new TemperatureReading(TemperatureKind.Cpu, "CPU", 52 + burst / 6.0),
+                    new TemperatureReading(TemperatureKind.Storage, "Samsung SSD 990 PRO", 41),
+                ],
+                Fans = [new FanReading("CPU fan", 2340 + burst * 20)],
+            });
+        }
+
+        return samples;
+    }
+}

@@ -1,12 +1,12 @@
 # Architecture
 
-Developer Island is two projects plus tests:
+Claudex is two projects plus tests:
 
 | Project | Target | Contents |
 |---|---|---|
-| `DeveloperIsland.Core` | `net10.0` | Everything that does not need Windows UI: models, parsers, providers, pricing, SQLite storage, settings, placement math, focus timer, island state machine, module logic (Git, GitHub, calendar, tasks, system, plan usage, favorites), demo data. Fully unit-tested. |
-| `DeveloperIsland` | `net10.0-windows10.0.22621.0`, WinUI 3 | The app: composition root, view models, views, motion, and platform integration (windowing, tray, autostart, media sessions, monitors, hardware sensors, hotkey). |
-| `DeveloperIsland.Tests` | `net10.0`, xUnit v3 | 382 tests against Core, including a real `git` repository and a Windows Credential Manager round trip. |
+| `Claudex.Core` | `net10.0` | Everything that does not need Windows UI: models, parsers, providers, pricing, SQLite storage, settings, placement math, focus timer, island state machine, module logic (Git, GitHub, calendar, tasks, system, plan usage, favorites), demo data. Fully unit-tested. |
+| `Claudex` | `net10.0-windows10.0.22621.0`, WinUI 3 | The app: composition root, view models, views, motion, and platform integration (windowing, tray, autostart, media sessions, monitors, hardware sensors, hotkey). |
+| `Claudex.Tests` | `net10.0`, xUnit v3 | 382 tests against Core, including a real `git` repository and a Windows Credential Manager round trip. |
 
 ## Data flow
 
@@ -48,7 +48,7 @@ Developer Island is two projects plus tests:
 
 ## Storage
 
-SQLite (`Microsoft.Data.Sqlite`) at `%LOCALAPPDATA%\DeveloperIsland\usage.db`, WAL mode, versioned through `PRAGMA user_version` with append-only migrations.
+SQLite (`Microsoft.Data.Sqlite`) at `%LOCALAPPDATA%\Claudex\usage.db`, WAL mode, versioned through `PRAGMA user_version` with append-only migrations.
 
 | Table | Contents |
 |---|---|
@@ -121,7 +121,7 @@ Every module follows **Provider, then State, then ViewModel, then View**, with o
 | Tasks | `tasks.json` | On change |
 | System | `SystemMetricsReader` (CPU, memory, battery), `HardwareSensors` (LibreHardwareMonitor: GPU load every second, temperatures and fans every 5 s; ACPI thermal zones via PDH) | 1 Hz, 60-sample history; the UI hears about samples only while the panel is open or System is featured |
 
-`HardwareCapabilities` is derived from the samples themselves, so a component that does not exist simply never appears. Manual fan control is gated by `FanControlCapability`, which requires a crash-safe fallback to firmware control; no supported interface offers that, so the island monitors only. `DeveloperIsland.exe --system-report` prints what a device exposes.
+`HardwareCapabilities` is derived from the samples themselves, so a component that does not exist simply never appears. Manual fan control is gated by `FanControlCapability`, which requires a crash-safe fallback to firmware control; no supported interface offers that, so the island monitors only. `Claudex.exe --system-report` prints what a device exposes.
 
 ## Awake
 
@@ -134,7 +134,7 @@ The lid change outlives a crash, so it follows a journal-first rule:
 | Start | read the original values, write `awake-session.json`, then write "do nothing", then the power request, then schedule the backstop. Without a journal, the lid is not changed. |
 | End (timer, End, battery floor, module off, Quit) | release the request, put back each value that still reads "do nothing" (`AwakeRules.Restoration`), then delete the journal and the backstop. A failed restore keeps the journal as an ended session. |
 | App start | `AwakeRules.OnStartup`: an indefinite or unexpired session resumes; an ended one is restored. |
-| Backstop | `ScheduledTaskBackstop` registers a one-time task (UTF-16 task XML through `schtasks /Create /XML`, `StartWhenAvailable`, no battery limits, expires and deletes itself a week later). `DeveloperIsland.exe --awake-restore` exits at once while the island runs (its instance mutex exists), otherwise restores an ended session. |
+| Backstop | `ScheduledTaskBackstop` registers a one-time task (UTF-16 task XML through `schtasks /Create /XML`, `StartWhenAvailable`, no battery limits, expires and deletes itself a week later). `Claudex.exe --awake-restore` exits at once while the island runs (its instance mutex exists), otherwise restores an ended session. |
 
 Battery level, power source and lid state come from `RegisterPowerSettingNotification` on the host window, only while a session runs; lid events are logged, not acted on.
 
@@ -163,7 +163,7 @@ Windows records each app's device use under `HKCU\Software\Microsoft\Windows\Cur
 
 ## Plan usage
 
-Claude plan usage comes from Claude Code's documented status line input (`rate_limits.five_hour` and `seven_day`: `used_percentage`, `resets_at`). `ClaudeStatusLineSetup` adds Developer Island as the `statusLine` command in Claude Code's `settings.json` on request (backup first, never replacing a status line the user already has). `DeveloperIsland.exe --claude-statusline` runs before any UI, keeps only those numbers in `claude-plan.json`, prints nothing and always exits 0. `PlanUsageService` follows that file with a watcher. Codex's 5-hour and weekly windows come from its own rollout records. A window that has reset no longer shows its percentage. Claude Code runs status lines only in its terminal interface, so `PlanStatus` separates the link (connected or not) from the data (waiting, receiving, stale after an hour), and Settings and the Usage panel say which one applies.
+Claude plan usage comes from Claude Code's documented status line input (`rate_limits.five_hour` and `seven_day`: `used_percentage`, `resets_at`). `ClaudeStatusLineSetup` adds Claudex as the `statusLine` command in Claude Code's `settings.json` on request (backup first, never replacing a status line the user already has). `Claudex.exe --claudex-statusline` runs before any UI, keeps only those numbers in `claude-plan.json`, prints nothing and always exits 0. `PlanUsageService` follows that file with a watcher. Codex's 5-hour and weekly windows come from its own rollout records. A window that has reset no longer shows its percentage. Claude Code runs status lines only in its terminal interface, so `PlanStatus` separates the link (connected or not) from the data (waiting, receiving, stale after an hour), and Settings and the Usage panel say which one applies.
 
 ## Auto-hide in apps
 

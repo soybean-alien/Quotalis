@@ -12,26 +12,26 @@ Everything builds with the .NET CLI; Visual Studio is optional.
 ## Build, run and test
 
 ```powershell
-git clone https://github.com/maximilian467/Developer-Island.git
-cd Developer-Island
+git clone https://github.com/soybean-alien/Claudex.git
+cd Claudex
 
-dotnet test tests/DeveloperIsland.Tests                 # restore, build and run the tests
-dotnet build src/DeveloperIsland -c Debug               # build the app
+dotnet test tests/Claudex.Tests                 # restore, build and run the tests
+dotnet build src/Claudex -c Debug               # build the app
 .un.cmd -Demo                                         # build and start with demo data
 ```
 
 `run.cmd` builds and starts the app from source: `.un.cmd` uses your real data, `-Demo` invented data with separate demo settings, `-Release` an optimized build. The scripts find the .NET 10 SDK themselves, even when the `dotnet` on PATH is an older install without it.
 
-The built app is at `src/DeveloperIsland/bin/x64/Debug/net10.0-windows10.0.22621.0/win-x64/DeveloperIsland.exe`. Useful switches:
+The built app is at `src/Claudex/bin/x64/Debug/net10.0-windows10.0.22621.0/win-x64/Claudex.exe`. Useful switches:
 
 | Command | What it does |
 |---|---|
-| `DeveloperIsland.exe --demo` | Invented data only; real usage, tasks and repositories are never read or changed. Preferences are saved separately in `settings.demo.json`. |
-| `DeveloperIsland.exe --demo --snapshot=C:	emp\shots --culture=en-US` | Renders every state (compact, peek, activities, notch, each module, empty and error states, privacy marks, Settings) to PNG files offscreen, without touching the desktop, then exits. |
-| `DeveloperIsland.exe --system-report` | Prints what the System module can read on this device (GPU, temperatures, fans, camera and microphone state) and exits. |
-| `DeveloperIsland.exe --settings=modules` | Opens Settings at a section (`general`, `position`, `modules`, `appearance`, `about`). |
+| `Claudex.exe --demo` | Invented data only; real usage, tasks and repositories are never read or changed. Preferences are saved separately in `settings.demo.json`. |
+| `Claudex.exe --demo --snapshot=C:	emp\shots --culture=en-US` | Renders every state (compact, peek, activities, notch, each module, empty and error states, privacy marks, Settings) to PNG files offscreen, without touching the desktop, then exits. |
+| `Claudex.exe --system-report` | Prints what the System module can read on this device (GPU, temperatures, fans, camera and microphone state) and exits. |
+| `Claudex.exe --settings=modules` | Opens Settings at a section (`general`, `position`, `modules`, `appearance`, `about`). |
 
-Set `DI_LOG_DEBUG=1` to write debug-level logs to `%LOCALAPPDATA%\DeveloperIsland\logs`.
+Set `DI_LOG_DEBUG=1` to write debug-level logs to `%LOCALAPPDATA%\Claudex\logs`.
 
 ## Release build
 
@@ -46,7 +46,7 @@ See [RELEASING.md](RELEASING.md) for the full release checklist.
 The screenshots and the hero animation come from the app's own offscreen renders:
 
 ```powershell
-DeveloperIsland.exe --demo --snapshot=C:	emp\shots --culture=en-US
+Claudex.exe --demo --snapshot=C:	emp\shots --culture=en-US
 python tools/make-readme-media.py C:	emp\shots          # needs Pillow: pip install pillow
 ```
 
@@ -56,7 +56,7 @@ To record the live app instead (real spring motion), follow [RECORDING.md](RECOR
 
 ```
 src/
-  DeveloperIsland.Core/     platform-independent logic, covered by unit tests
+  Claudex.Core/     platform-independent logic, covered by unit tests
     Providers/  Usage/      Claude Code and Codex providers, parsers, aggregation, history
     Pricing/  Storage/      API equivalent; SQLite (events, daily totals, focus, cursors)
     Modules/                module ids, states and order; the featured-module selector
@@ -67,12 +67,12 @@ src/
     Island/  Placement/     state machine, hover tracking, notch policy; monitor math
     Settings/  Demo/        JSON settings; demo data
     Privacy/  Formatting/   camera and microphone rules; display formats and compact width reserves
-  DeveloperIsland/          WinUI 3 app
+  Claudex/          WinUI 3 app
     App/                    composition root (AppHost, ModuleHost), entry point, single instance
     ViewModels/             one view model per module (the UI never parses anything)
     UI/                     island window, compact and activity views, one panel per module, settings
     Platform/               windowing, foreground tracking, hotkey, tray, media, system metrics, camera and microphone
-tests/DeveloperIsland.Tests
+tests/Claudex.Tests
 installer/                  Inno Setup script
 tools/                      release build, run script, asset and README media generators
 docs/                       architecture, modules, performance, status, design, release and recording guides

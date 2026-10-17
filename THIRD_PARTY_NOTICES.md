@@ -1,6 +1,6 @@
 # Third-party notices
 
-Developer Island's own code is licensed under the [MIT License](LICENSE). It uses and ships the third-party components below, which keep their own licenses. The MIT License of this project does not apply to them.
+Claudex is a personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck. Its code, including the original Developer Island code, is licensed under the [MIT License](LICENSE). It uses and ships the third-party components below, which keep their own licenses. The MIT License of this project does not apply to them.
 
 ## Trademarks
 
