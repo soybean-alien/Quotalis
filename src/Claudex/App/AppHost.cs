@@ -913,7 +913,7 @@ internal sealed class AppHost : IDisposable
         ApplyFavorites(settings);
         _plan?.Configure(settings.ClaudeEnabled);
         _viewModel.EnsureValidTab();
-        _window.SetAlwaysOnTop(settings.AlwaysOnTop);
+        _window.SetAlwaysOnTop(settings.AlwaysOnTop && !_settingsActive);
         ApplyKeepOpen(settings);
         _window.ConfigureHomeCloud(settings.HomeCloudActive, settings.HomeCloudTargetPath, settings.HomeCloudDropSide);
         PlaceIsland();
@@ -1328,12 +1328,31 @@ internal sealed class AppHost : IDisposable
 
     private void OpenSettings() => OpenSettings(null);
 
+    private bool _settingsActive;
+
+    private void SetSettingsActive(bool active)
+    {
+        _settingsActive = active;
+        _window.SetAlwaysOnTop(_settings.Current.AlwaysOnTop && !active);
+        if (!active)
+        {
+            _window.KeepOnTop();
+        }
+    }
+
     private void OpenSettings(string? section)
     {
         if (_settingsWindow is null)
         {
             _settingsWindow = new SettingsWindow(_settings, _options.IsDemo, () => _hotkey?.IsInUse ?? false, _secrets);
-            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+            _settingsWindow.Closed += (_, _) =>
+            {
+                _settingsWindow = null;
+                SetSettingsActive(false);
+            };
+            // While Settings is the active window the island leaves the always-on-top band, so Settings is never
+            // drawn behind it (the island also re-claims the top whenever another window comes to the front).
+            _settingsWindow.Activated += (_, args) => SetSettingsActive(args.WindowActivationState != Microsoft.UI.Xaml.WindowActivationState.Deactivated);
             _settingsWindow.QuitRequested += OnQuitFromSettings;
         }
 

@@ -4,6 +4,13 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.8] - 2026-10-17
+
+### Fixed
+
+- **Settings opened behind the island.** The island re-claims the top of the always-on-top layer whenever another window comes to the front, and Settings counted as one. While Settings is the active window, the island now leaves that layer, and it returns as soon as you switch away or close Settings.
+- **The open island could not be moved.** Dragging worked only in the pill, peek and notch, so with "Keep the island open" there was no way to move it. The open island now drags from any part of the capsule its controls leave free.
+
 ## [0.5.7] - 2026-10-17
 
 ### Added
