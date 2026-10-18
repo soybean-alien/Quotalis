@@ -188,7 +188,7 @@ public sealed class IslandStateMachine : IDisposable
             case IslandInput.PointerEntered: PointerEntered(); break;
             case IslandInput.PointerExited: PointerExited(); break;
             case IslandInput.Clicked: Activate(); break;
-            case IslandInput.ClickedOutside: Dismiss(); break;
+            case IslandInput.ClickedOutside: DismissFromOutside(); break;
             case IslandInput.ModuleEvent: ShowEvent(); break;
             case IslandInput.DragStarted: BeginDrag(); break;
             case IslandInput.DragEnded: EndDrag(); break;
@@ -283,6 +283,22 @@ public sealed class IslandStateMachine : IDisposable
         {
             CancelTimer();
             SetMode(IslandMode.Expanded, ActivitySource.None);
+        }
+    }
+
+    /// <summary>
+    /// "Keep the island open": an expanded island stays expanded when the user clicks elsewhere or switches windows
+    /// (<see cref="DismissFromOutside"/>). Esc, the shortcut and the tray still close it; stepping aside for a full-screen
+    /// or auto-hide app still applies.
+    /// </summary>
+    public bool KeepExpanded { get; set; }
+
+    /// <summary>A click outside the capsule, or another window taking focus: closes unless <see cref="KeepExpanded"/>.</summary>
+    public void DismissFromOutside()
+    {
+        if (!KeepExpanded)
+        {
+            Dismiss();
         }
     }
 

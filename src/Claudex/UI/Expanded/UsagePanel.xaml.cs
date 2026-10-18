@@ -20,6 +20,9 @@ public sealed partial class UsagePanel : UserControl
         {
             _viewModel = value;
             Heatmap.ViewModel = value;
+            value.HourProfileChanged += () => Hours.Set(value.HourFractions, value.PeakHourMask);
+            Hours.HourHovered += value.HoverHour;
+            Hours.Set(value.HourFractions, value.PeakHourMask);
             value.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName is nameof(UsageViewModel.ShowBoth) or "" or null)

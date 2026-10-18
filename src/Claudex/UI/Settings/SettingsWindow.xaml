@@ -124,6 +124,20 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Keep the island open" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock Text="The open island stays open when you click elsewhere, instead of rolling back into the pill. Esc or the keyboard shortcut still close it, and full-screen apps still move it aside."
+                                                   Style="{StaticResource SettingsRowDescriptionStyle}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="KeepOpenToggle" Grid.Column="1" Style="{StaticResource SettingsToggleStyle}"
+                                                  AutomationProperties.Name="Keep the island open" Toggled="OnToggle" Tag="KeepIslandOpen" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <Grid Style="{StaticResource SettingsRowStyle}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                                         <TextBlock Text="Keyboard shortcut" Style="{StaticResource SettingsRowTitleStyle}" />
                                         <TextBlock x:Name="ShortcutText" Text="Opens or closes the island from anywhere." Style="{StaticResource SettingsRowDescriptionStyle}" />
                                     </StackPanel>
@@ -132,6 +146,24 @@
                                                   AutomationProperties.Name="Keyboard shortcut keys" SelectionChanged="OnShortcutChanged" />
                                     <ToggleSwitch x:Name="ShortcutToggle" Style="{StaticResource SettingsToggleStyle}"
                                                   AutomationProperties.Name="Keyboard shortcut" Toggled="OnToggle" Tag="Shortcut" />
+                                    </StackPanel>
+                                </Grid>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <!-- Anthropic's peak hours, used by the usage panel's hour strip and peak comparison. -->
+                                <Grid Style="{StaticResource SettingsRowStyle}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Claude peak hours" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock Text="Weekdays, US Eastern time. Anthropic named 8 AM to 2 PM in March 2026; change it if they announce new hours."
+                                                   Style="{StaticResource SettingsRowDescriptionStyle}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <ComboBox x:Name="PeakStartPicker" MinWidth="96" AutomationProperties.Name="Peak hours start" SelectionChanged="OnPeakHoursChanged" />
+                                        <TextBlock Text="to" VerticalAlignment="Center" Style="{StaticResource SettingsRowDescriptionStyle}" />
+                                        <ComboBox x:Name="PeakEndPicker" MinWidth="96" AutomationProperties.Name="Peak hours end" SelectionChanged="OnPeakHoursChanged" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

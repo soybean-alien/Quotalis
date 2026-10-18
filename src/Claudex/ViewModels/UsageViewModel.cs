@@ -100,6 +100,7 @@ public sealed class UsageViewModel : ObservableObject
         : $"{DisplayFormat.Tokens(_days[_inspectedIndex].FreshTokens)} fresh tokens";
 
     /// <summary>The readout grows by one line once plan usage has ever been measured (no jump per day).</summary>
+    /// <summary>The day area below the hours block: one line taller once plan usage has ever been measured (no jump per day).</summary>
     public double ReadoutHeight => _planPeaks.Count > 0 ? 100 : 82;
 
     // Per-tool bars of the inspected day: Claude above Codex, on one scale (the busiest single-tool day).
@@ -111,11 +112,14 @@ public sealed class UsageViewModel : ObservableObject
     /// <summary>"2.96M · $42.03"; "2.96M · $42.03, partly priced" when some of the tool's models have no list price.</summary>
     public string InspectedClaudeText => IsInspecting ? ToolText(_days[_inspectedIndex].Claude.Fresh, _days[_inspectedIndex].ClaudeApiValueUsd, _days[_inspectedIndex].ClaudePartial) : string.Empty;
 
-    public string InspectedCodexText => IsInspecting ? ToolText(_days[_inspectedIndex].Codex.Fresh, _days[_inspectedIndex].CodexApiValueUsd, _days[_inspectedIndex].CodexPartial) : string.Empty;
+    public string InspectedCodexText => !IsInspecting ? string.Empty
+        : _days[_inspectedIndex].CodexImported && _days[_inspectedIndex].Codex.Fresh > 0
+            ? $"{DisplayFormat.Tokens(_days[_inspectedIndex].Codex.Fresh)} · {DisplayFormat.Usd(_days[_inspectedIndex].CodexApiValueUsd)}, estimated"
+            : ToolText(_days[_inspectedIndex].Codex.Fresh, _days[_inspectedIndex].CodexApiValueUsd, _days[_inspectedIndex].CodexPartial);
 
-    public string InspectedSessions => IsInspecting && _days[_inspectedIndex].HasUsage
-        ? DisplayFormat.Count(_days[_inspectedIndex].Sessions, "session", "sessions")
-        : "No usage";
+    public string InspectedSessions => !IsInspecting || !_days[_inspectedIndex].HasUsage ? "No usage"
+        : _days[_inspectedIndex].CodexImported ? "Codex from your ChatGPT profile"
+        : DisplayFormat.Count(_days[_inspectedIndex].Sessions, "session", "sessions");
 
     private double Fraction(long fresh) => _maxProviderFresh <= 0 ? 0 : Math.Clamp((double)fresh / _maxProviderFresh, 0, 1);
 
@@ -129,7 +133,7 @@ public sealed class UsageViewModel : ObservableObject
     public string InspectedValue => !IsInspecting ? string.Empty
         : _days[_inspectedIndex].ApiValuePartial
             ? (_days[_inspectedIndex].TotalApiValueUsd > 0 ? $"{DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd)}, partly priced" : "Unavailable")
-            : DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd);
+            : DisplayFormat.Usd(_days[_inspectedIndex].TotalApiValueUsd) + (_days[_inspectedIndex].CodexImported ? ", estimated" : string.Empty);
 
     /// <summary>Spoken description of the inspected day.</summary>
     public string InspectedAccessibleText => IsInspecting
@@ -187,6 +191,107 @@ public sealed class UsageViewModel : ObservableObject
         }
     }
 
+    // Usage by hour of day and Anthropic's peak hours (Claude and Codex together, recent days).
+
+    public const int PeakStatsDays = 28;
+
+    private IReadOnlyList<double> _hourFractions = new double[24];
+    private IReadOnlyList<bool> _peakHourMask = new bool[24];
+    private string _peakShareText = string.Empty;
+    private string _drainText = string.Empty;
+
+    public IReadOnlyList<double> HourFractions => _hourFractions;
+
+    /// <summary>Local hours (0 to 23) that fall in the peak window on a weekday.</summary>
+    public IReadOnlyList<bool> PeakHourMask => _peakHourMask;
+
+    /// <summary>"Peak hours (weekdays 8 AM–2 PM ET): 41% of your usage, last 28 days".</summary>
+    public string PeakShareText => _peakShareText;
+
+    /// <summary>How fast Claude's 5-hour limit fills per dollar in peak versus off-peak hours, or how far the comparison is.</summary>
+    public string DrainText => _drainText;
+
+    public bool HasHourProfile => _peakShareText.Length > 0;
+
+    private HourlyProfile _hourProfile = HourlyProfile.Empty;
+    private int _hoveredHour = -1;
+
+    public int HoveredHour => _hoveredHour;
+
+    /// <summary>"2 PM: 12.4M fresh tokens · $4.10 (peak hour)" while a bar is hovered, else a hint.</summary>
+    public string HourDetailText
+    {
+        get
+        {
+            if (_hoveredHour is < 0 or > 23)
+            {
+                return "Hover an hour for its tokens, last " + PeakStatsDays + " days";
+            }
+
+            var c = System.Globalization.CultureInfo.CurrentCulture;
+            var start = new DateTime(2000, 1, 1, _hoveredHour, 0, 0).ToString("h tt", c);
+            var end = new DateTime(2000, 1, 1, (_hoveredHour + 1) % 24, 0, 0).ToString("h tt", c);
+            var fresh = _hourProfile.FreshByHour[_hoveredHour];
+            var peak = _hoveredHour < _peakHourMask.Count && _peakHourMask[_hoveredHour] ? ", peak on weekdays" : string.Empty;
+            return fresh == 0
+                ? $"{start}–{end}: no usage, last {PeakStatsDays} days{peak}"
+                : $"{start}–{end}: {DisplayFormat.Tokens(fresh)} fresh tokens · {DisplayFormat.Usd(_hourProfile.CostByHour[_hoveredHour])}, last {PeakStatsDays} days{peak}";
+        }
+    }
+
+    /// <summary>The pointer is over the bar of <paramref name="hour"/> (0 to 23), or left the strip (-1).</summary>
+    public void HoverHour(int hour)
+    {
+        var next = hour is >= 0 and <= 23 ? hour : -1;
+        if (next == _hoveredHour)
+        {
+            return;
+        }
+
+        _hoveredHour = next;
+        OnPropertyChanged(nameof(HoveredHour));
+        OnPropertyChanged(nameof(HourDetailText));
+    }
+
+    public event Action? HourProfileChanged;
+
+    public void SetPeakStats(HourlyProfile profile, DrainStats drain, PeakWindow window)
+    {
+        _hourProfile = profile;
+        var max = profile.CostByHour.Max();
+        _hourFractions = profile.CostByHour.Select(c => max > 0 ? (double)(c / max) : 0).ToList();
+        _peakHourMask = LocalPeakHours(window);
+        var c = System.Globalization.CultureInfo.CurrentCulture;
+        _peakShareText = profile.TotalCost > 0
+            ? $"Peak hours ({window.Describe(c)}): {Math.Round(profile.PeakShare * 100):0}% of your usage, last {PeakStatsDays} days"
+            : $"Peak hours ({window.Describe(c)}): no usage in the last {PeakStatsDays} days";
+        _drainText = drain.PeakFactor is { } factor
+            ? $"5h limit per $1: {drain.PeakPercentPerUsd!.Value.ToString("0.00", c)}% peak, {drain.OffPeakPercentPerUsd!.Value.ToString("0.00", c)}% off-peak ({factor.ToString("0.0", c)}×)"
+            : $"Limit drain: collecting readings (peak {Math.Min(drain.PeakIntervals, DrainStats.MinIntervals)}/{DrainStats.MinIntervals}, off-peak {Math.Min(drain.OffPeakIntervals, DrainStats.MinIntervals)}/{DrainStats.MinIntervals})";
+        OnPropertyChanged(nameof(HourFractions));
+        OnPropertyChanged(nameof(PeakHourMask));
+        OnPropertyChanged(nameof(PeakShareText));
+        OnPropertyChanged(nameof(DrainText));
+        OnPropertyChanged(nameof(HasHourProfile));
+        OnPropertyChanged(nameof(HourDetailText));
+        HourProfileChanged?.Invoke();
+    }
+
+    /// <summary>Which local hours are peak hours on a weekday (this week's offset to US Eastern time).</summary>
+    private static bool[] LocalPeakHours(PeakWindow window)
+    {
+        var today = DateTime.Today;
+        var weekday = today.AddDays(today.DayOfWeek switch { DayOfWeek.Saturday => 2, DayOfWeek.Sunday => 1, _ => 0 });
+        var mask = new bool[24];
+        for (var h = 0; h < 24; h++)
+        {
+            var local = new DateTimeOffset(weekday.AddHours(h + 0.5), TimeZoneInfo.Local.GetUtcOffset(weekday.AddHours(h + 0.5)));
+            mask[h] = window.IsPeak(local);
+        }
+
+        return mask;
+    }
+
     // Running cost totals of Claude and Codex together (estimated API equivalent, USD).
 
     private SpendTotals _spend = SpendTotals.Zero;
@@ -197,8 +302,16 @@ public sealed class UsageViewModel : ObservableObject
 
     public string LifetimeTotalText => DisplayFormat.Usd(_spend.Lifetime);
 
-    /// <summary>Some tokens in these totals have no list price; the totals cover the priced part.</summary>
-    public bool SpendPartial => _spend.LifetimePartial;
+    /// <summary>Some tokens in these totals have no list price, or some days are imported estimates.</summary>
+    public bool SpendPartial => _spend.LifetimePartial || _spend.IncludesImported;
+
+    public string SpendNote => (_spend.LifetimePartial, _spend.IncludesImported) switch
+    {
+        (true, true) => "Partly priced, and Codex days imported from your ChatGPT profile are estimated.",
+        (true, false) => "Partly priced: some tokens have no list price.",
+        (false, true) => "Includes Codex days imported from your ChatGPT profile (estimated).",
+        _ => string.Empty,
+    };
 
     public string SpendAccessibleText =>
         $"Estimated API equivalent: this week {WeekTotalText}, this month {MonthTotalText}, lifetime {LifetimeTotalText}{(SpendPartial ? ", partly priced" : string.Empty)}";
@@ -215,6 +328,7 @@ public sealed class UsageViewModel : ObservableObject
         OnPropertyChanged(nameof(MonthTotalText));
         OnPropertyChanged(nameof(LifetimeTotalText));
         OnPropertyChanged(nameof(SpendPartial));
+        OnPropertyChanged(nameof(SpendNote));
         OnPropertyChanged(nameof(SpendAccessibleText));
     }
 

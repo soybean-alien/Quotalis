@@ -16,6 +16,26 @@ public class IslandStateMachineTests
     }
 
     [Fact]
+    public void Keep_open_ignores_outside_clicks_but_not_an_explicit_close()
+    {
+        var island = Create();
+        island.KeepExpanded = true;
+        island.Activate();
+
+        island.DismissFromOutside();
+        island.Handle(IslandInput.ClickedOutside);
+        Assert.Equal(IslandMode.Expanded, island.Mode);
+
+        island.Toggle(); // the keyboard shortcut (and Esc) still close it
+        Assert.Equal(IslandMode.Compact, island.Mode);
+
+        island.KeepExpanded = false;
+        island.Activate();
+        island.DismissFromOutside();
+        Assert.Equal(IslandMode.Compact, island.Mode);
+    }
+
+    [Fact]
     public void Hover_opens_a_peek_after_a_short_dwell()
     {
         var island = Create();

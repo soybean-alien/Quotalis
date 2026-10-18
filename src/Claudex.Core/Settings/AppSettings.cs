@@ -68,6 +68,9 @@ public sealed class AppSettings
 
     public bool LaunchHidden { get; set; }
 
+    /// <summary>The expanded island stays open when you click elsewhere (Esc or the shortcut still close it).</summary>
+    public bool KeepIslandOpen { get; set; }
+
     // Position
     /// <summary>Device name of the monitor (for example <c>\.\DISPLAY2</c>); null means the primary monitor.</summary>
     public string? MonitorDevice { get; set; }
@@ -168,6 +171,11 @@ public sealed class AppSettings
 
     /// <summary>One of <see cref="ShortcutGesture.Presets"/>, by its text.</summary>
     public string GlobalShortcut { get; set; } = ShortcutGesture.Default.Text;
+
+    // Peak hours (Anthropic's busy hours, weekdays in US Eastern time; announced as 8 AM to 2 PM in March 2026)
+    public int PeakStartHour { get; set; } = 8;
+
+    public int PeakEndHour { get; set; } = 14;
 
     // Updates
     /// <summary>Look for a new Claudex release once a day (through the signed-in GitHub CLI).</summary>
