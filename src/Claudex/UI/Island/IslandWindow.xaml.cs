@@ -708,7 +708,9 @@ public sealed partial class IslandWindow : Window
             return;
         }
 
-        if (_state.Mode is not (IslandMode.Compact or IslandMode.Activity or IslandMode.Retracted))
+        // The open island can be dragged too, from any part of the capsule its controls leave free (they handle
+        // their own presses); otherwise "Keep the island open" would leave no way to move it.
+        if (_state.Mode is not (IslandMode.Compact or IslandMode.Activity or IslandMode.Retracted or IslandMode.Expanded))
         {
             return;
         }
