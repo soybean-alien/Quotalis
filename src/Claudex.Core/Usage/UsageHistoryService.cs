@@ -121,7 +121,10 @@ public sealed class UsageHistoryService
     {
         var to = Today;
         var from = to.AddDays(-(days - 1));
-        var merged = UsageAggregator.MergeByDay(_db.GetDaily(from, to)).ToDictionary(d => d.Day);
+        var imported = _db.GetImportedDays(from, to);
+        var merged = UsageAggregator.MergeByDay(_db.GetDaily(from, to))
+            .Select(d => imported.Contains((d.Day, AiProviderKind.Codex)) ? d with { CodexImported = true } : d)
+            .ToDictionary(d => d.Day);
         var result = new List<UsageDay>(days);
         for (var day = from; day <= to; day = day.AddDays(1))
         {
@@ -160,7 +163,8 @@ public sealed class UsageHistoryService
             }
         }
 
-        return new SpendTotals(decimal.Round(week, 2), decimal.Round(month, 2), decimal.Round(lifetime, 2), weekPartial, monthPartial, lifetimePartial);
+        var anyImported = _db.GetImportedDays(DateOnly.MinValue, today).Count > 0;
+        return new SpendTotals(decimal.Round(week, 2), decimal.Round(month, 2), decimal.Round(lifetime, 2), weekPartial, monthPartial, lifetimePartial, anyImported);
     }
 
     /// <summary>

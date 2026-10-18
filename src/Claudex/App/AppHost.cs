@@ -212,6 +212,8 @@ internal sealed class AppHost : IDisposable
 
         ScheduleMidnight();
         _ = StartBackgroundAsync();
+        // "Keep the island open" opens it once the window is up.
+        _dispatcher.TryEnqueue(DispatcherQueuePriority.Low, () => ApplyKeepOpen(_settings.Current));
         if (!_options.IsDemo && !IsSnapshot)
         {
             AppUpdater.Shared = new AppUpdater();
@@ -709,6 +711,49 @@ internal sealed class AppHost : IDisposable
         }
     }
 
+    private DateTimeOffset _peakStatsAt = DateTimeOffset.MinValue;
+    private PeakWindow? _peakStatsWindow;
+
+    /// <summary>
+    /// Usage by hour and the peak share for the last <see cref="UsageViewModel.PeakStatsDays"/> days, and the 5-hour limit
+    /// drain from exact readings: Claudex's calibration log, plus Tokenz's older log when it is still on this PC (read only).
+    /// </summary>
+    private (HourlyProfile Profile, DrainStats Drain) ComputePeakStats(PeakWindow window)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var events = _database.GetEventsBetween(now.AddDays(-UsageViewModel.PeakStatsDays), now.AddMinutes(1));
+        var profile = HourlyProfile.From(events, _history.Pricing, window, TimeZoneInfo.Local);
+        if (_options.IsDemo)
+        {
+            return (profile, new DrainStats(null, null, 0, 0));
+        }
+
+        var lines = new List<string>();
+        var tokenzLog = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Tokenz", "state", "calibration_log.jsonl");
+        foreach (var log in new[] { Path.Combine(AppPaths.Root, "calibration-log.jsonl"), tokenzLog })
+        {
+            try
+            {
+                if (File.Exists(log))
+                {
+                    using var stream = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                    using var reader = new StreamReader(stream);
+                    while (reader.ReadLine() is { } line)
+                    {
+                        lines.Add(line);
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Log.Debug("plan", "Calibration log unreadable", new { error = ex.GetType().Name });
+            }
+        }
+
+        var claude = events.Where(e => e.Provider == AiProviderKind.Claude).ToList();
+        return (profile, PlanDrain.Analyze(PlanDrain.ParseReadings(lines), claude, _history.Pricing, window));
+    }
+
     /// <summary>
     /// Looks for a new release once a day when "Check for updates daily" is on, starting a couple of minutes after
     /// launch so it never competes with the first log scan. Results only show in Settings, About.
@@ -869,6 +914,7 @@ internal sealed class AppHost : IDisposable
         _plan?.Configure(settings.ClaudeEnabled);
         _viewModel.EnsureValidTab();
         _window.SetAlwaysOnTop(settings.AlwaysOnTop);
+        ApplyKeepOpen(settings);
         _window.ConfigureHomeCloud(settings.HomeCloudActive, settings.HomeCloudTargetPath, settings.HomeCloudDropSide);
         PlaceIsland();
         SyncAutostart(settings);
@@ -888,6 +934,12 @@ internal sealed class AppHost : IDisposable
 
         // A changed battery floor applies at once.
         CheckAwakeBattery();
+
+        // Changed peak hours re-shade the hour strip and redo the peak comparison.
+        if (_peakStatsWindow is { } shown && (shown.StartHour != settings.PeakStartHour || shown.EndHour != settings.PeakEndHour))
+        {
+            RequestHistoryReload();
+        }
 
         if (!_options.IsDemo)
         {
@@ -1101,6 +1153,17 @@ internal sealed class AppHost : IDisposable
     }
 
     // Visibility ---------------------------------------------------------------------------------------
+
+    /// <summary>"Keep the island open": turning it on opens the island now; the state machine then ignores outside clicks.</summary>
+    private void ApplyKeepOpen(AppSettings settings)
+    {
+        var turnedOn = settings.KeepIslandOpen && !_state.KeepExpanded;
+        _state.KeepExpanded = settings.KeepIslandOpen;
+        if (turnedOn && _state.Mode is Core.Island.IslandMode.Compact or Core.Island.IslandMode.Activity && !IsSnapshot)
+        {
+            ShowIsland(expand: true);
+        }
+    }
 
     private void ShowIsland(bool expand)
     {
@@ -1339,6 +1402,15 @@ internal sealed class AppHost : IDisposable
             _viewModel.Usage.SetHistory(history);
             var totals = await Task.Run(() => _history.GetSpendTotals(firstDay));
             _viewModel.Usage.SetSpendTotals(totals);
+            var settings = _settings.Current;
+            var window = new PeakWindow(settings.PeakStartHour, settings.PeakEndHour, PeakWindow.Eastern);
+            if (DateTimeOffset.UtcNow - _peakStatsAt > TimeSpan.FromMinutes(1) || window != _peakStatsWindow)
+            {
+                _peakStatsAt = DateTimeOffset.UtcNow;
+                _peakStatsWindow = window;
+                var (profile, drain) = await Task.Run(() => ComputePeakStats(window));
+                _viewModel.Usage.SetPeakStats(profile, drain, window);
+            }
             if (history.Count > 0)
             {
                 var peaks = await Task.Run(() => _database.GetPlanPeaks(AiProviderKind.Claude, history[0].Day, history[^1].Day));

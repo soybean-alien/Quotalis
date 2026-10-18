@@ -95,6 +95,19 @@ public sealed class UsageDatabase : IDisposable
             PRIMARY KEY (day, provider, window)
         ) WITHOUT ROWID;
         """,
+
+        // 3: days whose daily totals were imported from elsewhere (for example a ChatGPT profile), not measured from
+        // local logs. The daily_usage row holds the figures; this row says where they came from.
+        """
+        CREATE TABLE imported_days (
+            day          TEXT    NOT NULL,
+            provider     INTEGER NOT NULL,
+            source       TEXT    NOT NULL,
+            total_tokens INTEGER NOT NULL,
+            imported_ms  INTEGER NOT NULL,
+            PRIMARY KEY (day, provider)
+        ) WITHOUT ROWID;
+        """,
     ];
 
     private readonly SqliteConnection _connection;
@@ -217,6 +230,96 @@ public sealed class UsageDatabase : IDisposable
         return inserted;
     }
 
+    /// <summary>True when the day has a daily row for the provider that was measured locally (not imported).</summary>
+    public bool HasMeasuredDaily(DateOnly day, AiProviderKind provider)
+    {
+        lock (_gate)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT COUNT(*) FROM daily_usage d
+                WHERE d.day = $day AND d.provider = $p
+                  AND NOT EXISTS (SELECT 1 FROM imported_days i WHERE i.day = d.day AND i.provider = d.provider);
+                """;
+            cmd.Parameters.AddWithValue("$day", FormatDay(day));
+            cmd.Parameters.AddWithValue("$p", (int)provider);
+            return Convert.ToInt64(cmd.ExecuteScalar(), CultureInfo.InvariantCulture) > 0;
+        }
+    }
+
+    /// <summary>Stores an imported day: its daily row and where it came from, in one transaction.</summary>
+    public void ImportDaily(DailyUsage daily, string source, long totalTokens, DateTimeOffset importedAt)
+    {
+        lock (_gate)
+        {
+            using var tx = _connection.BeginTransaction();
+            UpsertDailyCore(daily, tx);
+            using var cmd = _connection.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = """
+                INSERT INTO imported_days (day, provider, source, total_tokens, imported_ms) VALUES ($day, $p, $source, $total, $at)
+                ON CONFLICT (day, provider) DO UPDATE SET source = excluded.source, total_tokens = excluded.total_tokens, imported_ms = excluded.imported_ms;
+                """;
+            cmd.Parameters.AddWithValue("$day", FormatDay(daily.Day));
+            cmd.Parameters.AddWithValue("$p", (int)daily.Provider);
+            cmd.Parameters.AddWithValue("$source", source);
+            cmd.Parameters.AddWithValue("$total", totalTokens);
+            cmd.Parameters.AddWithValue("$at", importedAt.ToUnixTimeMilliseconds());
+            cmd.ExecuteNonQuery();
+            tx.Commit();
+        }
+    }
+
+    /// <summary>The imported (day, provider) pairs in the range.</summary>
+    public IReadOnlySet<(DateOnly Day, AiProviderKind Provider)> GetImportedDays(DateOnly from, DateOnly to)
+    {
+        lock (_gate)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT day, provider FROM imported_days WHERE day >= $from AND day <= $to;";
+            cmd.Parameters.AddWithValue("$from", FormatDay(from));
+            cmd.Parameters.AddWithValue("$to", FormatDay(to));
+            using var reader = cmd.ExecuteReader();
+            var set = new HashSet<(DateOnly, AiProviderKind)>();
+            while (reader.Read())
+            {
+                set.Add((ParseDay(reader.GetString(0)), (AiProviderKind)reader.GetInt32(1)));
+            }
+
+            return set;
+        }
+    }
+
+    /// <summary>Every event of both tools with a timestamp in [<paramref name="from"/>, <paramref name="to"/>), oldest first.</summary>
+    public IReadOnlyList<UsageEvent> GetEventsBetween(DateTimeOffset from, DateTimeOffset to)
+    {
+        lock (_gate)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT provider, event_key, ts_ms, model, input, output, cache_w5m, cache_w1h, cache_read, session_id, project
+                FROM usage_events WHERE ts_ms >= $from AND ts_ms < $to ORDER BY ts_ms;
+                """;
+            cmd.Parameters.AddWithValue("$from", from.ToUnixTimeMilliseconds());
+            cmd.Parameters.AddWithValue("$to", to.ToUnixTimeMilliseconds());
+            using var reader = cmd.ExecuteReader();
+            var list = new List<UsageEvent>();
+            while (reader.Read())
+            {
+                list.Add(new UsageEvent(
+                    (AiProviderKind)reader.GetInt32(0),
+                    reader.GetString(1),
+                    DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(2)),
+                    reader.GetString(3),
+                    new TokenCounts(reader.GetInt64(4), reader.GetInt64(5), reader.GetInt64(6), reader.GetInt64(7), reader.GetInt64(8)),
+                    reader.IsDBNull(9) ? null : reader.GetString(9),
+                    reader.IsDBNull(10) ? null : reader.GetString(10)));
+            }
+
+            return list;
+        }
+    }
+
     public IReadOnlyList<UsageEvent> GetEvents(AiProviderKind provider, DateOnly day)
     {
         lock (_gate)
@@ -246,11 +349,28 @@ public sealed class UsageDatabase : IDisposable
         }
     }
 
+    /// <summary>Stores a day measured from local logs. It replaces an imported estimate for that day, if there was one.</summary>
     public void UpsertDaily(DailyUsage daily)
     {
         lock (_gate)
         {
+            using var tx = _connection.BeginTransaction();
+            UpsertDailyCore(daily, tx);
             using var cmd = _connection.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "DELETE FROM imported_days WHERE day = $day AND provider = $p;";
+            cmd.Parameters.AddWithValue("$day", FormatDay(daily.Day));
+            cmd.Parameters.AddWithValue("$p", (int)daily.Provider);
+            cmd.ExecuteNonQuery();
+            tx.Commit();
+        }
+    }
+
+    private void UpsertDailyCore(DailyUsage daily, SqliteTransaction tx)
+    {
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.Transaction = tx;
             cmd.CommandText = """
                 INSERT INTO daily_usage (day, provider, input, output, cache_w5m, cache_w1h, cache_read, total_tokens, api_value_eur, partial, sessions)
                 VALUES ($day, $p, $in, $out, $w5, $w1, $cr, $total, $value, $partial, $sessions)

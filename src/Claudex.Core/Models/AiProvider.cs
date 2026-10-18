@@ -96,7 +96,7 @@ public sealed record DailyUsage(
 /// Estimated API equivalent of Claude and Codex together, in USD, for the current week, the current month and
 /// every stored day. A flag is set when some tokens in that range have no list price (the value covers the rest).
 /// </summary>
-public sealed record SpendTotals(decimal Week, decimal Month, decimal Lifetime, bool WeekPartial, bool MonthPartial, bool LifetimePartial)
+public sealed record SpendTotals(decimal Week, decimal Month, decimal Lifetime, bool WeekPartial, bool MonthPartial, bool LifetimePartial, bool IncludesImported = false)
 {
     public static readonly SpendTotals Zero = new(0m, 0m, 0m, false, false, false);
 }
@@ -104,6 +104,7 @@ public sealed record SpendTotals(decimal Week, decimal Month, decimal Lifetime, 
 /// <summary>One cell of the usage history graph.</summary>
 /// <param name="ClaudePartial">Some of Claude's tokens that day have no list price; its value covers the priced ones.</param>
 /// <param name="CodexPartial">Some of Codex's tokens that day have no list price; its value covers the priced ones.</param>
+/// <param name="CodexImported">Codex's figures that day come from a ChatGPT profile import: estimated, not measured.</param>
 public sealed record UsageDay(
     DateOnly Day,
     TokenCounts Claude,
@@ -112,7 +113,8 @@ public sealed record UsageDay(
     decimal CodexApiValueUsd,
     int Sessions,
     bool ClaudePartial = false,
-    bool CodexPartial = false)
+    bool CodexPartial = false,
+    bool CodexImported = false)
 {
     public bool ApiValuePartial => ClaudePartial || CodexPartial;
 

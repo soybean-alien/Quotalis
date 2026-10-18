@@ -28,7 +28,7 @@ public sealed partial class IslandWindow : Window
 
     /// <summary>Largest capsule the window must hold, in DIPs.</summary>
     public const double MaxCapsuleWidth = 420;
-    public const double MaxCapsuleHeight = 780;
+    public const double MaxCapsuleHeight = 920;
 
     public static double WindowWidth => MaxCapsuleWidth + 2 * EdgeMargin;
 
@@ -648,7 +648,7 @@ public sealed partial class IslandWindow : Window
         {
             Log.Debug("island", "Clicked outside");
             _restoreFocusOnCollapse = false;
-            _state.Dismiss();
+            _state.DismissFromOutside();
         }
     }
 
@@ -701,7 +701,7 @@ public sealed partial class IslandWindow : Window
             if (_state.Mode == IslandMode.Expanded)
             {
                 _restoreFocusOnCollapse = false;
-                _state.Dismiss();
+                _state.DismissFromOutside();
             }
 
             e.Handled = true;
@@ -895,7 +895,7 @@ public sealed partial class IslandWindow : Window
         if (args.WindowActivationState == WindowActivationState.Deactivated && _state.Mode == IslandMode.Expanded)
         {
             _restoreFocusOnCollapse = false;
-            _state.Dismiss();
+            _state.DismissFromOutside();
         }
     }
 

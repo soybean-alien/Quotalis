@@ -26,6 +26,12 @@ public static class Program
             return CalibrationCommand.CodexStop();
         }
 
+        // Codex history from a ChatGPT profile export, for days before Claudex tracked Codex locally.
+        if (ImportCommand.IsRequested(args))
+        {
+            return ImportCommand.Run(args);
+        }
+
         // Installer and uninstaller: point the Claude Code and Codex hooks at this copy, or remove them.
         if (CalibrationCommand.IsHooks(args))
         {

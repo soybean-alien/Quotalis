@@ -42,6 +42,7 @@ public sealed partial class SettingsWindow : Window
         }
 
         InitAwake();
+        InitPeakHours();
 
 
         _sections = new()
@@ -185,6 +186,7 @@ public sealed partial class SettingsWindow : Window
             CheckUpdatesToggle.IsOn = s.CheckForUpdates;
             CheckUpdatesToggle.IsEnabled = !_isDemo;
             LaunchHiddenToggle.IsOn = s.LaunchHidden;
+            KeepOpenToggle.IsOn = s.KeepIslandOpen;
             BuildModuleRows(s);
             UpdatePlanConnection();
             BuildRepositoryRows(s);
@@ -192,6 +194,7 @@ public sealed partial class SettingsWindow : Window
             ShortcutToggle.IsOn = s.GlobalShortcutEnabled;
             ShortcutPicker.SelectedItem = ShortcutGesture.FromText(s.GlobalShortcut).Text;
             ShortcutPicker.IsEnabled = s.GlobalShortcutEnabled;
+            LoadPeakHours(s);
             UpdateShortcutStatus(s);
             SmartHideToggle.IsOn = s.SmartHideEnabled;
             (s.SmartHideBehavior == SmartHideBehavior.Hide ? SmartHideHide : SmartHideRetract).IsChecked = true;
@@ -307,6 +310,7 @@ public sealed partial class SettingsWindow : Window
                 case "AlwaysOnTop": s.AlwaysOnTop = on; break;
                 case "CheckForUpdates": s.CheckForUpdates = on; break;
                 case "LaunchHidden": s.LaunchHidden = on; break;
+                case "KeepIslandOpen": s.KeepIslandOpen = on; break;
                 case var module when module.StartsWith("Module:", StringComparison.Ordinal)
                     && Enum.TryParse<ModuleId>(module["Module:".Length..], out var id):
                     s.SetEnabled(id, on);

@@ -4,6 +4,26 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-10-17
+
+### Added
+
+- **Usage by hour and Claude's peak hours.** Below the usage graph, while no day is inspected or pinned:
+  - **Hour strip:** 24 bars show when you use Claude and Codex (estimated API equivalent by local hour, last 28 days), with Anthropic's peak hours shaded bright yellow. Hovering a bar shows that hour's fresh tokens and cost.
+  - **Peak share:** one line gives the share of your usage that falls in peak hours.
+  - **Limit drain:** another compares how fast Claude's 5-hour limit fills per $1 of usage in peak versus off-peak hours, measured from your own exact readings. It pairs consecutive readings in the same 5-hour window, at most two hours apart, against the Claude usage logged between them, and shows the result once each side has 5 intervals and $1 of usage; until then it counts the readings so far. Readings come from Claudex's calibration log and, when it is still on this PC, Tokenz's older log (read only).
+- **Codex history from your ChatGPT profile.** `Claudex.exe --claudex-import-codex-profile <profile.json>` imports the "Token activity" of a ChatGPT profile (the JSON behind `chatgpt.com/u/<name>`), so the usage graph covers Codex days from before Claudex tracked them.
+  - **Which days:** only days before the first Codex day Claudex measured itself. The profile counts UTC days, so later days would overlap measured evenings and count them twice.
+  - **Estimates:** the profile gives one total per day, so each total is split by your measured Codex mix (input, output, cached input) and valued at your measured cost per million tokens.
+  - **Labels:** the day readout says "estimated" and "Codex from your ChatGPT profile", and the gold totals note that they include imported days.
+  - **Provenance:** imported days are recorded in a new `imported_days` table. A later local measurement of the same day replaces the import, and re-pricing never touches imported days.
+- **Settings, General, Keep the island open.** When on, the open island stays open when you click elsewhere or switch windows, instead of rolling back into the pill. It opens as soon as you turn the option on and when Claudex starts. Esc and the keyboard shortcut still close it, and full-screen and auto-hide apps still move it aside.
+- **Settings, General, Claude peak hours:** start and end hour, weekdays in US Eastern time. The default is 8 AM to 2 PM, as Anthropic announced in March 2026; it can't be confirmed for later dates, hence the setting.
+
+### Changed
+
+- **The hours block and the day readout show together.** Inspecting or pinning a day no longer swaps the hour strip out: the day's numbers appear in their own area below it (a short hint stands there otherwise), so the layout never jumps. The open island grows at the bottom to fit both (up to 920 DIP, from 780).
+
 ### Fixed
 
 - **Flaky GitHub module test.** `Without_gh_the_module_explains_how_to_connect` sometimes saw `Loading` instead of `Unavailable`: the module's first refresh ran on a real timer, held the fetch lock, and the test's own refresh returned before the status changed. The test now uses a fake clock, so that first refresh runs inside `Configure`. Test-only; the app is unchanged.
