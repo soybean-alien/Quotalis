@@ -85,6 +85,24 @@ public class PlanUsageTests
     }
 
     [Fact]
+    public void Plan_service_refresh_recovers_a_reading_the_first_load_missed()
+    {
+        var path = Path.Combine(TestData.TempDirectory(), "claude-plan.json");
+        PlanUsage? onDisk = null;
+        using var service = new PlanUsageService(path, () => onDisk);
+        service.Configure(true);
+        Assert.Null(service.Usage);
+
+        PlanUsage? seen = null;
+        service.Changed += u => seen = u;
+        onDisk = new PlanUsage(new PlanWindow(83, Now.AddHours(1)), new PlanWindow(36, Now.AddDays(3)), Now);
+        service.Refresh();
+
+        Assert.Equal(83, service.Usage!.Current!.UsedPercent);
+        Assert.Same(onDisk, seen);
+    }
+
+    [Fact]
     public void Plan_peaks_keep_the_daily_maximum_and_are_never_invented()
     {
         using var db = UsageDatabase.OpenInMemory();

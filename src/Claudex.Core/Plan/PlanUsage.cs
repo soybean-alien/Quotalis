@@ -83,7 +83,7 @@ public sealed class PlanUsageStore(string path)
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
-            Log.Debug("plan", "Plan usage file unreadable", new { error = ex.GetType().Name });
+            Log.Warn("plan", "Plan usage file unreadable", new { error = ex.GetType().Name, ex.Message });
             return null;
         }
     }
@@ -263,25 +263,21 @@ public sealed class PlanUsageService : IDisposable
         }
 
         _usage = _load();
-        try
-        {
-            var dir = System.IO.Path.GetDirectoryName(_path)!;
-            Directory.CreateDirectory(dir);
-            _watcher = new FileSystemWatcher(dir, System.IO.Path.GetFileName(_path))
-            {
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
-            };
-            _watcher.Changed += (_, _) => Reload();
-            _watcher.Created += (_, _) => Reload();
-            _watcher.Renamed += (_, _) => Reload();
-            _watcher.EnableRaisingEvents = true;
-        }
-        catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
-        {
-            Log.Debug("plan", "Plan usage not watched", new { error = ex.GetType().Name });
-        }
-
+        Log.Info("plan", "Plan usage loaded", new { found = _usage is not null, fileExists = File.Exists(_path) });
+        Watch();
         Changed?.Invoke(_usage);
+    }
+
+    /// <summary>
+    /// Reads the file again when the reading shown may be missing or behind (the Usage panel opened).
+    /// The watcher normally delivers every write; this catches a missed event or a failed first read.
+    /// </summary>
+    public void Refresh()
+    {
+        if (_enabled)
+        {
+            Reload(retry: false);
+        }
     }
 
     public void Dispose()
@@ -291,17 +287,63 @@ public sealed class PlanUsageService : IDisposable
         _watcher = null;
     }
 
-    private void Reload()
+    private void Watch()
+    {
+        _watcher?.Dispose();
+        _watcher = null;
+        try
+        {
+            var dir = System.IO.Path.GetDirectoryName(_path)!;
+            Directory.CreateDirectory(dir);
+            _watcher = new FileSystemWatcher(dir, System.IO.Path.GetFileName(_path))
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
+            };
+            _watcher.Changed += (_, _) => Reload(retry: true);
+            _watcher.Created += (_, _) => Reload(retry: true);
+            _watcher.Renamed += (_, _) => Reload(retry: true);
+            // A failed watcher stops reporting for good: start a new one and read the file once.
+            _watcher.Error += (_, e) =>
+            {
+                Log.Warn("plan", "Plan usage watcher failed, restarting it", new { error = e.GetException()?.GetType().Name });
+                if (_enabled)
+                {
+                    Watch();
+                    Reload(retry: false);
+                }
+            };
+            _watcher.EnableRaisingEvents = true;
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
+        {
+            Log.Warn("plan", "Plan usage not watched", new { error = ex.GetType().Name });
+        }
+    }
+
+    private void Reload(bool retry)
     {
         var usage = _load();
-        if (usage is null || usage == _usage)
+        if (usage is null && retry)
         {
+            // The writer may still hold the file: try once more shortly.
+            _ = Task.Delay(300).ContinueWith(_ => Reload(retry: false), TaskScheduler.Default);
             return;
         }
 
-        _usage = usage;
+        lock (_gate)
+        {
+            if (usage is null || usage == _usage)
+            {
+                return;
+            }
+
+            _usage = usage;
+        }
+
         Changed?.Invoke(usage);
     }
+
+    private readonly object _gate = new();
 }
 
 /// <summary>What the plan usage link can deliver right now; "connected" alone is not "available".</summary>

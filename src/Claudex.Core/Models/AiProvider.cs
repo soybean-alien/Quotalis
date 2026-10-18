@@ -78,6 +78,12 @@ public sealed record AiUsageSnapshot
 
     public DateTimeOffset? WeeklyLimitResetsAt { get; init; }
 
+    /// <summary>A current (5-hour) window was recorded and has reset since: 0% used until the next request.</summary>
+    public bool LimitHasReset { get; init; }
+
+    /// <summary>A weekly window was recorded and has reset since.</summary>
+    public bool WeeklyLimitHasReset { get; init; }
+
     public string? ErrorMessage { get; init; }
 
     public static AiUsageSnapshot Initial(AiProviderKind provider) => new() { Provider = provider };

@@ -142,11 +142,15 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
                 WeeklyLimitResetsAt = weeklyLimit.ResetsAt,
             };
         }
+        else if (weeklyLimit is not null)
+        {
+            snapshot = snapshot with { WeeklyLimitHasReset = true };
+        }
 
-        // A reading from a window that has already reset says nothing about the current window.
+        // A reading from a window that has already reset says nothing about the current window, except that it is empty.
         if (limit is null || (limit.ResetsAt is { } resets && resets <= Time.GetUtcNow()))
         {
-            return snapshot;
+            return limit is null ? snapshot : snapshot with { LimitHasReset = true };
         }
 
         return snapshot with
