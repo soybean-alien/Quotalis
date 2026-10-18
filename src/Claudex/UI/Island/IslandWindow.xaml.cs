@@ -245,6 +245,12 @@ public sealed partial class IslandWindow : Window
     public void SetAlwaysOnTop(bool value)
     {
         _alwaysOnTop = value;
+        // Quitting from Settings closes Settings after the island: its window is already gone then.
+        if (_exiting || AppWindow is null)
+        {
+            return;
+        }
+
         IslandWindowChrome.SetAlwaysOnTop(_hwnd, AppWindow, value);
     }
 

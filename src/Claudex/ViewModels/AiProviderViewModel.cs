@@ -162,12 +162,30 @@ public sealed class AiProviderViewModel : ObservableObject
 
     public bool HasNoPlan => IsReady && !HasPlan;
 
-    /// <summary>Both windows are known: offer the Current / Weekly switch.</summary>
-    public bool HasBothPlanWindows => IsReady && CurrentWindow is not null && WeeklyWindow is not null;
+    /// <summary>
+    /// A window that was measured and has since reset: nothing is used in it until the next request, so it
+    /// shows as 0% (marked "Reset") instead of disappearing, which kept the Current / Weekly switch away.
+    /// </summary>
+    private static readonly PlanWindow ResetWindow = new(0, DateTimeOffset.MinValue);
+
+    private bool CurrentHasReset => Kind == AiProviderKind.Claude
+        ? _plan?.Current is { } c && c.ResetsAt <= DateTimeOffset.UtcNow
+        : _snapshot.LimitHasReset || _snapshot.LimitPercent is not null && _snapshot.LimitResetsAt is { } r && r <= DateTimeOffset.UtcNow;
+
+    private bool WeeklyHasReset => Kind == AiProviderKind.Claude
+        ? _plan?.Weekly is { } w && w.ResetsAt <= DateTimeOffset.UtcNow
+        : _snapshot.WeeklyLimitHasReset || _snapshot.WeeklyLimitPercent is not null && _snapshot.WeeklyLimitResetsAt is { } r && r <= DateTimeOffset.UtcNow;
+
+    private PlanWindow? DisplayCurrent => CurrentWindow ?? (CurrentHasReset ? ResetWindow : null);
+
+    private PlanWindow? DisplayWeekly => WeeklyWindow ?? (WeeklyHasReset ? ResetWindow : null);
+
+    /// <summary>Both windows are known (live or reset): offer the Current / Weekly switch.</summary>
+    public bool HasBothPlanWindows => HasPlan && DisplayCurrent is not null && DisplayWeekly is not null;
 
     public bool ShowWeekly
     {
-        get => _showWeekly && WeeklyWindow is not null || CurrentWindow is null && WeeklyWindow is not null;
+        get => _showWeekly && DisplayWeekly is not null || DisplayCurrent is null && DisplayWeekly is not null;
         set
         {
             if (_showWeekly != value)
@@ -180,7 +198,7 @@ public sealed class AiProviderViewModel : ObservableObject
 
     public bool ShowCurrent => !ShowWeekly;
 
-    private PlanWindow? ShownWindow => ShowWeekly ? WeeklyWindow : CurrentWindow;
+    private PlanWindow? ShownWindow => ShowWeekly ? DisplayWeekly : DisplayCurrent;
 
     public string PlanPercentText => ShownWindow is { } w ? PercentText(w) : "Unavailable";
 
@@ -196,6 +214,11 @@ public sealed class AiProviderViewModel : ObservableObject
     {
         get
         {
+            if (ReferenceEquals(ShownWindow, ResetWindow))
+            {
+                return "Reset, starts on next request";
+            }
+
             var reset = ShownWindow is { } w && w.ResetsAt != DateTimeOffset.MaxValue ? ResetText(w.ResetsAt, DateTimeOffset.UtcNow) : string.Empty;
             if (ShownWindow is { IsEstimated: true })
             {

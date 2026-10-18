@@ -64,8 +64,11 @@ public class CodexRecoveryTests
         Assert.Equal(75, provider.Snapshot.LimitPercent);
         time.Advance(TimeSpan.FromMinutes(4)); // Active indicator expires first.
         Assert.Equal(75, provider.Snapshot.LimitPercent);
+        Assert.False(provider.Snapshot.LimitHasReset);
         time.Advance(TimeSpan.FromMinutes(7));
         Assert.Null(provider.Snapshot.LimitPercent);
+        // The island still knows the window exists (0% until the next request), so the 5H / Weekly switch stays.
+        Assert.True(provider.Snapshot.LimitHasReset);
     }
 
     [Theory]

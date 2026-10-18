@@ -4,6 +4,18 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.9] - 2026-10-18
+
+### Fixed
+
+- **The 5H / Weekly switch disappeared after a reset.** A window that had reset was dropped, and the switch only showed while both windows were live. After Codex's off-schedule weekly reset its old 5-hour window ran out, so Codex showed Weekly alone. A window that has reset now shows as 0%, marked "Reset, starts on next request", and the switch stays for Claude and Codex. Readings are still merged newest first, so an early reset is followed as soon as it is logged.
+- **Claude's plan bar could stay "Unavailable" while readings arrived.** The island kept the reading it found at startup and only learned of new ones from file events; one running copy missed every update until it was restarted. Opening the Usage panel now re-reads `claude-plan.json`, a failed read after a file event is retried once, a failed file watcher is restarted, and read failures are logged as warnings (they were debug-only), with what was found at startup.
+- **Quitting from Settings logged two errors.** Settings closed after the island and tried to change the island's always-on-top state on a window that was already gone.
+
+### Added
+
+- `docs/assets/heatmap-demo.gif`: the usage graph being hovered, clicked to pin a day, and left with the pin kept (demo data). The snapshot run renders the walk (`80-walk-*`), and `tools/make-heatmap-gif.py` adds the cursor and captions.
+
 ## [0.5.8] - 2026-10-17
 
 ### Fixed

@@ -157,7 +157,15 @@ internal sealed class AppHost : IDisposable
             SetRest);
         _window = new IslandWindow(_viewModel, _state, settings.AlwaysOnTop) { SnapshotMode = IsSnapshot };
         _window.SettingsRequested += OpenSettings;
-        _window.VisiblePanelChanged += tab => _modules.OnPanelVisible(tab);
+        _window.VisiblePanelChanged += tab =>
+        {
+            _modules.OnPanelVisible(tab);
+            // Re-read Claude's plan file when the Usage panel opens, so a missed file event can't leave it blank.
+            if (tab == ViewModels.IslandTab.Usage)
+            {
+                _plan?.Refresh();
+            }
+        };
         _window.DragCompleted += OnDragCompleted;
         _window.PlacementInvalidated += () => _dispatcher.TryEnqueue(PlaceIsland);
         _window.ConfigureHomeCloud(settings.HomeCloudActive, settings.HomeCloudTargetPath, settings.HomeCloudDropSide);
@@ -276,6 +284,34 @@ internal sealed class AppHost : IDisposable
             _viewModel.Usage.Inspect(busiest);
             await Shot("11-usage-tooltip");
             _viewModel.Usage.Inspect(-1);
+
+            // A walk over the graph for the demo GIF (tools/make-heatmap-gif.py): hover days, click to pin one, keep
+            // hovering while it stays pinned, leave the graph, then pin another day.
+            var usage = _viewModel.Usage;
+            var active = usage.Days.Select((d, i) => (d, i)).Where(x => x.d.HasUsage).Select(x => x.i).ToList();
+            if (active.Count >= 6)
+            {
+                int Pick(double at) => active[(int)Math.Round(at * (active.Count - 1))];
+                var steps = new (string Action, int Day)[]
+                {
+                    ("hover", Pick(0.15)), ("hover", Pick(0.35)), ("hover", busiest), ("pin", busiest),
+                    ("hover", Pick(0.6)), ("hover", Pick(0.85)), ("leave", -1), ("hover", active[^1]), ("pin", active[^1]), ("leave", -1),
+                };
+                for (var n = 0; n < steps.Length; n++)
+                {
+                    var (action, day) = steps[n];
+                    switch (action)
+                    {
+                        case "hover": usage.Inspect(day); break;
+                        case "pin": usage.Pin(day); break;
+                        default: usage.EndHover(); break;
+                    }
+
+                    await Shot($"80-walk-{n:00}-{action}");
+                }
+
+                usage.ClearPin();
+            }
 
             _state.Dismiss();
             await ExtraSnapshotsAsync(Shot);
