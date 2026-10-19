@@ -1110,7 +1110,8 @@ internal sealed class AppHost : IDisposable
             {
                 IAiUsageProvider provider = kind == AiProviderKind.Claude
                     ? new ClaudeUsageProvider(ClaudeUsageProvider.DefaultRoot(), _history, _database)
-                    : new CodexUsageProvider(CodexUsageProvider.DefaultRoot(), _history, _database);
+                    : new CodexUsageProvider(CodexUsageProvider.DefaultRoot(), _history, _database,
+                        publisher: new Claudex.Core.Usage.CodexLimitPublisher(AppPaths.CodexPlan, AppPaths.CodexLimitLog));
                 await _providers.AddAsync(provider, _shutdown.Token);
             }
             else if (!enabled && running.Contains(kind))

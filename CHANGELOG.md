@@ -4,6 +4,15 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.11] - 2026-10-19
+
+### Added
+
+- **Codex's 5-hour and weekly limits are published for other programs**, the way Claude's already are. The Claudex mini Stream Deck plugin reads them, so its Codex keys show the same numbers as the island. Both files are in `%USERPROFILE%\.claudex`:
+  - `codex-plan.json`: the newest 5-hour and weekly readings (% used, reset time, window length), written atomically whenever Codex reports new numbers. Values are as Codex reported them; a window whose reset time has passed counts as 0% used, as on the island.
+  - `codex-limit-log.jsonl`: one line per reading, so usage per day can be worked out. Lines older than 35 days are dropped.
+  - Numbers only: no prompts, paths or account details.
+
 ## [0.5.10] - 2026-10-19
 
 ### Fixed
