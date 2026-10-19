@@ -68,7 +68,7 @@ Settings are JSON (`settings.json`, source-generated serializer) and are written
 
 - **Name matching.** A price matches an exact model ID or a dated snapshot of it (`claude-sonnet-4-20250514`). Newer models (`claude-opus-5-7`, `gpt-5.2`) stay unpriced instead of borrowing a guess.
 - **Partial pricing.** Unpriced tokens mark the value as partial, per tool and day; the priced part is still shown and labelled "partly priced". `UsageHistoryService.Reprice` recomputes stored days from their events at startup, so new list prices apply to the past.
-- **Overrides.** `pricing.json` next to the settings can override prices and the rate.
+- **Overrides.** `pricing.json` in `%USERPROFILE%\.claudex` can override prices and the rate.
 
 ## The island window
 
@@ -176,3 +176,7 @@ Private calendar links are kept in Windows Credential Manager (`CredentialManage
 ## Composition root
 
 `AppHost` wires everything and is the only place that crosses threads (`DispatcherQueue.TryEnqueue`); `ModuleHost` does the same for the newer modules. A single instance is enforced with a named mutex; a second launch signals a named event and exits. `--demo` swaps in an in-memory database, demo providers and a demo media queue, and uses its own settings file and instance name.
+
+## Shared files (`%USERPROFILE%\.claudex`)
+
+Files that hooks, calibration and other programs write for Claudex live in `%USERPROFILE%\.claudex`, not in `%LOCALAPPDATA%\Claudex`: `claude-plan.json`, `calibration-log.jsonl`, `stop-hook-last.json`, `codex-stop-hook-last.json` and `pricing.json`. Claude desktop is a packaged (MSIX) app, and Windows redirects new files that its hooks create under AppData into Claude's private package folder (`%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Local\Claudex`). A normally started Claudex never sees those files. The user profile root is not redirected. At startup, `SharedFileAdoption` brings in the newest copy of each file from the old data folder and from any packaged app's private copy, merging the calibration log line by line. It only reads the sources.

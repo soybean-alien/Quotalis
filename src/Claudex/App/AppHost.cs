@@ -110,6 +110,17 @@ internal sealed class AppHost : IDisposable
         });
 
         _settings = new SettingsStore(AppPaths.Settings(_options.IsDemo));
+        if (!_options.IsDemo)
+        {
+            // Hook-written files now live in %USERPROFILE%\.claudex; bring over copies from the old folder and from the
+            // private AppData of packaged apps (Claude desktop) that ran our hooks.
+            var adopted = Core.Storage.SharedFileAdoption.Adopt(AppPaths.Shared, AppPaths.LegacySharedFolders(), AppPaths.SharedFiles);
+            if (adopted.Count > 0)
+            {
+                Log.Info("storage", "Shared files adopted", new { files = string.Join(", ", adopted), into = AppPaths.Shared });
+            }
+        }
+
         var pricing = ModelPricingService.Load(AppPaths.PricingOverrides);
         _database = OpenDatabase();
         _history = new UsageHistoryService(_database, pricing);
@@ -766,7 +777,7 @@ internal sealed class AppHost : IDisposable
 
         var lines = new List<string>();
         var tokenzLog = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Tokenz", "state", "calibration_log.jsonl");
-        foreach (var log in new[] { Path.Combine(AppPaths.Root, "calibration-log.jsonl"), tokenzLog })
+        foreach (var log in new[] { AppPaths.CalibrationLog, tokenzLog })
         {
             try
             {

@@ -4,6 +4,14 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.10] - 2026-10-19
+
+### Fixed
+
+- **Claude's plan bar and 5H / Weekly switch were missing whenever Claudex was started normally.** Claude desktop is a packaged (MSIX) app, and Windows redirects new files its hooks create under AppData into Claude's private package folder (`%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Local\Claudex`). Every calibration from the Stop hook landed there, so Claudex started from Explorer, the Start menu or autostart never saw a reading. Only a copy started from inside a Claude session did, which is why a restart sometimes "fixed" it. The same redirection hid `pricing.json` from a normal start, so `codex-auto-review` went unpriced and history was re-priced back and forth at each start.
+  - Files that hooks and other programs write for Claudex now live in **`%USERPROFILE%\.claudex`**, which Windows does not redirect: `claude-plan.json`, `calibration-log.jsonl`, `stop-hook-last.json`, `codex-stop-hook-last.json` and `pricing.json`.
+  - At startup, Claudex brings in the newest copy of each from the old folder and from any packaged app's private copy, and merges the calibration log line by line. It only reads the old copies and never deletes them.
+
 ## [0.5.9] - 2026-10-18
 
 ### Fixed

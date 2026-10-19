@@ -38,7 +38,7 @@ public sealed record ModelPrice
 /// <summary>Result of pricing a set of tokens.</summary>
 public readonly record struct PriceEstimate(decimal ValueUsd, bool IsPriced);
 
-/// <summary>User-editable pricing overrides (<c>pricing.json</c> next to the settings).</summary>
+/// <summary>User-editable pricing overrides (<c>pricing.json</c> in <c>%USERPROFILE%\.claudex</c>).</summary>
 public sealed class PricingOverrides
 {
     [JsonPropertyName("models")]

@@ -11,11 +11,11 @@ namespace Claudex;
 /// </summary>
 internal static class CalibrationCommand
 {
-    private static string LogFile => Path.Combine(AppPaths.Root, "calibration-log.jsonl");
+    private static string LogFile => AppPaths.CalibrationLog;
 
-    private static string HookTrace => Path.Combine(AppPaths.Root, "stop-hook-last.json");
+    private static string HookTrace => AppPaths.ClaudeHookTrace;
 
-    private static string CodexHookTrace => Path.Combine(AppPaths.Root, "codex-stop-hook-last.json");
+    private static string CodexHookTrace => AppPaths.CodexHookTrace;
 
     public static bool IsCalibrate(string[] args) => args.Contains(PlanCalibration.Argument, StringComparer.Ordinal);
 
@@ -107,7 +107,7 @@ internal static class CalibrationCommand
 
         try
         {
-            Directory.CreateDirectory(AppPaths.Root);
+            Directory.CreateDirectory(AppPaths.Shared);
             File.WriteAllText(HookTrace, new JsonObject { ["at"] = DateTimeOffset.Now.ToString("o"), ["blocked"] = reason is not null, ["why"] = why }.ToJsonString());
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -140,7 +140,7 @@ internal static class CalibrationCommand
 
         try
         {
-            Directory.CreateDirectory(AppPaths.Root);
+            Directory.CreateDirectory(AppPaths.Shared);
             File.WriteAllText(CodexHookTrace, new JsonObject
             {
                 ["at"] = now.ToString("o"),
@@ -187,7 +187,7 @@ internal static class CalibrationCommand
     {
         try
         {
-            Directory.CreateDirectory(AppPaths.Root);
+            Directory.CreateDirectory(AppPaths.Shared);
             File.AppendAllText(LogFile, row.ToJsonString(new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
