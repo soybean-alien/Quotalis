@@ -19,10 +19,13 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
     private bool _scanCompleted;
     private ITimer? _resetTimer;
     private bool _disposed;
+    private readonly CodexLimitPublisher? _publisher;
 
-    public CodexUsageProvider(string rootDirectory, UsageHistoryService history, UsageDatabase database, TimeProvider? time = null)
+    /// <param name="publisher">Optional: writes the readings to <c>codex-plan.json</c> and <c>codex-limit-log.jsonl</c> for other programs.</param>
+    public CodexUsageProvider(string rootDirectory, UsageHistoryService history, UsageDatabase database, TimeProvider? time = null, CodexLimitPublisher? publisher = null)
         : base(AiProviderKind.Codex, rootDirectory, history, database, time)
     {
+        _publisher = publisher;
     }
 
     protected override string LogDirectory => Path.Combine(RootDirectory, "sessions");
@@ -76,6 +79,7 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
             UpdateWeekly(weekly);
         }
 
+        PublishLimits(parser.LastRateLimit, parser.LastWeeklyRateLimit);
         return new ParseResult(newOffset, JsonSerializer.Serialize(parser.State, CoreJsonContext.Default.CodexFileState));
     }
 
@@ -87,6 +91,7 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
             if (state is not { Version: 1 }) return false;
             if (state.LastRateLimit is { } limit) UpdateLimit(limit);
             if (state.LastWeeklyRateLimit is { } weekly) UpdateWeekly(weekly);
+            PublishLimits(state.LastRateLimit, state.LastWeeklyRateLimit);
             return true;
         }
         catch (JsonException)
@@ -159,6 +164,20 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
             LimitWindowMinutes = limit.WindowMinutes,
             LimitResetsAt = limit.ResetsAt,
         };
+    }
+
+    private void PublishLimits(CodexRateLimit? reading, CodexRateLimit? readingWeekly)
+    {
+        if (_publisher is null) return;
+        CodexRateLimit? newest;
+        CodexRateLimit? newestWeekly;
+        lock (_limitGate)
+        {
+            newest = _limit;
+            newestWeekly = _weekly;
+        }
+
+        _publisher.Publish(reading, readingWeekly, newest, newestWeekly);
     }
 
     private void UpdateWeekly(CodexRateLimit weekly)
