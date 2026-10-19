@@ -120,7 +120,7 @@ internal sealed class IslandMorph
         // Shadow follows the surface: in with the growth, out slightly ahead of the shrink.
         var shadowAnimation = _c.CreateScalarKeyFrameAnimation();
         shadowAnimation.InsertKeyFrame(1f, shadow, Motion.EaseOut(_c));
-        shadowAnimation.Duration = TimeSpan.FromMilliseconds(elevated ? 320 : 140);
+        shadowAnimation.Duration = TimeSpan.FromMilliseconds((elevated ? 320 : 140) * Motion.IslandPace);
         _props.StartAnimation("Shadow", shadowAnimation);
         batch.End();
         batch.Completed += (_, _) =>

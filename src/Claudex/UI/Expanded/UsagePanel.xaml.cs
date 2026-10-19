@@ -29,9 +29,34 @@ public sealed partial class UsagePanel : UserControl
                 {
                     ApplyColumns();
                 }
+
+                if (e.PropertyName is nameof(UsageViewModel.IsCondensed) or nameof(UsageViewModel.IsInspecting) or "" or null)
+                {
+                    ApplyCondensed();
+                }
             };
             ApplyColumns();
+            ApplyCondensed();
         }
+    }
+
+    /// <summary>
+    /// The usage strip keeps plan usage, the gold totals and the heatmap. A day's readout appears only while a day is
+    /// hovered or pinned. The island's spring animates the height change, and its shape clips the content.
+    /// </summary>
+    private void ApplyCondensed()
+    {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        var condensed = _viewModel.IsCondensed;
+        ClaudeSummary.Condensed = condensed;
+        CodexSummary.Condensed = condensed;
+        RestDetails.Visibility = condensed ? Visibility.Collapsed : Visibility.Visible;
+        Footnote.Visibility = condensed ? Visibility.Collapsed : Visibility.Visible;
+        ReadoutArea.Visibility = !condensed || _viewModel.IsInspecting ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>With one provider turned off, the other takes the full width.</summary>

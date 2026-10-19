@@ -48,6 +48,8 @@
 
         <!-- Below the graph: the summary, the hours block (always), then the inspected or pinned day underneath it. -->
         <StackPanel Margin="0,10,0,0" Spacing="4">
+            <!-- Hidden in the usage strip: the summary and the hours block. -->
+            <StackPanel x:Name="RestDetails" Spacing="4">
             <Grid Height="18">
                 <TextBlock Text="{x:Bind ViewModel.HistorySummary, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
@@ -78,9 +80,10 @@
                 <TextBlock Text="{x:Bind ViewModel.PeakShareText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
                 <TextBlock Text="{x:Bind ViewModel.DrainText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
             </StackPanel>
+            </StackPanel>
 
             <!-- The inspected or pinned day, in a fixed-height area so hovering never moves the layout. -->
-            <Grid Height="{x:Bind ViewModel.ReadoutHeight, Mode=OneWay}" Margin="0,8,0,0">
+            <Grid x:Name="ReadoutArea" Height="{x:Bind ViewModel.ReadoutHeight, Mode=OneWay}" Margin="0,8,0,0">
             <TextBlock Visibility="{x:Bind ViewModel.IsNotInspecting, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Top"
                        Text="Hover a day in the graph for its numbers, or click it to keep them here." />
             <!-- Inspected day: pooled total, then Claude (orange) above Codex (blue) on one scale. -->
@@ -133,7 +136,7 @@
             </Grid>
         </StackPanel>
 
-        <TextBlock Margin="0,12,0,0" Style="{StaticResource FineTextStyle}"
+        <TextBlock x:Name="Footnote" Margin="0,12,0,0" Style="{StaticResource FineTextStyle}"
                    Text="Costs are API list prices, not what you pay." TextWrapping="Wrap" TextTrimming="None" />
     </StackPanel>
 </UserControl>

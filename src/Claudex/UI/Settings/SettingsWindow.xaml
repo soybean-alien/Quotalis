@@ -138,6 +138,20 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Always display usage" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock Text="The island rests as a usage strip (plan usage, the gold totals and the heatmap) instead of the pill, and opens in full while you use it. Together with Keep the island open, only the strip is shown; a tab click still opens the rest for a moment."
+                                                   Style="{StaticResource SettingsRowDescriptionStyle}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="AlwaysUsageToggle" Grid.Column="1" Style="{StaticResource SettingsToggleStyle}"
+                                                  AutomationProperties.Name="Always display usage" Toggled="OnToggle" Tag="AlwaysDisplayUsage" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <Grid Style="{StaticResource SettingsRowStyle}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                                         <TextBlock Text="Keyboard shortcut" Style="{StaticResource SettingsRowTitleStyle}" />
                                         <TextBlock x:Name="ShortcutText" Text="Opens or closes the island from anywhere." Style="{StaticResource SettingsRowDescriptionStyle}" />
                                     </StackPanel>

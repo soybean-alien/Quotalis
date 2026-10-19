@@ -296,6 +296,14 @@ internal sealed class AppHost : IDisposable
             await Shot("11-usage-tooltip");
             _viewModel.Usage.Inspect(-1);
 
+            // The usage strip ("Always display usage"), alone and with a day inspected.
+            _window.SetUsageStripMode(UI.Expanded.UsageStripMode.Always);
+            await Shot("12-usage-strip");
+            _viewModel.Usage.Inspect(busiest);
+            await Shot("12-usage-strip-day");
+            _viewModel.Usage.Inspect(-1);
+            _window.SetUsageStripMode(UI.Expanded.UsageStripMode.Off);
+
             // A walk over the graph for the demo GIF (tools/make-heatmap-gif.py): hover days, click to pin one, keep
             // hovering while it stays pinned, leave the graph, then pin another day.
             var usage = _viewModel.Usage;
@@ -1210,11 +1218,22 @@ internal sealed class AppHost : IDisposable
 
     // Visibility ---------------------------------------------------------------------------------------
 
-    /// <summary>"Keep the island open": turning it on opens the island now; the state machine then ignores outside clicks.</summary>
+    /// <summary>
+    /// "Keep the island open" and "Always display usage": either keeps the island open (turning one on opens it now; the
+    /// state machine then ignores outside clicks). Always display usage folds it into the usage strip: at rest only, or
+    /// always when both are on.
+    /// </summary>
     private void ApplyKeepOpen(AppSettings settings)
     {
-        var turnedOn = settings.KeepIslandOpen && !_state.KeepExpanded;
-        _state.KeepExpanded = settings.KeepIslandOpen;
+        var keep = settings.KeepIslandOpen || settings.AlwaysDisplayUsage;
+        var turnedOn = keep && !_state.KeepExpanded;
+        _state.KeepExpanded = keep;
+        if (!IsSnapshot)
+        {
+            _window.SetUsageStripMode(!settings.AlwaysDisplayUsage ? UI.Expanded.UsageStripMode.Off
+                : settings.KeepIslandOpen ? UI.Expanded.UsageStripMode.Always : UI.Expanded.UsageStripMode.AtRest);
+        }
+
         if (turnedOn && _state.Mode is Core.Island.IslandMode.Compact or Core.Island.IslandMode.Activity && !IsSnapshot)
         {
             ShowIsland(expand: true);

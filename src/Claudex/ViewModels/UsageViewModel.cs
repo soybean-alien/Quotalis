@@ -101,6 +101,25 @@ public sealed class UsageViewModel : ObservableObject
 
     /// <summary>The readout grows by one line once plan usage has ever been measured (no jump per day).</summary>
     /// <summary>The day area below the hours block: one line taller once plan usage has ever been measured (no jump per day).</summary>
+    private bool _isCondensed;
+
+    /// <summary>
+    /// The usage strip: only plan usage, the gold totals and the heatmap (plus a day's readout while one is inspected or
+    /// pinned). Set by the island; the panel collapses everything else, and the island's shape spring animates the size.
+    /// </summary>
+    public bool IsCondensed
+    {
+        get => _isCondensed;
+        set
+        {
+            if (value != _isCondensed)
+            {
+                _isCondensed = value;
+                OnPropertyChanged(nameof(IsCondensed));
+            }
+        }
+    }
+
     public double ReadoutHeight => _planPeaks.Count > 0 ? 100 : 82;
 
     // Per-tool bars of the inspected day: Claude above Codex, on one scale (the busiest single-tool day).
