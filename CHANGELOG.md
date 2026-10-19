@@ -4,11 +4,17 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.12] - 2026-10-19
+
+### Fixed
+
+- **Starting Claudex while it was already running did nothing you could see.** A second start (a desktop, Start menu or pinned taskbar shortcut, or a Stream Deck launcher key) only re-showed the resting island. It now opens the island in front, as clicking the tray icon does, and logs "Second start".
+
 ## [0.5.11] - 2026-10-19
 
 ### Added
 
-- **Codex's 5-hour and weekly limits are published for other programs**, the way Claude's already are. The Claudex mini Stream Deck plugin reads them, so its Codex keys show the same numbers as the island. Both files are in `%USERPROFILE%\.claudex`:
+- **Codex's 5-hour and weekly limits are published for other programs**, the way Claude's already are. The Claudex Mini Stream Deck plugin reads them, so its Codex keys show the same numbers as the island. Both files are in `%USERPROFILE%\.claudex`:
   - `codex-plan.json`: the newest 5-hour and weekly readings (% used, reset time, window length), written atomically whenever Codex reports new numbers. Values are as Codex reported them; a window whose reset time has passed counts as 0% used, as on the island.
   - `codex-limit-log.jsonl`: one line per reading, so usage per day can be worked out. Lines older than 35 days are dropped.
   - Numbers only: no prompts, paths or account details.
