@@ -9,7 +9,51 @@ internal static class AppPaths
 
     public static string Database => Path.Combine(Root, "usage.db");
 
-    public static string PricingOverrides => Path.Combine(Root, "pricing.json");
+    /// <summary>
+    /// Files that hooks and other programs write for Claudex: <c>%USERPROFILE%\.claudex</c>, outside AppData. Claude desktop
+    /// is a packaged (MSIX) app, and Windows redirects new files its hooks create under AppData into Claude's private
+    /// package folder, where a normally started Claudex never sees them. The user profile root is not redirected.
+    /// </summary>
+    public static string Shared { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claudex");
+
+    public static string PricingOverrides => Path.Combine(Shared, "pricing.json");
+
+    public static string CalibrationLog => Path.Combine(Shared, "calibration-log.jsonl");
+
+    public static string ClaudeHookTrace => Path.Combine(Shared, "stop-hook-last.json");
+
+    public static string CodexHookTrace => Path.Combine(Shared, "codex-stop-hook-last.json");
+
+    /// <summary>The names that moved from <see cref="Root"/> to <see cref="Shared"/> in 0.5.10.</summary>
+    public static readonly string[] SharedFiles = ["claude-plan.json", "calibration-log.jsonl", "stop-hook-last.json", "codex-stop-hook-last.json", "pricing.json"];
+
+    /// <summary>
+    /// Where older copies of the shared files may sit: the old data folder, and the private AppData of any packaged app
+    /// that ran our hooks (for example <c>Packages\Claude_…\LocalCache\Local\Claudex</c>).
+    /// </summary>
+    public static IEnumerable<string> LegacySharedFolders()
+    {
+        yield return Root;
+        var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages");
+        string[] dirs;
+        try
+        {
+            dirs = Directory.Exists(packages) ? Directory.GetDirectories(packages) : [];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            dirs = [];
+        }
+
+        foreach (var dir in dirs)
+        {
+            var candidate = Path.Combine(dir, "LocalCache", "Local", "Claudex");
+            if (Directory.Exists(candidate))
+            {
+                yield return candidate;
+            }
+        }
+    }
 
     public static string FocusSession => Path.Combine(Root, "focus-session.json");
 
@@ -21,7 +65,7 @@ internal static class AppPaths
     public static string UiState => Path.Combine(Root, "ui-state.json");
 
     /// <summary>Plan usage handed over by Claude Code's status line (numbers only).</summary>
-    public static string ClaudePlan => Path.Combine(Root, "claude-plan.json");
+    public static string ClaudePlan => Path.Combine(Shared, "claude-plan.json");
 
     public static string Settings(bool demo) => Path.Combine(Root, demo ? "settings.demo.json" : "settings.json");
 

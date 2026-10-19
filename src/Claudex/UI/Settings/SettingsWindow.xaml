@@ -605,7 +605,7 @@
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="API equivalent" Style="{StaticResource SettingsRowTitleStyle}" />
                                         <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}"
-                                                   Text="Estimated from public API list prices, in US dollars. Subscriptions are billed differently, so this is not what you pay. Adjust or add prices in pricing.json." />
+                                                   Text="Estimated from public API list prices, in US dollars. Subscriptions are billed differently, so this is not what you pay. Adjust or add prices in .claudex\pricing.json in your user folder." />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

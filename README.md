@@ -127,7 +127,7 @@ Everything is set in the Settings window and applies immediately:
 | Modules | Each module on or off and its order; Claude plan usage; Claude Code alerts; Git repositories; calendars |
 | Appearance | System or Dark for Settings (the island itself is always dark) |
 
-API prices and the exchange rate for the API equivalent can be adjusted in `%LOCALAPPDATA%\Claudex\pricing.json` ([example](docs/PRIVACY.md)).
+API prices and the exchange rate for the API equivalent can be adjusted in `%USERPROFILE%\.claudex\pricing.json` ([example](docs/PRIVACY.md)).
 
 ## Architecture
 
