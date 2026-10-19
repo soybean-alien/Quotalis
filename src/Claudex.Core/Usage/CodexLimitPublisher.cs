@@ -6,7 +6,7 @@ using Claudex.Core.Diagnostics;
 namespace Claudex.Core.Usage;
 
 /// <summary>
-/// Publishes Codex's rate-limit readings for other programs on this machine (the Claudex mini Stream Deck plugin), the
+/// Publishes Codex's rate-limit readings for other programs on this machine (the Claudex Mini Stream Deck plugin), the
 /// way <c>claude-plan.json</c> and <c>calibration-log.jsonl</c> do for Claude:
 /// <list type="bullet">
 /// <item><c>codex-plan.json</c>: the newest 5-hour and weekly readings, written atomically. Raw values: a reader treats a

@@ -24,10 +24,10 @@ internal static class AppPaths
 
     public static string CodexHookTrace => Path.Combine(Shared, "codex-stop-hook-last.json");
 
-    /// <summary>Codex's newest 5-hour and weekly readings, published for other programs (Claudex mini).</summary>
+    /// <summary>Codex's newest 5-hour and weekly readings, published for other programs (Claudex Mini).</summary>
     public static string CodexPlan => Path.Combine(Shared, "codex-plan.json");
 
-    /// <summary>Every Codex rate-limit reading, one JSON line each, published for other programs (Claudex mini).</summary>
+    /// <summary>Every Codex rate-limit reading, one JSON line each, published for other programs (Claudex Mini).</summary>
     public static string CodexLimitLog => Path.Combine(Shared, "codex-limit-log.jsonl");
 
     /// <summary>The names that moved from <see cref="Root"/> to <see cref="Shared"/> in 0.5.10.</summary>

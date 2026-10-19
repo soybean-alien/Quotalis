@@ -565,8 +565,16 @@ internal sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>Second launch of the app: show the island.</summary>
-    public void OnSecondInstance() => ShowIsland(expand: false);
+    /// <summary>
+    /// Claudex was started again while running (desktop or Start menu shortcut, pinned taskbar icon, a Stream Deck
+    /// launcher). Open the island in front, as the tray icon does, so the start always shows a visible response;
+    /// showing an island that is already resting did nothing visible.
+    /// </summary>
+    public void OnSecondInstance()
+    {
+        Log.Info("startup", "Second start: opening the island");
+        ShowIsland(expand: true);
+    }
 
     public void Dispose()
     {
