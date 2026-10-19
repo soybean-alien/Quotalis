@@ -17,8 +17,23 @@ namespace Claudex.UI.Expanded;
 /// a cramped dashboard); the selected tab's name sits beside them, and each icon has a tooltip and an
 /// accessible name. Panels are separate controls; this view only switches between them.
 /// </summary>
+/// <summary>
+/// When the open island shows only the usage strip (plan usage, gold totals, heatmap): never, at rest (the full island
+/// while the pointer is on it), or always (a tab click opens the full island until the pointer leaves).
+/// </summary>
+public enum UsageStripMode
+{
+    Off,
+    AtRest,
+    Always,
+}
+
 public sealed partial class ExpandedView : UserControl
 {
+    /// <summary>The pointer must stay this long before the strip opens up, and be gone this long before it folds back.</summary>
+    private static readonly TimeSpan StripOpenDelay = TimeSpan.FromMilliseconds(280);
+    private static readonly TimeSpan StripFoldDelay = TimeSpan.FromMilliseconds(450);
+
     /// <summary>From this many tabs on, the tab buttons are 28 instead of 32 DIP wide.</summary>
     private const int CompactTabCount = 9;
 
@@ -27,6 +42,10 @@ public sealed partial class ExpandedView : UserControl
     private IslandViewModel _viewModel = null!;
     private bool _indicatorPlaced;
     private bool _isShown;
+    private UsageStripMode _stripMode;
+    private bool _pointerInside;
+    private bool _temporaryFull;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _stripTimer;
 
     public ExpandedView()
     {
@@ -45,6 +64,79 @@ public sealed partial class ExpandedView : UserControl
         };
         ElementCompositionPreview.SetIsTranslationEnabled(TabIndicator, true);
         Tabs.SizeChanged += (_, _) => MoveIndicator(animate: false);
+        PointerEntered += (_, _) => ScheduleStrip(inside: true);
+        PointerExited += (_, _) => ScheduleStrip(inside: false);
+    }
+
+    /// <summary>Set from Settings ("Always display usage", with or without "Keep the island open").</summary>
+    public UsageStripMode StripMode
+    {
+        get => _stripMode;
+        set
+        {
+            _stripMode = value;
+            _temporaryFull = false;
+            ApplyStrip();
+        }
+    }
+
+    /// <summary>Hover in opens the full island (at rest mode) after a short dwell; hover out folds it back.</summary>
+    private void ScheduleStrip(bool inside)
+    {
+        if (_stripMode == UsageStripMode.Off)
+        {
+            _pointerInside = inside;
+            return;
+        }
+
+        _stripTimer ??= DispatcherQueue.CreateTimer();
+        _stripTimer.Stop();
+        _stripTimer.IsRepeating = false;
+        _stripTimer.Interval = inside ? StripOpenDelay : StripFoldDelay;
+        _stripTimer.Tick -= OnStripTimer;
+        _stripTimer.Tick += OnStripTimer;
+        _pendingInside = inside;
+        _stripTimer.Start();
+    }
+
+    private bool _pendingInside;
+
+    private void OnStripTimer(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args)
+    {
+        _pointerInside = _pendingInside;
+        if (!_pointerInside)
+        {
+            _temporaryFull = false;
+        }
+
+        ApplyStrip();
+    }
+
+    /// <summary>
+    /// Folds the usage panel into the strip or opens it in full. Only the content changes; the island follows the new
+    /// size with its shape spring, so the change is one smooth growth or shrink.
+    /// </summary>
+    private void ApplyStrip()
+    {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        var usageAvailable = _viewModel.AvailableTabs.Contains(IslandTab.Usage);
+        var condensed = usageAvailable && _stripMode switch
+        {
+            UsageStripMode.AtRest => !_pointerInside,
+            UsageStripMode.Always => !_temporaryFull,
+            _ => false,
+        };
+
+        if (condensed && _viewModel.SelectedTab != IslandTab.Usage)
+        {
+            _viewModel.SelectedTab = IslandTab.Usage;
+        }
+
+        _viewModel.Usage.IsCondensed = condensed;
     }
 
     public event Action? SettingsRequested;
@@ -170,6 +262,13 @@ public sealed partial class ExpandedView : UserControl
     {
         if (sender is Button { Tag: IslandTab tab })
         {
+            // With only the strip on screen, a tab click opens the full island until the pointer leaves.
+            if (_stripMode == UsageStripMode.Always && _viewModel.Usage.IsCondensed)
+            {
+                _temporaryFull = true;
+                _viewModel.Usage.IsCondensed = false;
+            }
+
             _viewModel.SelectedTab = tab;
             _viewModel.NoteTabOpened(tab);
         }

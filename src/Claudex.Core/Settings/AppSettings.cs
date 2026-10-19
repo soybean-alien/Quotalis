@@ -71,6 +71,12 @@ public sealed class AppSettings
     /// <summary>The expanded island stays open when you click elsewhere (Esc or the shortcut still close it).</summary>
     public bool KeepIslandOpen { get; set; }
 
+    /// <summary>
+    /// The island rests as the usage strip (plan usage, the gold totals and the heatmap) instead of the pill, and opens
+    /// in full while you interact. With <see cref="KeepIslandOpen"/> as well, only the strip is shown.
+    /// </summary>
+    public bool AlwaysDisplayUsage { get; set; }
+
     // Position
     /// <summary>Device name of the monitor (for example <c>\.\DISPLAY2</c>); null means the primary monitor.</summary>
     public string? MonitorDevice { get; set; }

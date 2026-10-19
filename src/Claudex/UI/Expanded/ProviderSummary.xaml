@@ -65,7 +65,8 @@
                         AutomationProperties.Name="Connect Claude plan usage in Settings" />
             </StackPanel>
 
-            <!-- Local usage today -->
+            <!-- Local usage today (hidden in the usage strip, see UsageViewModel.IsCondensed) -->
+            <StackPanel x:Name="TodayDetails" Spacing="2">
             <TextBlock Text="Today on this PC" Style="{StaticResource FineTextStyle}" Margin="0,12,0,0" />
             <StackPanel Orientation="Horizontal" Spacing="5" Background="Transparent" ToolTipService.Placement="Bottom">
                 <ToolTipService.ToolTip>
@@ -108,6 +109,7 @@
             <TextBlock Text="{x:Bind ViewModel.DetailText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,0"
                        Visibility="{x:Bind ViewModel.HasDetail, Mode=OneWay}" />
             <TextBlock Text="{x:Bind ViewModel.ContextText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
+            </StackPanel>
         </StackPanel>
 
         <StackPanel Visibility="{x:Bind ViewModel.IsUnavailable, Mode=OneWay}" Spacing="4" Margin="0,4,0,0">

@@ -187,6 +187,7 @@ public sealed partial class SettingsWindow : Window
             CheckUpdatesToggle.IsEnabled = !_isDemo;
             LaunchHiddenToggle.IsOn = s.LaunchHidden;
             KeepOpenToggle.IsOn = s.KeepIslandOpen;
+            AlwaysUsageToggle.IsOn = s.AlwaysDisplayUsage;
             BuildModuleRows(s);
             UpdatePlanConnection();
             BuildRepositoryRows(s);
@@ -311,6 +312,7 @@ public sealed partial class SettingsWindow : Window
                 case "CheckForUpdates": s.CheckForUpdates = on; break;
                 case "LaunchHidden": s.LaunchHidden = on; break;
                 case "KeepIslandOpen": s.KeepIslandOpen = on; break;
+                case "AlwaysDisplayUsage": s.AlwaysDisplayUsage = on; break;
                 case var module when module.StartsWith("Module:", StringComparison.Ordinal)
                     && Enum.TryParse<ModuleId>(module["Module:".Length..], out var id):
                     s.SetEnabled(id, on);

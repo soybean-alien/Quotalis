@@ -4,6 +4,19 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.13] - 2026-10-19
+
+### Added
+
+- **Usage strip: Settings, General, "Always display usage".** The open island folds into a strip that holds only plan usage, the gold week, month and lifetime totals, and the heatmap, with its bottom corners rounded like the top. Hovering or pinning a day adds that day's readout row.
+  - **On its own:** the strip replaces the pill at rest. Rest the pointer on it and it grows into the full island; move away and it folds back.
+  - **With "Keep the island open":** only the strip is shown. A tab click opens the full island until the pointer leaves.
+  - **Animation:** only the content changes, and the island follows with its shape spring, so it grows and folds in one smooth motion.
+
+### Changed
+
+- **The island moves at half speed.** Opening (the slide down from the top), closing and the hover peek take twice as long: the shape spring's period is 160 ms instead of 80, the same curve stretched, and the content fading between states and the shadow follow at the same pace, so text never arrives before the shape. Everything still animates on the compositor at the display's refresh rate, so slower stays smooth. Tab switches and small elements keep their speed. One constant, `Motion.IslandPace`, sets it.
+
 ## [0.5.12] - 2026-10-19
 
 ### Fixed

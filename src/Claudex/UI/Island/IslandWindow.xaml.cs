@@ -319,6 +319,9 @@ public sealed partial class IslandWindow : Window
         ExpandFromShortcut();
     }
 
+    /// <summary>"Always display usage": how the open island folds into the usage strip.</summary>
+    public void SetUsageStripMode(Claudex.UI.Expanded.UsageStripMode mode) => Expanded.StripMode = mode;
+
     public void ExpandFromShortcut()
     {
         _keyboardInitiated = true;
@@ -447,10 +450,10 @@ public sealed partial class IslandWindow : Window
                 {
                     fadingOut.Visibility = Visibility.Collapsed;
                 }
-            }, toScale: 0.97f, origin: AnchorPointIn(fadingOut));
+            }, toScale: 0.97f, origin: AnchorPointIn(fadingOut), duration: Motion.IslandFadeOutDuration);
 
             var fromY = _anchor.Vertical() == VerticalEdge.Top ? -6f : 6f;
-            Motion.FadeIn(target, Motion.FadeInDelay, fromY, fromScale: 0.97f, origin: AnchorPointIn(target));
+            Motion.FadeIn(target, Motion.IslandFadeInDelay, fromY, fromScale: 0.97f, origin: AnchorPointIn(target), duration: Motion.IslandFadeInDuration);
         }
     }
 

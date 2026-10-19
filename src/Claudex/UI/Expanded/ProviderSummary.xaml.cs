@@ -14,6 +14,12 @@ public sealed partial class ProviderSummary : UserControl
         InitializeComponent();
     }
 
+    /// <summary>The usage strip: hides today's local usage, keeping the name and plan usage.</summary>
+    public bool Condensed
+    {
+        set => TodayDetails.Visibility = value ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     public AiProviderViewModel ViewModel
     {
         get => _viewModel;

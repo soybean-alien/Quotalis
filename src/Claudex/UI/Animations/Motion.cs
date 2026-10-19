@@ -16,8 +16,16 @@ internal readonly record struct Spring(float DampingRatio, TimeSpan Period);
 /// </summary>
 internal static class Motion
 {
-    /// <summary>The island shape morph: settles without a visible bounce.</summary>
-    public static readonly Spring IslandSpring = new(0.84f, TimeSpan.FromMilliseconds(80));
+    /// <summary>
+    /// How much slower than the original design the island opens, closes and peeks: 2 = half speed. Only the island's
+    /// own motion uses it (the shape morph, its shadow and the content fading between states); tab switches and small
+    /// elements keep their pace. Every animation still runs on the compositor at the display's refresh rate, so slower
+    /// never means choppier.
+    /// </summary>
+    public const double IslandPace = 2.0;
+
+    /// <summary>The island shape morph: settles without a visible bounce. A longer period is the same curve, slower.</summary>
+    public static readonly Spring IslandSpring = new(0.84f, TimeSpan.FromMilliseconds(80 * IslandPace));
 
     /// <summary>Small UI elements (tab indicator).</summary>
     public static readonly Spring SnappySpring = new(0.9f, TimeSpan.FromMilliseconds(45));
@@ -25,6 +33,11 @@ internal static class Motion
     public static readonly TimeSpan FadeOutDuration = TimeSpan.FromMilliseconds(110);
     public static readonly TimeSpan FadeInDuration = TimeSpan.FromMilliseconds(240);
     public static readonly TimeSpan FadeInDelay = TimeSpan.FromMilliseconds(70);
+
+    /// <summary>Content leaving and arriving while the island changes state, at the island's pace.</summary>
+    public static readonly TimeSpan IslandFadeOutDuration = FadeOutDuration * IslandPace;
+    public static readonly TimeSpan IslandFadeInDuration = FadeInDuration * IslandPace;
+    public static readonly TimeSpan IslandFadeInDelay = FadeInDelay * IslandPace;
 
     private static readonly UISettings Settings = new();
     private static CompositionEasingFunction? s_easeOut;
@@ -80,8 +93,9 @@ internal static class Motion
     }
 
     /// <summary>Fades an element in from a slight offset (content arriving after a morph or tab switch).</summary>
-    public static void FadeIn(UIElement element, TimeSpan? delay = null, float fromY = 0, float fromScale = 1f, Vector2? origin = null)
+    public static void FadeIn(UIElement element, TimeSpan? delay = null, float fromY = 0, float fromScale = 1f, Vector2? origin = null, TimeSpan? duration = null)
     {
+        var fadeIn = duration ?? FadeInDuration;
         var visual = ElementCompositionPreview.GetElementVisual(element);
         var c = visual.Compositor;
         ElementCompositionPreview.SetIsTranslationEnabled(element, true);
@@ -109,7 +123,7 @@ internal static class Motion
         var opacity = c.CreateScalarKeyFrameAnimation();
         opacity.InsertKeyFrame(0f, 0f);
         opacity.InsertKeyFrame(1f, 1f, EaseOut(c));
-        opacity.Duration = FadeInDuration;
+        opacity.Duration = fadeIn;
         opacity.DelayTime = delay ?? TimeSpan.Zero;
         opacity.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
         visual.StartAnimation("Opacity", opacity);
@@ -119,7 +133,7 @@ internal static class Motion
             var translation = c.CreateVector3KeyFrameAnimation();
             translation.InsertKeyFrame(0f, new Vector3(0, fromY, 0));
             translation.InsertKeyFrame(1f, Vector3.Zero, EaseOut(c));
-            translation.Duration = FadeInDuration + TimeSpan.FromMilliseconds(80);
+            translation.Duration = fadeIn + TimeSpan.FromMilliseconds(80 * (fadeIn / FadeInDuration));
             translation.DelayTime = delay ?? TimeSpan.Zero;
             translation.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
             visual.StartAnimation("Translation", translation);
@@ -130,7 +144,7 @@ internal static class Motion
             var scale = c.CreateVector3KeyFrameAnimation();
             scale.InsertKeyFrame(0f, new Vector3(fromScale, fromScale, 1));
             scale.InsertKeyFrame(1f, Vector3.One, EaseOut(c));
-            scale.Duration = FadeInDuration + TimeSpan.FromMilliseconds(80);
+            scale.Duration = fadeIn + TimeSpan.FromMilliseconds(80 * (fadeIn / FadeInDuration));
             scale.DelayTime = delay ?? TimeSpan.Zero;
             scale.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
             visual.StartAnimation("Scale", scale);
@@ -138,15 +152,16 @@ internal static class Motion
     }
 
     /// <summary>Fades an element out, continuing from its current opacity, then runs <paramref name="completed"/>.</summary>
-    public static void FadeOut(UIElement element, Action? completed, float toScale = 1f, Vector2? origin = null)
+    public static void FadeOut(UIElement element, Action? completed, float toScale = 1f, Vector2? origin = null, TimeSpan? duration = null)
     {
+        var fadeOut = duration ?? FadeOutDuration;
         var visual = ElementCompositionPreview.GetElementVisual(element);
         var c = visual.Compositor;
         var batch = c.CreateScopedBatch(CompositionBatchTypes.Animation);
 
         var opacity = c.CreateScalarKeyFrameAnimation();
         opacity.InsertKeyFrame(1f, 0f, EaseIn(c));
-        opacity.Duration = IsEnabled ? FadeOutDuration : TimeSpan.FromMilliseconds(80);
+        opacity.Duration = IsEnabled ? fadeOut : TimeSpan.FromMilliseconds(80);
         visual.StartAnimation("Opacity", opacity);
 
         if (IsEnabled && toScale != 1f)
@@ -158,7 +173,7 @@ internal static class Motion
 
             var scale = c.CreateVector3KeyFrameAnimation();
             scale.InsertKeyFrame(1f, new Vector3(toScale, toScale, 1), EaseIn(c));
-            scale.Duration = FadeOutDuration;
+            scale.Duration = fadeOut;
             visual.StartAnimation("Scale", scale);
         }
 
