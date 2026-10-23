@@ -15,6 +15,9 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
     private readonly object _limitGate = new();
     private CodexRateLimit? _limit;
     private CodexRateLimit? _weekly;
+    private CodexRateLimit? _accountLimit;
+    private CodexRateLimit? _accountWeekly;
+    private bool _accountConnected;
     private double _lastAnnounced = -1;
     private bool _scanCompleted;
     private ITimer? _resetTimer;
@@ -36,6 +39,23 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
         return !string.IsNullOrWhiteSpace(configured)
             ? configured
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex");
+    }
+
+    /// <summary>Use the signed-in account's current shared allowance when available; local rollout limits remain the fallback.</summary>
+    public void ApplyAccountLimits(CodexRateLimit? current, CodexRateLimit? weekly, bool connected)
+    {
+        bool wasConnected;
+        lock (_limitGate)
+        {
+            wasConnected = _accountConnected;
+            _accountLimit = current;
+            _accountWeekly = weekly;
+            _accountConnected = connected;
+        }
+
+        // Account polling updates the live plan, not the per-session history log.
+        PublishLimits(null, null, clearWhenEmpty: wasConnected && !connected);
+        RefreshSnapshot();
     }
 
     protected override ParseResult ParseFile(string path, long offset, string? state, List<UsageEvent> events, CancellationToken cancellationToken)
@@ -124,8 +144,8 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
         CodexRateLimit? weeklyLimit;
         lock (_limitGate)
         {
-            limit = _limit;
-            weeklyLimit = _weekly;
+            limit = _accountConnected ? _accountLimit : _limit;
+            weeklyLimit = _accountConnected ? _accountWeekly : _weekly;
             var now = Time.GetUtcNow();
             _resetTimer?.Dispose();
             _resetTimer = null;
@@ -166,18 +186,18 @@ public sealed class CodexUsageProvider : LogFileUsageProvider
         };
     }
 
-    private void PublishLimits(CodexRateLimit? reading, CodexRateLimit? readingWeekly)
+    private void PublishLimits(CodexRateLimit? reading, CodexRateLimit? readingWeekly, bool clearWhenEmpty = false)
     {
         if (_publisher is null) return;
         CodexRateLimit? newest;
         CodexRateLimit? newestWeekly;
         lock (_limitGate)
         {
-            newest = _limit;
-            newestWeekly = _weekly;
+            newest = _accountConnected ? _accountLimit : _limit;
+            newestWeekly = _accountConnected ? _accountWeekly : _weekly;
         }
 
-        _publisher.Publish(reading, readingWeekly, newest, newestWeekly);
+        _publisher.Publish(reading, readingWeekly, newest, newestWeekly, clearWhenEmpty);
     }
 
     private void UpdateWeekly(CodexRateLimit weekly)

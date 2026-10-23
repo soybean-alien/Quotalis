@@ -8,6 +8,26 @@ namespace Claudex.Tests;
 
 public class CodexLimitPublisherTests
 {
+    [Fact]
+    public void Account_refresh_updates_live_plan_without_history_and_signout_clears_it()
+    {
+        var dir = TestData.TempDirectory();
+        var plan = Path.Combine(dir, "codex-plan.json");
+        var log = Path.Combine(dir, "codex-limit-log.jsonl");
+        var publisher = new CodexLimitPublisher(plan, log);
+        var account = new CodexRateLimit(38, 300, DateTimeOffset.UtcNow.AddHours(2), DateTimeOffset.UtcNow);
+
+        publisher.Publish(null, null, account, null);
+        Assert.Equal(38, JsonDocument.Parse(File.ReadAllText(plan)).RootElement.GetProperty("current").GetProperty("usedPercent").GetDouble());
+        Assert.False(File.Exists(log));
+
+        publisher.Publish(null, null, null, null);
+        Assert.True(File.Exists(plan)); // a scan with nothing new yet keeps the plan
+
+        publisher.Publish(null, null, null, null, clearWhenEmpty: true);
+        Assert.False(File.Exists(plan));
+    }
+
     private static string TokenCountWithWeekly(DateTimeOffset ts, double five, long fiveResets, double weekly, long weeklyResets) => JsonSerializer.Serialize(new
     {
         timestamp = ts.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
