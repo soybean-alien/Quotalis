@@ -29,7 +29,7 @@ AI coding tools spend tokens and plan limits where you can't see them, and the r
 ### AI usage
 
 - **Claude Code and Codex** usage from their local logs: today's fresh and processed tokens with a full breakdown (input, cache write, output, cache read), sessions and model.
-- **Plan usage** where the tool reports it: Claude's 5-hour and weekly windows with reset times, and Codex's windows from its own logs. Never computed from token counts.
+- **Plan usage** where the service reports it: Claude's 5-hour and weekly windows, plus ChatGPT's current and weekly Work/Codex allowance after sign-in. Every limit bucket returned by Codex is shown in Settings with its reset time. Codex rollout logs remain a fallback. Never computed from token counts.
 - A **26-week usage graph** with a tooltip per day, and an **estimated API equivalent** at public list prices (in the expanded view only).
 - The compact capsule reads like `Claude 1.12M · 72%`.
 - **Claude Code alerts:** a live activity when Claude Code needs your permission, waits for your input or has finished a reply, with the project's folder name, so an agent left running never waits unnoticed. Through Claude Code's hooks, connected once in Settings.
@@ -86,8 +86,8 @@ Claudex is **local-first**. It has no account, no telemetry and no cloud sync, a
 
 - **Read locally:** Claude Code transcripts (`~/.claude/projects`) and Codex rollout files (`~/.codex/sessions`). Only usage metadata is extracted (token counts, model, timestamps, session IDs, working directory); prompt, message and code content is never stored, displayed or logged.
 - **Stored locally** in `%LOCALAPPDATA%\Claudex`: a SQLite database with token counts and daily totals, settings, tasks, focus history, the last Claude plan percentages, the last Claude Code alert (its kind, project folder name and time) and, during an Awake session, the lid setting to put back. Logs contain events and error types, never content, and are kept for 7 days.
-- **Credentials:** private calendar links are kept in Windows Credential Manager. GitHub access goes through the GitHub CLI's own sign-in; Claudex never sees a token. The claude.ai sign-in for plan usage happens on claude.ai's own page; its cookies stay in a browser profile on this PC (`%USERPROFILE%\.claudex\claude-signin`), Claudex never sees your password or reads the cookie values, and Sign out clears the profile.
-- **Network:** only claude.ai's usage page while you're signed in for plan usage (it sends no messages, so it never counts against your limits), the calendar links you add, the GitHub CLI's read-only requests while the GitHub module is on, and, if you drop files onto the island, the copy to the folder you configured under Home Cloud (your own server).
+- **Credentials:** private calendar links are kept in Windows Credential Manager. GitHub access goes through the GitHub CLI's own sign-in; Claudex never sees a token. The claude.ai sign-in for plan usage happens on claude.ai's own page; its cookies stay in a browser profile on this PC (`%USERPROFILE%\.claudex\claude-signin`), Claudex never sees your password or reads the cookie values, and Sign out clears the profile. ChatGPT sign-in runs through the locally installed Codex app-server in an isolated profile at `%USERPROFILE%\.claudex\chatgpt-signin`; Codex stores its credentials there, and Claudex never reads them.
+- **Network:** claude.ai's usage page and Codex's ChatGPT sign-in and rate-limit requests while connected (usage reads send no AI messages), the calendar links you add, the GitHub CLI's read-only requests while the GitHub module is on, and, if you drop files onto the island, the copy to the folder you configured under Home Cloud (your own server).
 - **Camera and microphone:** only "in use or not" is read from Windows' own consent store; app names are never stored or shown.
 
 Full details: [docs/PRIVACY.md](docs/PRIVACY.md) and [SECURITY.md](SECURITY.md).
@@ -111,6 +111,7 @@ The installer is not code-signed yet, so Windows SmartScreen may ask you to conf
 | Click the ☆ next to a module's name | That module is featured in the compact capsule |
 | Drag the capsule | Move it; it snaps to the nearest anchor |
 | Settings, Modules, **Claude plan usage**, Sign in to claude.ai | Claude's 5-hour and weekly usage, a few seconds after each reply |
+| Settings, Modules, **ChatGPT plan usage**, Sign in with ChatGPT | The shared Work/Codex allowance and every additional limit bucket Codex reports, with reset times |
 | Settings, Modules, **Claude Code alerts**, Connect | A peek when Claude Code waits for you or has finished |
 | Settings, Position, **Auto-hide in apps** | Choose which apps make the island step aside |
 
@@ -182,7 +183,7 @@ More, including offscreen snapshots and the hardware report: [docs/DEVELOPMENT.m
 
 - **Hardware sensors vary by device.** CPU temperatures need administrator rights on many machines, and many laptops expose no fan speed to applications; such readings are hidden, not estimated.
 - **Claude plan usage** needs a one-time sign-in to claude.ai in Settings (or, for terminal sessions only, the status line). Token usage works either way.
-- **Codex limits** appear once Codex has recorded them in its logs.
+- **ChatGPT plan usage** needs a one-time sign-in and a locally installed Codex desktop app or CLI. The account service may return only the shared Work/Codex bucket; Claudex displays additional model buckets when the service provides them. Local Codex log limits remain available without sign-in.
 - The installer is **not code-signed** yet. Only **x64** is built and tested.
 - More in [docs/STATUS.md](docs/STATUS.md).
 

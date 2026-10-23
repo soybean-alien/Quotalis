@@ -73,8 +73,15 @@ if (-not $SkipInstaller) {
         "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
     ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     if (-not $iscc) { throw "Inno Setup (ISCC.exe) not found. Install it with: winget install JRSoftware.InnoSetup" }
-    & $iscc "/DAppVersion=$Version" "/DSourceDir=$publish" "/DOutputDir=$artifacts" "$root\installer\Claudex.iss"
+    # Inno Setup writes Setup.exe's icons in place, which fails (EndUpdateResource, 110) when OneDrive or antivirus
+    # opens the new file first. The repository lives on a OneDrive-synced Desktop, so build outside it and copy back.
+    $installerOut = Join-Path ([IO.Path]::GetTempPath()) "claudex-installer-$Version"
+    New-Item -ItemType Directory -Force $installerOut | Out-Null
+    & $iscc "/DAppVersion=$Version" "/DSourceDir=$publish" "/DOutputDir=$installerOut" "$root\installer\Claudex.iss"
     if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
+    $setup = Join-Path $installerOut "Claudex-Setup-$Version.exe"
+    Copy-Item -LiteralPath $setup -Destination $artifacts -Force
+    Remove-Item -LiteralPath $setup -Force
     Write-Host "Installer: $(Join-Path $artifacts "Claudex-Setup-$Version.exe")"
 }
 

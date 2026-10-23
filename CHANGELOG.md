@@ -4,6 +4,16 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.15] - 2026-10-23
+
+### Added
+
+- **ChatGPT plan usage in Settings, Modules.** Sign in with ChatGPT through Codex's local app-server and see the shared Work and Codex five-hour and weekly usage and reset times. The card shows every limit bucket returned for the account. It refreshes after Codex activity and every 2 minutes, and offers Refresh now and Sign out. Codex keeps the sign-in in a separate profile under `%USERPROFILE%\.claudex\chatgpt-signin`; Claudex retains percentages and reset times only. The island's Codex plan bar and the files used by Claudex Mini use this live reading when available, with local Codex logs as a fallback.
+
+### Build
+
+- **`tools/build-release.ps1` builds the installer in a temporary folder outside OneDrive** and copies it into `artifacts` afterwards. Inno Setup failed with "EndUpdateResource failed (110)" when OneDrive or antivirus opened the new `Setup.exe` in the synced folder while its icons were being written.
+
 ## [0.5.14] - 2026-10-22
 
 ### Added

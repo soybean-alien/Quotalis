@@ -192,6 +192,87 @@ public sealed partial class SettingsWindow
 
     private void OnClaudeRefresh(object sender, RoutedEventArgs e) => ClaudeWeb?.RefreshNow();
 
+    // ChatGPT plan usage -----------------------------------------------------------------------------
+
+    /// <summary>The account reader of the running island; null in demo mode.</summary>
+    internal ChatGptUsageReader? ChatGptUsage { get; set; }
+
+    internal void RefreshChatGptUsage() => UpdateChatGptUsage();
+
+    private void UpdateChatGptUsage()
+    {
+        var reader = _isDemo ? null : ChatGptUsage;
+        var status = reader?.Status ?? ChatGptUsageStatus.Checking;
+        var now = DateTimeOffset.UtcNow;
+        (ChatGptStatusTitle.Text, ChatGptStatusText.Text) = (_isDemo, status) switch
+        {
+            (true, _) => ("Not available in demo mode", "Demo mode never signs in to ChatGPT."),
+            (_, ChatGptUsageStatus.CodexMissing) => ("Codex is needed", "Install the Codex desktop app or CLI to connect ChatGPT plan usage."),
+            (_, ChatGptUsageStatus.SignedOut) => ("Not signed in", "Sign in with ChatGPT to sync the shared Work and Codex plan allowance, including five-hour and weekly reset times."),
+            (_, ChatGptUsageStatus.SigningIn) => ("Finish signing in", "Complete ChatGPT sign-in in your browser. Claudex will refresh when it finishes."),
+            (_, ChatGptUsageStatus.Unavailable) => ("ChatGPT usage is unavailable", "The last reading is shown below, if one exists. Use Refresh now to try again."),
+            (_, ChatGptUsageStatus.UnknownFormat) => ("ChatGPT usage has an unknown format", "Claudex keeps the last valid reading and retries later. An update may be needed."),
+            (_, ChatGptUsageStatus.SignedIn) when reader?.LastRead is { } at => ("Signed in with ChatGPT", $"Updated {Core.Formatting.DisplayFormat.Ago(now - at)}. Refreshes after Codex activity and every 2 minutes otherwise."),
+            (_, ChatGptUsageStatus.SignedIn) => ("Signed in with ChatGPT", "Waiting for the first usage reading."),
+            _ => ("Checking ChatGPT", "Checking this PC's ChatGPT plan connection."),
+        };
+
+        ChatGptSignInButton.Visibility = status is ChatGptUsageStatus.SignedOut or ChatGptUsageStatus.CodexMissing ? Visibility.Visible : Visibility.Collapsed;
+        ChatGptSignInButton.IsEnabled = !_isDemo && reader is not null && status != ChatGptUsageStatus.CodexMissing;
+        ChatGptRefreshButton.Visibility = status is ChatGptUsageStatus.SignedIn or ChatGptUsageStatus.Unavailable or ChatGptUsageStatus.UnknownFormat ? Visibility.Visible : Visibility.Collapsed;
+        ChatGptSignOutButton.Visibility = status is ChatGptUsageStatus.SignedIn or ChatGptUsageStatus.SigningIn or ChatGptUsageStatus.Unavailable or ChatGptUsageStatus.UnknownFormat ? Visibility.Visible : Visibility.Collapsed;
+
+        ChatGptBucketRows.Children.Clear();
+        foreach (var bucket in reader?.Latest?.Buckets ?? [])
+        {
+            ChatGptBucketRows.Children.Add(new TextBlock
+            {
+                Text = $"{bucket.Name}: {Window(bucket.Current, "5-hour", now)} · {Window(bucket.Weekly, "weekly", now)}",
+                Style = Res("SettingsRowDescriptionStyle"),
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
+    }
+
+    private static string Window(Claudex.Core.Usage.CodexRateLimit? limit, string label, DateTimeOffset now)
+    {
+        if (limit is null) return $"{label} unavailable";
+        if (limit.ResetsAt is { } reset && reset <= now) return $"{label} 0% (reset; starts on next request)";
+        var percent = $"{Math.Round(limit.UsedPercent):0}%";
+        return limit.ResetsAt is { } at ? $"{label} {percent}, resets {at.ToLocalTime():ddd MMM d, h:mm tt}" : $"{label} {percent}, reset time unavailable";
+    }
+
+    private async void OnChatGptSignIn(object sender, RoutedEventArgs e)
+    {
+        if (_isDemo || ChatGptUsage is not { } reader) return;
+        ChatGptSignInButton.IsEnabled = false;
+        try
+        {
+            var url = await reader.StartSignInAsync();
+            if (!await Launcher.LaunchUriAsync(new Uri(url)))
+            {
+                reader.CancelSignIn();
+                ChatGptStatusText.Text = "Windows could not open the ChatGPT sign-in page.";
+            }
+            else UpdateChatGptUsage();
+        }
+        catch (Exception ex)
+        {
+            reader.CancelSignIn();
+            Log.Warn("chatgpt-usage", "Sign-in could not start", new { error = ex.GetType().Name });
+            ChatGptStatusText.Text = "ChatGPT sign-in could not start. Check that Codex is installed, then try again.";
+        }
+        ChatGptSignInButton.IsEnabled = true;
+    }
+
+    private void OnChatGptRefresh(object sender, RoutedEventArgs e) => ChatGptUsage?.RefreshNow();
+
+    private async void OnChatGptSignOut(object sender, RoutedEventArgs e)
+    {
+        if (ChatGptUsage is { } reader) await reader.SignOutAsync();
+        UpdateChatGptUsage();
+    }
+
     private async void OnClaudeSignOut(object sender, RoutedEventArgs e)
     {
         _store.Update(s => s.ClaudeWebSignedIn = false);

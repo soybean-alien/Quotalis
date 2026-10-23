@@ -475,6 +475,30 @@
                             </StackPanel>
                         </Border>
 
+                        <TextBlock Text="ChatGPT plan usage" Style="{StaticResource SettingsGroupLabelStyle}" Margin="4,20,0,4" />
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <StackPanel>
+                                <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Spacing="6">
+                                        <TextBlock x:Name="ChatGptStatusTitle" Text="Checking ChatGPT" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock x:Name="ChatGptStatusText" Text="Checking whether ChatGPT plan usage is connected." Style="{StaticResource SettingsRowDescriptionStyle}" />
+                                        <StackPanel x:Name="ChatGptBucketRows" Spacing="4" />
+                                        <TextBlock Text="Private: Codex handles sign-in in a separate profile on this PC. Claudex reads usage percentages and reset times only. Refreshing usage sends no AI request."
+                                                   Style="{StaticResource SettingsRowDescriptionStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button x:Name="ChatGptSignInButton" Content="Sign in with ChatGPT" Style="{StaticResource AccentButtonStyle}" Click="OnChatGptSignIn" />
+                                        <Button x:Name="ChatGptRefreshButton" Content="Refresh now" Click="OnChatGptRefresh" Visibility="Collapsed" />
+                                        <Button x:Name="ChatGptSignOutButton" Content="Sign out" Click="OnChatGptSignOut" Visibility="Collapsed" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="Awake" Style="{StaticResource SettingsGroupLabelStyle}" Margin="4,20,0,4" />
                         <Border Style="{StaticResource SettingsCardStyle}">
                             <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">

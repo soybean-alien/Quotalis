@@ -78,6 +78,9 @@ internal static class AppPaths
     /// </summary>
     public static string ClaudeWebProfile => Path.Combine(Shared, "claude-signin");
 
+    /// <summary>Codex-managed ChatGPT credentials for Claudex only; separate from the user's normal Codex account.</summary>
+    public static string ChatGptProfile => Path.Combine(Shared, "chatgpt-signin");
+
     public static string Settings(bool demo) => Path.Combine(Root, demo ? "settings.demo.json" : "settings.json");
 
     public static string Assets => Path.Combine(AppContext.BaseDirectory, "Assets");

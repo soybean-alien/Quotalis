@@ -27,8 +27,12 @@ public sealed class CodexLimitPublisher(string planPath, string logPath, TimeSpa
 
     public string LogPath => logPath;
 
-    /// <summary>Logs a reading from one file (any age) and rewrites the plan file from the newest readings overall.</summary>
-    public void Publish(CodexRateLimit? reading, CodexRateLimit? readingWeekly, CodexRateLimit? newest, CodexRateLimit? newestWeekly)
+    /// <summary>
+    /// Logs a reading from one file (any age) and rewrites the plan file from the newest readings overall.
+    /// <paramref name="clearWhenEmpty"/> removes the plan file when there is nothing newer to show (an account sign-out
+    /// with no local fallback); otherwise an empty call leaves it alone, so a scan that has not found a limit yet keeps it.
+    /// </summary>
+    public void Publish(CodexRateLimit? reading, CodexRateLimit? readingWeekly, CodexRateLimit? newest, CodexRateLimit? newestWeekly, bool clearWhenEmpty = false)
     {
         lock (_gate)
         {
@@ -42,6 +46,11 @@ public sealed class CodexLimitPublisher(string planPath, string logPath, TimeSpa
                 if (newest is not null || newestWeekly is not null)
                 {
                     WritePlan(newest, newestWeekly);
+                }
+                else if (clearWhenEmpty)
+                {
+                    if (File.Exists(planPath)) File.Delete(planPath);
+                    _lastPlan = null;
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

@@ -62,6 +62,7 @@ internal sealed class AppHost : IDisposable
     private DispatcherQueueTimer? _rotation;
     private PlanUsageService? _plan;
     private ClaudeWebReader? _claudeWeb;
+    private ChatGptUsageReader? _chatGptUsage;
     private DispatcherQueueTimer? _planReset;
     private DispatcherQueueTimer? _historyDebounce;
     private DispatcherQueueTimer? _displaySettle;
@@ -189,6 +190,9 @@ internal sealed class AppHost : IDisposable
             _claudeWeb = new ClaudeWebReader(_dispatcher, _host.Handle, new PlanUsageStore(AppPaths.ClaudePlan));
             _claudeWeb.Changed += OnClaudeWebChanged;
             _claudeWeb.Configure(settings.ClaudeEnabled && settings.ClaudeWebSignedIn);
+            _chatGptUsage = new ChatGptUsageReader(_dispatcher);
+            _chatGptUsage.Changed += OnChatGptUsageChanged;
+            _chatGptUsage.Configure(settings.CodexEnabled);
         }
 
         _tray = new TrayIcon(_host, AppPaths.Icon)
@@ -608,6 +612,7 @@ internal sealed class AppHost : IDisposable
         _modules?.Dispose();
         _plan?.Dispose();
         _claudeWeb?.Dispose();
+        _chatGptUsage?.Dispose();
         _media?.Dispose();
         _state?.Dispose();
         _fullscreen?.Dispose();
@@ -871,6 +876,10 @@ internal sealed class AppHost : IDisposable
             {
                 _claudeWeb?.OnActivity(); // a reply landed: read claude.ai's usage in a few seconds
             }
+            else if (snapshot.IsActive)
+            {
+                _chatGptUsage?.OnActivity();
+            }
 
             _modules.OnAiSnapshot(snapshot);
         });
@@ -989,6 +998,7 @@ internal sealed class AppHost : IDisposable
         ApplyFavorites(settings);
         _plan?.Configure(settings.ClaudeEnabled);
         _claudeWeb?.Configure(settings.ClaudeEnabled && settings.ClaudeWebSignedIn);
+        _chatGptUsage?.Configure(settings.CodexEnabled);
         _viewModel.EnsureValidTab();
         _window.SetAlwaysOnTop(settings.AlwaysOnTop && !_settingsActive);
         ApplyKeepOpen(settings);
@@ -1033,6 +1043,13 @@ internal sealed class AppHost : IDisposable
     {
         _viewModel.Usage.Claude.SetPlan(_plan?.Usage, PlanConnectionNow());
         _settingsWindow?.RefreshPlanConnection();
+    }
+
+    private void OnChatGptUsageChanged()
+    {
+        var shared = _chatGptUsage?.Latest?.Shared;
+        _providers.Providers.OfType<CodexUsageProvider>().FirstOrDefault()?.ApplyAccountLimits(shared?.Current, shared?.Weekly, shared is not null);
+        _settingsWindow?.RefreshChatGptUsage();
     }
 
     /// <summary>
@@ -1153,6 +1170,11 @@ internal sealed class AppHost : IDisposable
                     : new CodexUsageProvider(CodexUsageProvider.DefaultRoot(), _history, _database,
                         publisher: new Claudex.Core.Usage.CodexLimitPublisher(AppPaths.CodexPlan, AppPaths.CodexLimitLog));
                 await _providers.AddAsync(provider, _shutdown.Token);
+                if (provider is CodexUsageProvider codex)
+                {
+                    var shared = _chatGptUsage?.Latest?.Shared;
+                    codex.ApplyAccountLimits(shared?.Current, shared?.Weekly, shared is not null);
+                }
             }
             else if (!enabled && running.Contains(kind))
             {
@@ -1454,6 +1476,8 @@ internal sealed class AppHost : IDisposable
             _settingsWindow.Activated += (_, args) => SetSettingsActive(args.WindowActivationState != Microsoft.UI.Xaml.WindowActivationState.Deactivated);
             _settingsWindow.QuitRequested += OnQuitFromSettings;
             _settingsWindow.ClaudeWeb = _claudeWeb;
+            _settingsWindow.ChatGptUsage = _chatGptUsage;
+            _settingsWindow.RefreshChatGptUsage();
         }
 
         if (section is not null)

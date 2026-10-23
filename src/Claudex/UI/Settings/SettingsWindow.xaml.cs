@@ -190,6 +190,7 @@ public sealed partial class SettingsWindow : Window
             AlwaysUsageToggle.IsOn = s.AlwaysDisplayUsage;
             BuildModuleRows(s);
             UpdatePlanConnection();
+            UpdateChatGptUsage();
             BuildRepositoryRows(s);
             BuildCalendarRows(s);
             ShortcutToggle.IsOn = s.GlobalShortcutEnabled;
