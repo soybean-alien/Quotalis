@@ -12,8 +12,8 @@ namespace Claudex.Core.Plan;
 public sealed record PlanWindow(double UsedPercent, DateTimeOffset ResetsAt, bool IsEstimated = false);
 
 /// <summary>
-/// Claude plan usage, measured by Claude and handed over by Claude Code's status line or by calibration
-/// from the desktop app's usage card: the 5-hour window
+/// Claude plan usage, measured by Claude and read from claude.ai (see <see cref="ClaudeWebUsage"/>), Claude Code's
+/// status line or a reading entered by hand: the 5-hour window
 /// ("current") and the 7-day window ("weekly"). Never computed from local token counts.
 /// </summary>
 public sealed record PlanUsage(PlanWindow? Current, PlanWindow? Weekly, DateTimeOffset MeasuredAt)
@@ -99,10 +99,10 @@ public sealed class PlanUsageStore(string path)
 
 public enum PlanConnection
 {
-    /// <summary>Claude Code's settings do not run Claudex as the status line.</summary>
+    /// <summary>Not signed in to claude.ai, and Claude Code's settings do not run Claudex as the status line.</summary>
     NotConnected,
 
-    /// <summary>Claudex is the status line; plan usage arrives with the next response.</summary>
+    /// <summary>Signed in to claude.ai, or Claudex is the status line.</summary>
     Connected,
 
     /// <summary>The user has their own status line; it is left alone.</summary>
@@ -110,6 +110,12 @@ public enum PlanConnection
 
     /// <summary>Claude Code's settings could not be read.</summary>
     Unreadable,
+
+    /// <summary>claude.ai no longer accepts the sign-in.</summary>
+    SignInExpired,
+
+    /// <summary>claude.ai answered in a format Claudex does not know; nothing is shown rather than a wrong number.</summary>
+    FormatChanged,
 }
 
 /// <summary>
@@ -218,7 +224,7 @@ public static class ClaudeStatusLineSetup
 }
 
 /// <summary>
-/// Follows the plan usage file (written by the status line bridge and by calibration) with a file watcher;
+/// Follows the plan usage file (written by the claude.ai reader, the status line bridge and calibration) with a file watcher;
 /// no polling.
 /// </summary>
 public sealed class PlanUsageService : IDisposable
@@ -351,17 +357,19 @@ public enum PlanDataState
 {
     NotConnected,
 
-    /// <summary>The status line is set up, but Claude Code has not handed over any plan usage yet.</summary>
+    /// <summary>A link is set up, but no plan usage has arrived yet.</summary>
     WaitingForData,
 
     /// <summary>Plan usage arrived recently.</summary>
     Receiving,
 
-    /// <summary>The last plan usage is old (no terminal session for a while), or its windows have reset.</summary>
+    /// <summary>The last plan usage is old (claude.ai not reachable for a while), or its windows have reset.</summary>
     Stale,
 
     OtherStatusLine,
     Unreadable,
+    SignInExpired,
+    FormatChanged,
 }
 
 /// <summary>Turns the connection and the last measurement into one honest state and its wording.</summary>
@@ -375,6 +383,8 @@ public static class PlanStatus
         PlanConnection.OtherStatusLine => PlanDataState.OtherStatusLine,
         PlanConnection.Unreadable => PlanDataState.Unreadable,
         PlanConnection.NotConnected => PlanDataState.NotConnected,
+        PlanConnection.SignInExpired => PlanDataState.SignInExpired,
+        PlanConnection.FormatChanged => PlanDataState.FormatChanged,
         _ when usage is null => PlanDataState.WaitingForData,
         _ when now - usage.MeasuredAt > StaleAfter || (usage.CurrentAt(now) is null && usage.WeeklyAt(now) is null) => PlanDataState.Stale,
         _ => PlanDataState.Receiving,
@@ -383,11 +393,13 @@ public static class PlanStatus
     /// <summary>Why the plan block says "Unavailable" (or that it may be out of date), in one line.</summary>
     public static string Reason(PlanDataState state) => state switch
     {
-        PlanDataState.WaitingForData => "Connected, no data yet. Claude Code sends plan usage from terminal sessions, after a reply; the VS Code extension does not.",
-        PlanDataState.Stale => "No recent update. Plan usage refreshes with your next reply in a Claude Code session.",
+        PlanDataState.WaitingForData => "Connected, no reading yet. It arrives a few seconds after you sign in to claude.ai.",
+        PlanDataState.Stale => "No recent update. Claudex keeps trying claude.ai every few minutes.",
         PlanDataState.OtherStatusLine => "Claude Code already runs another status line.",
         PlanDataState.Unreadable => "Claude Code settings could not be read.",
-        PlanDataState.NotConnected => "Connect Claude Code in Settings, Modules.",
+        PlanDataState.NotConnected => "Sign in to claude.ai in Settings, Modules.",
+        PlanDataState.SignInExpired => "Your claude.ai sign-in expired. Sign in again in Settings, Modules.",
+        PlanDataState.FormatChanged => "claude.ai answered in a format Claudex doesn't know, so nothing is shown.",
         _ => string.Empty,
     };
 }

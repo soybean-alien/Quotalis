@@ -86,8 +86,8 @@ Claudex is **local-first**. It has no account, no telemetry and no cloud sync, a
 
 - **Read locally:** Claude Code transcripts (`~/.claude/projects`) and Codex rollout files (`~/.codex/sessions`). Only usage metadata is extracted (token counts, model, timestamps, session IDs, working directory); prompt, message and code content is never stored, displayed or logged.
 - **Stored locally** in `%LOCALAPPDATA%\Claudex`: a SQLite database with token counts and daily totals, settings, tasks, focus history, the last Claude plan percentages, the last Claude Code alert (its kind, project folder name and time) and, during an Awake session, the lid setting to put back. Logs contain events and error types, never content, and are kept for 7 days.
-- **Credentials:** private calendar links are kept in Windows Credential Manager. GitHub access goes through the GitHub CLI's own sign-in; Claudex never sees a token.
-- **Network:** only the calendar links you add, the GitHub CLI's read-only requests while the GitHub module is on, and, if you drop files onto the island, the copy to the folder you configured under Home Cloud (your own server).
+- **Credentials:** private calendar links are kept in Windows Credential Manager. GitHub access goes through the GitHub CLI's own sign-in; Claudex never sees a token. The claude.ai sign-in for plan usage happens on claude.ai's own page; its cookies stay in a browser profile on this PC (`%USERPROFILE%\.claudex\claude-signin`), Claudex never sees your password or reads the cookie values, and Sign out clears the profile.
+- **Network:** only claude.ai's usage page while you're signed in for plan usage (it sends no messages, so it never counts against your limits), the calendar links you add, the GitHub CLI's read-only requests while the GitHub module is on, and, if you drop files onto the island, the copy to the folder you configured under Home Cloud (your own server).
 - **Camera and microphone:** only "in use or not" is read from Windows' own consent store; app names are never stored or shown.
 
 Full details: [docs/PRIVACY.md](docs/PRIVACY.md) and [SECURITY.md](SECURITY.md).
@@ -110,7 +110,7 @@ The installer is not code-signed yet, so Windows SmartScreen may ask you to conf
 | Click it, or press **Ctrl + Alt + C** | The expanded island; Esc or a click elsewhere closes it |
 | Click the ☆ next to a module's name | That module is featured in the compact capsule |
 | Drag the capsule | Move it; it snaps to the nearest anchor |
-| Settings, Modules, **Claude plan usage**, Connect | Claude's 5-hour and weekly usage (from Claude Code terminal sessions) |
+| Settings, Modules, **Claude plan usage**, Sign in to claude.ai | Claude's 5-hour and weekly usage, a few seconds after each reply |
 | Settings, Modules, **Claude Code alerts**, Connect | A peek when Claude Code waits for you or has finished |
 | Settings, Position, **Auto-hide in apps** | Choose which apps make the island step aside |
 
@@ -181,7 +181,7 @@ More, including offscreen snapshots and the hardware report: [docs/DEVELOPMENT.m
 ## Known limitations
 
 - **Hardware sensors vary by device.** CPU temperatures need administrator rights on many machines, and many laptops expose no fan speed to applications; such readings are hidden, not estimated.
-- **Claude plan usage** arrives from Claude Code terminal sessions (its status line) and from Claude desktop sessions over 2 minutes old (a Stop hook has Claude read its usage card); the VS Code extension provides neither. Token usage works either way.
+- **Claude plan usage** needs a one-time sign-in to claude.ai in Settings (or, for terminal sessions only, the status line). Token usage works either way.
 - **Codex limits** appear once Codex has recorded them in its logs.
 - The installer is **not code-signed** yet. Only **x64** is built and tested.
 - More in [docs/STATUS.md](docs/STATUS.md).

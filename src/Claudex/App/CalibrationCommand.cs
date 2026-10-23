@@ -4,8 +4,7 @@ using Claudex.Core.Plan;
 namespace Claudex;
 
 /// <summary>
-/// <c>Claudex.exe --claudex-calibrate ...</c> (see <see cref="PlanCalibration"/>) and
-/// <c>Claudex.exe --claudex-stop-hook</c> (see <see cref="ClaudeStopHook"/>), which write only the plan usage
+/// <c>Claudex.exe --claudex-calibrate ...</c> (see <see cref="PlanCalibration"/>), which writes only the plan usage
 /// file the running island watches plus a one-line log, and <c>Claudex.exe --claudex-codex-stop-hook</c>
 /// (see <see cref="CodexStopHook"/>), which writes only its trace. All run before any UI or single-instance setup.
 /// </summary>
@@ -13,13 +12,11 @@ internal static class CalibrationCommand
 {
     private static string LogFile => AppPaths.CalibrationLog;
 
-    private static string HookTrace => AppPaths.ClaudeHookTrace;
-
     private static string CodexHookTrace => AppPaths.CodexHookTrace;
 
     public static bool IsCalibrate(string[] args) => args.Contains(PlanCalibration.Argument, StringComparer.Ordinal);
 
-    public static bool IsStopHook(string[] args) => args.Contains(ClaudeStopHook.Argument, StringComparer.Ordinal);
+    public static bool IsStopHook(string[] args) => args.Contains(LegacyClaudeStopHook.Argument, StringComparer.Ordinal);
 
     public static bool IsCodexStopHook(string[] args) => args.Contains(CodexStopHook.Argument, StringComparer.Ordinal);
 
@@ -91,37 +88,11 @@ internal static class CalibrationCommand
         }
     }
 
-    public static int StopHook()
-    {
-        string? reason = null;
-        string why;
-        try
-        {
-            var input = StatusLineBridge.ReadInput();
-            (reason, why) = ClaudeStopHook.Decide(input, new PlanUsageStore(AppPaths.ClaudePlan).Load(), DateTimeOffset.UtcNow, Environment.ProcessPath ?? "Claudex.exe");
-        }
-        catch (Exception ex)
-        {
-            why = $"error: {ex.GetType().Name}"; // never break the session
-        }
-
-        try
-        {
-            Directory.CreateDirectory(AppPaths.Shared);
-            File.WriteAllText(HookTrace, new JsonObject { ["at"] = DateTimeOffset.Now.ToString("o"), ["blocked"] = reason is not null, ["why"] = why }.ToJsonString());
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-        }
-
-        if (reason is not null)
-        {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
-            Console.WriteLine(ClaudeStopHook.Output(reason));
-        }
-
-        return 0;
-    }
+    /// <summary>
+    /// <c>--claudex-stop-hook</c>, the Claude Stop hook of versions before 0.5.14. It does nothing now (the installer
+    /// removes its entries), so an entry left behind in Claude Code's settings never blocks a turn or costs a model call.
+    /// </summary>
+    public static int StopHook() => 0;
 
     public static int CodexStop()
     {
@@ -156,7 +127,7 @@ internal static class CalibrationCommand
         if (reason is not null)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            Console.WriteLine(ClaudeStopHook.Output(reason));
+            Console.WriteLine(CodexStopHook.Output(reason));
         }
 
         return 0;

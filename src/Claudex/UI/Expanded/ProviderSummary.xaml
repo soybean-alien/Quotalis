@@ -61,7 +61,7 @@
                 <TextBlock Text="{x:Bind ViewModel.PlanUnavailableReason, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
                            TextWrapping="Wrap" TextTrimming="None" MaxLines="2" MaxWidth="180" HorizontalAlignment="Left" />
                 <Button Style="{StaticResource IslandPillButtonStyle}" Height="32" MinWidth="0" Padding="14,0" FontSize="12" Margin="0,4,0,0"
-                        Content="Connect…" Click="OnConnectPlan" Visibility="{x:Bind ViewModel.CanConnectPlan, Mode=OneWay}"
+                        Content="Sign in…" Click="OnConnectPlan" Visibility="{x:Bind ViewModel.CanConnectPlan, Mode=OneWay}"
                         AutomationProperties.Name="Connect Claude plan usage in Settings" />
             </StackPanel>
 

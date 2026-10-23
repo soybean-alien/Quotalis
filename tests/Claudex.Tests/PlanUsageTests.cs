@@ -199,7 +199,7 @@ public class PlanStatusTests
     public void Connected_without_data_is_not_reported_as_available()
     {
         Assert.Equal(PlanDataState.WaitingForData, PlanStatus.StateOf(PlanConnection.Connected, null, Now));
-        Assert.Contains("terminal", PlanStatus.Reason(PlanDataState.WaitingForData));
+        Assert.Contains("claude.ai", PlanStatus.Reason(PlanDataState.WaitingForData));
     }
 
     [Fact]
@@ -216,6 +216,18 @@ public class PlanStatusTests
         Assert.Equal(PlanDataState.NotConnected, PlanStatus.StateOf(PlanConnection.NotConnected, usage, Now));
         Assert.Equal(PlanDataState.OtherStatusLine, PlanStatus.StateOf(PlanConnection.OtherStatusLine, null, Now));
         Assert.Equal(PlanDataState.Unreadable, PlanStatus.StateOf(PlanConnection.Unreadable, null, Now));
+        Assert.Equal(PlanDataState.SignInExpired, PlanStatus.StateOf(PlanConnection.SignInExpired, usage, Now));
+        Assert.Equal(PlanDataState.FormatChanged, PlanStatus.StateOf(PlanConnection.FormatChanged, usage, Now));
+    }
+
+    [Fact]
+    public void A_sign_in_problem_wins_and_either_link_connects()
+    {
+        Assert.Equal(PlanConnection.Connected, ClaudePlanLink.Combine(ClaudeWebStatus.SignedIn, PlanConnection.NotConnected));
+        Assert.Equal(PlanConnection.Connected, ClaudePlanLink.Combine(ClaudeWebStatus.SignedOut, PlanConnection.Connected));
+        Assert.Equal(PlanConnection.NotConnected, ClaudePlanLink.Combine(ClaudeWebStatus.SignedOut, PlanConnection.OtherStatusLine));
+        Assert.Equal(PlanConnection.SignInExpired, ClaudePlanLink.Combine(ClaudeWebStatus.Expired, PlanConnection.Connected));
+        Assert.Equal(PlanConnection.FormatChanged, ClaudePlanLink.Combine(ClaudeWebStatus.FormatChanged, PlanConnection.Connected));
     }
 }
 
@@ -258,74 +270,37 @@ public class PlanCalibrationTests
     }
 }
 
-public class ClaudeStopHookTests
+public class LegacyClaudeStopHookTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 17, 12, 25, 0, TimeSpan.Zero);
-
-    private static string Transcript(TimeSpan age, bool desktop)
-    {
-        var path = Path.Combine(TestData.TempDirectory(), "session.jsonl");
-        File.WriteAllLines(path,
-        [
-            $$"""{"type":"user","timestamp":"{{(Now - age).ToString("o")}}"{{(desktop ? ",\"entrypoint\":\"claude-desktop\"" : "")}}}""",
-            """{"type":"assistant","message":"hi"}""",
-        ]);
-        return path;
-    }
-
-    private static string Input(string transcript, bool active = false) =>
-        $$"""{"session_id":"s1","transcript_path":{{System.Text.Json.JsonSerializer.Serialize(transcript)}},"stop_hook_active":{{(active ? "true" : "false")}}}""";
-
     [Fact]
-    public void Asks_for_a_reading_in_a_desktop_session_over_two_minutes_old()
-    {
-        var (reason, why) = ClaudeStopHook.Decide(Input(Transcript(TimeSpan.FromMinutes(5), desktop: true)), null, Now, @"C:\Apps\Claudex.exe");
-
-        Assert.Equal("due", why);
-        Assert.Contains("\"C:\\Apps\\Claudex.exe\" --claudex-calibrate", reason);
-        Assert.Contains("applied by Claudex", reason);
-        Assert.Contains("🟠 Usage: Claude 5h", reason);
-        Assert.DoesNotContain("Tokenz", reason);
-        Assert.Contains("\"decision\":\"block\"", ClaudeStopHook.Output(reason!));
-    }
-
-    [Fact]
-    public void Stays_quiet_when_a_reading_is_not_needed_or_not_possible()
-    {
-        var desktop = Transcript(TimeSpan.FromMinutes(5), desktop: true);
-        var recent = new PlanUsage(new PlanWindow(51, Now.AddHours(3)), null, Now.AddSeconds(-10));
-
-        Assert.Null(ClaudeStopHook.Decide(Input(desktop, active: true), null, Now, "Claudex.exe").Reason);
-        Assert.Null(ClaudeStopHook.Decide(Input(desktop), recent, Now, "Claudex.exe").Reason);
-        Assert.Null(ClaudeStopHook.Decide(Input(Transcript(TimeSpan.FromMinutes(1), desktop: true)), null, Now, "Claudex.exe").Reason);
-        Assert.Null(ClaudeStopHook.Decide(Input(Transcript(TimeSpan.FromMinutes(5), desktop: false)), null, Now, "Claudex.exe").Reason);
-        Assert.Null(ClaudeStopHook.Decide(Input(Path.Combine(TestData.TempDirectory(), "missing.jsonl")), null, Now, "Claudex.exe").Reason);
-        Assert.Null(ClaudeStopHook.Decide("not json", null, Now, "Claudex.exe").Reason);
-    }
-
-    [Fact]
-    public void Setup_adds_the_hook_next_to_others_and_removes_only_ours()
+    public void Removes_every_old_claude_stop_hook_and_keeps_the_rest()
     {
         var path = Path.Combine(TestData.TempDirectory(), "settings.json");
         File.WriteAllText(path, """
             { "statusLine": { "type": "command", "command": "my-status.sh" },
-              "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "other-stop.sh" } ] } ] } }
+              "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "other-stop.sh" } ] },
+                                   { "hooks": [ { "type": "command", "command": "\"C:\\Apps\\Claudex.exe\" --claudex-stop-hook", "timeout": 15 } ] },
+                                   { "hooks": [ { "type": "command", "command": "\"D:\\dev\\Claudex.exe\" --claudex-stop-hook" } ] } ] } }
             """);
 
-        Assert.Equal(PlanConnection.Connected, ClaudePlanLink.Connect(path, @"C:\Apps\Claudex.exe"));
+        Assert.True(LegacyClaudeStopHook.Remove(path));
+
         var text = File.ReadAllText(path);
-        Assert.Contains("--claudex-stop-hook", text);
-        Assert.Contains("other-stop.sh", text);
-        Assert.Contains("my-status.sh", text);
-
-        ClaudePlanLink.Connect(path, @"C:\Apps\Claudex.exe");
-        Assert.Single(System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(path), "--claudex-stop-hook"));
-
-        Assert.Equal(PlanConnection.OtherStatusLine, ClaudePlanLink.Disconnect(path));
-        text = File.ReadAllText(path);
         Assert.DoesNotContain("--claudex-stop-hook", text);
         Assert.Contains("other-stop.sh", text);
         Assert.Contains("my-status.sh", text);
+        Assert.False(LegacyClaudeStopHook.Remove(path));
+    }
+
+    [Fact]
+    public void A_file_without_it_is_not_written()
+    {
+        var path = Path.Combine(TestData.TempDirectory(), "settings.json");
+        File.WriteAllText(path, """{ "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "other-stop.sh" } ] } ] } }""");
+
+        Assert.False(LegacyClaudeStopHook.Remove(path));
+        Assert.False(LegacyClaudeStopHook.Remove(Path.Combine(TestData.TempDirectory(), "missing.json")));
+        Assert.False(File.Exists(path + ".claudex.bak"));
     }
 }
 
@@ -389,6 +364,8 @@ public class HookInstallerTests
     private const string Dev = @"C:\src\Claudex\bin\Debug\Claudex.exe";
     private const string Installed = @"C:\Users\me\AppData\Local\Programs\Claudex\Claudex.exe";
 
+    private static string LegacyCommand(string executable) => $"\"{executable}\" {LegacyClaudeStopHook.Argument}";
+
     [Fact]
     public void Connect_moves_every_claudex_entry_to_the_installed_copy_and_keeps_the_rest()
     {
@@ -398,14 +375,14 @@ public class HookInstallerTests
         File.WriteAllText(claude, $$"""
             { "model": "opus", "statusLine": { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(ClaudeStatusLineSetup.CommandFor(Dev))}} },
               "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "other.sh" } ] },
-                                   { "hooks": [ { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(ClaudeStopHookSetup.CommandFor(Dev))}}, "timeout": 15 } ] } ] } }
+                                   { "hooks": [ { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(LegacyCommand(Dev))}}, "timeout": 15 } ] } ] } }
             """);
 
         HookInstaller.Connect(claude, codex, Installed);
 
         var claudeText = File.ReadAllText(claude);
         Assert.DoesNotContain("Debug", claudeText);
-        Assert.Single(System.Text.RegularExpressions.Regex.Matches(claudeText, "--claudex-stop-hook"));
+        Assert.DoesNotContain("--claudex-stop-hook", claudeText); // the old Claude Stop hook is gone
         Assert.Contains("--claudex-statusline", claudeText);
         Assert.Contains("other.sh", claudeText);
         Assert.Contains("opus", claudeText);
@@ -423,8 +400,8 @@ public class HookInstallerTests
         var codex = Path.Combine(dir, "hooks.json");
         HookInstaller.Connect(claude, codex, Installed);
         var root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(claude))!;
-        ((System.Text.Json.Nodes.JsonArray)root["hooks"]!["Stop"]!).Add(System.Text.Json.Nodes.JsonNode.Parse(
-            $$"""{ "hooks": [ { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(ClaudeStopHookSetup.CommandFor(Dev))}} } ] }""")); // a development build's hook next to it
+        root["hooks"] = System.Text.Json.Nodes.JsonNode.Parse( // a development build's entries next to it
+            $$"""{ "Stop": [ { "hooks": [ { "type": "command", "command": {{System.Text.Json.JsonSerializer.Serialize(LegacyCommand(Dev))}} } ] } ] }""");
         File.WriteAllText(claude, root.ToJsonString());
 
         HookInstaller.Disconnect(claude, codex, Installed);
@@ -446,6 +423,6 @@ public class HookInstallerTests
 
         var text = File.ReadAllText(claude);
         Assert.Contains("tokenz statusline", text);
-        Assert.Contains("--claudex-stop-hook", text);
+        Assert.DoesNotContain("--claudex-stop-hook", text);
     }
 }

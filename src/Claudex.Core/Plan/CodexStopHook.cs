@@ -18,6 +18,8 @@ public static class CodexStopHook
     /// <summary>A report this recent needs no new one.</summary>
     public static readonly TimeSpan MinInterval = TimeSpan.FromSeconds(30);
 
+    public static readonly TimeSpan MinSessionAge = TimeSpan.FromMinutes(2);
+
     /// <summary>The hook's block reason for Codex, or null to let the turn end; plus why, for the trace.</summary>
     public static (string? Reason, string Why) Decide(string input, DateTimeOffset? lastReport, DateTimeOffset now, string executable)
     {
@@ -43,7 +45,7 @@ public static class CodexStopHook
         }
 
         var (started, snapshot) = ReadSession(transcript);
-        if (started is null || now - started < ClaudeStopHook.MinSessionAge)
+        if (started is null || now - started < MinSessionAge)
         {
             return (null, "session younger than 2 min");
         }
@@ -56,6 +58,9 @@ public static class CodexStopHook
         var line = $"🔵 Usage: Codex 5h {Percent(snapshot?.Current, now)} · wk {Percent(snapshot?.Weekly, now)}";
         return (Instructions(line, executable), snapshot is null ? "due, no rate-limit snapshot yet" : "due");
     }
+
+    /// <summary>The block decision the hook prints on stdout.</summary>
+    public static string Output(string reason) => new JsonObject { ["decision"] = "block", ["reason"] = reason }.ToJsonString();
 
     public static string Instructions(string line, string executable) =>
         "Claudex usage report is due (session over 2 min). Add ONE line at the end of your reply, exactly: " +

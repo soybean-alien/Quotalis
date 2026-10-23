@@ -61,6 +61,7 @@ internal sealed class AppHost : IDisposable
     private UiStateStore _uiState = null!;
     private DispatcherQueueTimer? _rotation;
     private PlanUsageService? _plan;
+    private ClaudeWebReader? _claudeWeb;
     private DispatcherQueueTimer? _planReset;
     private DispatcherQueueTimer? _historyDebounce;
     private DispatcherQueueTimer? _displaySettle;
@@ -150,8 +151,7 @@ internal sealed class AppHost : IDisposable
         }
         else
         {
-            // The status line bridge (terminal sessions) and calibration from the desktop app's usage card
-            // (the Stop hook) both write this one file.
+            // The claude.ai reader, the status line bridge (terminal sessions) and calibration all write this one file.
             _plan = new PlanUsageService(new PlanUsageStore(AppPaths.ClaudePlan));
             _plan.Changed += usage => _dispatcher.TryEnqueue(() => OnPlanUsage(usage));
             _plan.Configure(settings.ClaudeEnabled);
@@ -184,6 +184,13 @@ internal sealed class AppHost : IDisposable
 
         _host = new HostWindow();
         _host.DisplaySettingsChanged += () => _dispatcher.TryEnqueue(RequestDisplayPlacement);
+        if (!_options.IsDemo)
+        {
+            _claudeWeb = new ClaudeWebReader(_dispatcher, _host.Handle, new PlanUsageStore(AppPaths.ClaudePlan));
+            _claudeWeb.Changed += OnClaudeWebChanged;
+            _claudeWeb.Configure(settings.ClaudeEnabled && settings.ClaudeWebSignedIn);
+        }
+
         _tray = new TrayIcon(_host, AppPaths.Icon)
         {
             IsIslandVisible = () => _window.IsIslandVisible,
@@ -600,6 +607,7 @@ internal sealed class AppHost : IDisposable
         _focusTimer?.Dispose();
         _modules?.Dispose();
         _plan?.Dispose();
+        _claudeWeb?.Dispose();
         _media?.Dispose();
         _state?.Dispose();
         _fullscreen?.Dispose();
@@ -859,6 +867,11 @@ internal sealed class AppHost : IDisposable
         {
             var vm = snapshot.Provider == AiProviderKind.Claude ? _viewModel.Usage.Claude : _viewModel.Usage.Codex;
             vm.Update(snapshot);
+            if (snapshot.Provider == AiProviderKind.Claude)
+            {
+                _claudeWeb?.OnActivity(); // a reply landed: read claude.ai's usage in a few seconds
+            }
+
             _modules.OnAiSnapshot(snapshot);
         });
         _providers.Activity += activity => _dispatcher.TryEnqueue(() => _viewModel.OnAiActivity(activity));
@@ -975,6 +988,7 @@ internal sealed class AppHost : IDisposable
         _modules.Apply(settings);
         ApplyFavorites(settings);
         _plan?.Configure(settings.ClaudeEnabled);
+        _claudeWeb?.Configure(settings.ClaudeEnabled && settings.ClaudeWebSignedIn);
         _viewModel.EnsureValidTab();
         _window.SetAlwaysOnTop(settings.AlwaysOnTop && !_settingsActive);
         ApplyKeepOpen(settings);
@@ -1010,14 +1024,24 @@ internal sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>How plan usage reaches Claudex right now: the claude.ai sign-in, else the status line.</summary>
+    private PlanConnection PlanConnectionNow() =>
+        ClaudePlanLink.Combine(_claudeWeb?.Status ?? ClaudeWebStatus.SignedOut, ClaudeStatusLineSetup.Inspect(ClaudeStatusLineSetup.SettingsPath()));
+
+    /// <summary>The claude.ai sign-in changed state or read new numbers (those also arrive through the plan file).</summary>
+    private void OnClaudeWebChanged()
+    {
+        _viewModel.Usage.Claude.SetPlan(_plan?.Usage, PlanConnectionNow());
+        _settingsWindow?.RefreshPlanConnection();
+    }
+
     /// <summary>
     /// New plan usage from Claude Code: show it, keep the day's measured peak for the history, and
     /// clear the percentage when its window resets.
     /// </summary>
     private void OnPlanUsage(PlanUsage? usage)
     {
-        var connection = ClaudePlanLink.Inspect(ClaudeStatusLineSetup.SettingsPath());
-        _viewModel.Usage.Claude.SetPlan(usage, connection);
+        _viewModel.Usage.Claude.SetPlan(usage, PlanConnectionNow());
         if (usage is null)
         {
             return;
@@ -1429,6 +1453,7 @@ internal sealed class AppHost : IDisposable
             // drawn behind it (the island also re-claims the top whenever another window comes to the front).
             _settingsWindow.Activated += (_, args) => SetSettingsActive(args.WindowActivationState != Microsoft.UI.Xaml.WindowActivationState.Deactivated);
             _settingsWindow.QuitRequested += OnQuitFromSettings;
+            _settingsWindow.ClaudeWeb = _claudeWeb;
         }
 
         if (section is not null)
