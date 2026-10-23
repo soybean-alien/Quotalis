@@ -4,6 +4,12 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.16] - 2026-10-23
+
+### Security
+
+- **No local folder paths in the binaries.** The build maps the source folder to `/_/`, so the DLLs' embedded debug paths no longer contain the build machine's user name. 0.5.16 is the first release with the ChatGPT plan usage card; 0.5.15 was tagged but never published.
+
 ## [0.5.15] - 2026-10-23
 
 ### Added
