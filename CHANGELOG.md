@@ -4,6 +4,23 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.5.14] - 2026-10-22
+
+### Added
+
+- **Claude plan usage from claude.ai, with a one-time sign-in.** Settings, Modules, "Claude plan usage", **Sign in to claude.ai** opens claude.ai's own sign-in page in a small window, which closes itself once you're signed in. Claudex then reads your 5-hour and weekly usage the way claude.ai's own Usage page does: a few seconds after Claude Code writes a reply (at most every 15 seconds while it keeps writing), every 2 minutes otherwise, and less often while claude.ai can't be reached. It works in Claude desktop, terminal and IDE sessions alike.
+  - **Never counts against your limits:** reading usage sends no messages to Claude, so it costs nothing.
+  - **Private:** the label says so in Settings. Your sign-in (claude.ai's cookies) stays in a browser profile on this PC, `%USERPROFILE%\.claudex\claude-signin`. Claudex never sees your password, never reads the cookie values, never logs claude.ai's answers, and keeps only the two percentages and their reset times. **Sign out** clears the profile. **Refresh now** reads at once.
+  - **Honest states:** an expired sign-in says so and offers **Sign in again**; an answer in an unknown format shows no percentage rather than a wrong one. The island's "Sign in…" button opens the same card.
+
+### Changed
+
+- **The terminal status line is now its own, optional row** in the same card, with Connect and Disconnect. It still hands over usage after every reply in a Claude Code terminal session.
+
+### Removed
+
+- **The Claude Stop hook** (`--claudex-stop-hook`). It had Claude read its usage card at the end of a turn, which cost model calls and counted against your limits every time. The installer removes its entries from Claude Code's settings, whichever copy of Claudex they ran, and an entry left anywhere else now ends at once without doing anything. Manual calibration (`--claudex-calibrate`) and the Codex Stop hook are unchanged.
+
 ## [0.5.13] - 2026-10-19
 
 ### Added

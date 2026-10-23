@@ -6,7 +6,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Company>soybean_alien</Company>
     <Product>Claudex</Product>
-    <Version>0.5.13</Version>
+    <Version>0.5.14</Version>
     <Copyright>Copyright © 2026 Maximilian Köhlenbeck</Copyright>
   </PropertyGroup>
 </Project>

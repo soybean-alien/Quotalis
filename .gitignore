@@ -46,3 +46,6 @@ Desktop.ini
 # Agent handoff notes (local working notes, see CLAUDE.md)
 CODEX_HANDOFF.md
 AGENTS.md
+
+# Token Savior index cache (local tool data)
+.token-savior-cache.json

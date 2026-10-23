@@ -101,6 +101,9 @@ public sealed class AppSettings
     // Modules
     public bool ClaudeEnabled { get; set; } = true;
 
+    /// <summary>Signed in to claude.ai for plan usage (the sign-in itself lives in the browser profile, not here).</summary>
+    public bool ClaudeWebSignedIn { get; set; }
+
     public bool CodexEnabled { get; set; } = true;
 
     public bool MusicEnabled { get; set; } = true;

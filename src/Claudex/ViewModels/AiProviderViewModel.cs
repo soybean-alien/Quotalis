@@ -243,7 +243,7 @@ public sealed class AiProviderViewModel : ObservableObject
         ? PlanStatus.Reason(PlanState)
         : "Codex has not recorded a limit yet.";
 
-    public bool CanConnectPlan => Kind == AiProviderKind.Claude && HasNoPlan && _planConnection == PlanConnection.NotConnected;
+    public bool CanConnectPlan => Kind == AiProviderKind.Claude && HasNoPlan && _planConnection is PlanConnection.NotConnected or PlanConnection.SignInExpired;
 
     /// <summary>"Reset in 2 h 14 min" within a day, else the weekday ("Resets Monday").</summary>
     public static string ResetText(DateTimeOffset resetsAt, DateTimeOffset now)

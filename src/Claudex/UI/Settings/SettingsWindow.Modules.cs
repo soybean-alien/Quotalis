@@ -115,28 +115,92 @@ public sealed partial class SettingsWindow
 
     // Claude plan usage --------------------------------------------------------------------------------
 
-    /// <summary>Shows whether Claude Code hands plan usage to Claudex (its status line and Stop hook).</summary>
+    /// <summary>The claude.ai reader of the running island; null in demo mode.</summary>
+    internal ClaudeWebReader? ClaudeWeb { get; set; }
+
+    private ClaudeSignInWindow? _signIn;
+
+    /// <summary>Called when the claude.ai sign-in changed state or read new numbers.</summary>
+    internal void RefreshPlanConnection() => UpdatePlanConnection();
+
+    /// <summary>Shows the claude.ai sign-in and the optional status line, each with what it delivers right now.</summary>
     private void UpdatePlanConnection()
     {
-        var state = _isDemo ? PlanConnection.NotConnected : ClaudePlanLink.Inspect(ClaudeStatusLineSetup.SettingsPath());
+        var web = _isDemo ? ClaudeWebStatus.SignedOut : ClaudeWeb?.Status ?? ClaudeWebStatus.SignedOut;
+        var signedIn = !_isDemo && _store.Current.ClaudeWebSignedIn;
         var usage = _isDemo ? null : new PlanUsageStore(AppPaths.ClaudePlan).Load();
-        var data = PlanStatus.StateOf(state, usage, DateTimeOffset.UtcNow);
-        var lastUpdate = usage is null ? string.Empty : Core.Formatting.DisplayFormat.Ago(DateTimeOffset.UtcNow - usage.MeasuredAt);
+        var now = DateTimeOffset.UtcNow;
+        var lastRead = ClaudeWeb?.LastRead is { } at ? Core.Formatting.DisplayFormat.Ago(now - at) : null;
 
-        // "Connected" alone is not "available": say whether plan usage actually arrives.
-        (PlanStatusTitle.Text, PlanStatusText.Text) = (_isDemo, data) switch
+        (PlanStatusTitle.Text, PlanStatusText.Text) = (_isDemo, signedIn, web) switch
         {
-            (true, _) => ("Not available in demo mode", "Demo mode never changes Claude Code's settings."),
-            (_, PlanDataState.Receiving) => ("Connected, receiving plan usage", $"Last update {lastUpdate}. It refreshes with every reply in a Claude Code terminal session, and from the usage card in Claude desktop sessions over 2 minutes old."),
-            (_, PlanDataState.Stale) => ("Connected, no recent update", $"Last update {lastUpdate}. Plan usage refreshes with your next reply in a Claude Code session."),
-            (_, PlanDataState.WaitingForData) => ("Connected, plan usage unavailable so far", "Plan usage arrives after a reply in a Claude Code terminal session (its status line), or at the end of a turn in a Claude desktop session over 2 minutes old (its Stop hook reads the usage card). Claude subscriptions only."),
-            (_, PlanDataState.OtherStatusLine) => ("Your own status line is in use", "Claude Code already runs a status line, which Claudex leaves alone. Connect adds only the Stop hook for desktop sessions. For terminal sessions, pipe the status line input to: " + ClaudeStatusLineSetup.CommandFor(Environment.ProcessPath ?? "Claudex.exe")),
-            (_, PlanDataState.Unreadable) => ("Claude Code settings unreadable", "Its settings.json could not be read, so nothing was changed."),
-            _ => ("Not connected", "Shows your current and weekly Claude plan usage. Claudex becomes Claude Code's status line (terminal sessions) and adds a Stop hook (desktop sessions, where Claude reads its usage card). Only these two percentages and their reset times are kept. Nothing else is read or sent."),
+            (true, _, _) => ("Not available in demo mode", "Demo mode never signs in to claude.ai."),
+            (_, true, ClaudeWebStatus.Expired) => ("Your claude.ai sign-in expired", "The island shows no Claude percentage until you sign in again."),
+            (_, true, ClaudeWebStatus.FormatChanged) => ("claude.ai answered in an unknown format", "Claudex shows nothing rather than a wrong number, and keeps trying every few minutes. An update of Claudex may be needed."),
+            (_, true, _) when lastRead is not null && usage is not null => ("Signed in to claude.ai", $"{Usage(usage, now)}. Updated {lastRead}. Refreshes a few seconds after each Claude reply, and every 2 minutes otherwise."),
+            (_, true, _) => ("Signed in to claude.ai", "Waiting for the first reading. It arrives in a few seconds."),
+            _ => ("Not signed in", "Sign in to claude.ai once and Claudex reads your 5-hour and weekly usage the way claude.ai's own Usage page does."),
         };
-        PlanConnectButton.Visibility = state == PlanConnection.Connected ? Visibility.Collapsed : Visibility.Visible;
-        PlanConnectButton.IsEnabled = !_isDemo && state is PlanConnection.NotConnected or PlanConnection.OtherStatusLine && Environment.ProcessPath is not null;
-        PlanDisconnectButton.Visibility = state == PlanConnection.Connected ? Visibility.Visible : Visibility.Collapsed;
+        PlanSignInButton.Content = signedIn && web == ClaudeWebStatus.Expired ? "Sign in again" : "Sign in to claude.ai";
+        PlanSignInButton.Visibility = !signedIn || web == ClaudeWebStatus.Expired ? Visibility.Visible : Visibility.Collapsed;
+        PlanSignInButton.IsEnabled = !_isDemo && ClaudeWeb is not null && _signIn is null;
+        PlanRefreshButton.Visibility = signedIn && web != ClaudeWebStatus.Expired ? Visibility.Visible : Visibility.Collapsed;
+        PlanSignOutButton.Visibility = signedIn ? Visibility.Visible : Visibility.Collapsed;
+
+        var line = _isDemo ? PlanConnection.NotConnected : ClaudeStatusLineSetup.Inspect(ClaudeStatusLineSetup.SettingsPath());
+        StatusLineText.Text = (_isDemo, line) switch
+        {
+            (true, _) => "Demo mode never changes Claude Code's settings.",
+            (_, PlanConnection.Connected) => "Connected. Claude Code terminal sessions also hand over usage after every reply.",
+            (_, PlanConnection.OtherStatusLine) => "Claude Code already runs your own status line, which Claudex leaves alone. To add terminal readings, pipe its input to: " + ClaudeStatusLineSetup.CommandFor(Environment.ProcessPath ?? "Claudex.exe"),
+            (_, PlanConnection.Unreadable) => "Claude Code's settings.json could not be read, so nothing was changed.",
+            _ => "Also takes usage from Claude Code terminal sessions, after every reply. Desktop sessions don't need it.",
+        };
+        PlanConnectButton.Visibility = line == PlanConnection.Connected ? Visibility.Collapsed : Visibility.Visible;
+        PlanConnectButton.IsEnabled = !_isDemo && line == PlanConnection.NotConnected && Environment.ProcessPath is not null;
+        PlanDisconnectButton.Visibility = line == PlanConnection.Connected ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private static string Usage(PlanUsage usage, DateTimeOffset now)
+    {
+        static string Percent(PlanWindow? w) => w is null ? "--" : $"{Math.Round(w.UsedPercent):0}%";
+        return $"5-hour {Percent(usage.CurrentAt(now))} · weekly {Percent(usage.WeeklyAt(now))}";
+    }
+
+    private void OnClaudeSignIn(object sender, RoutedEventArgs e)
+    {
+        if (_isDemo || ClaudeWeb is null || _signIn is not null)
+        {
+            return;
+        }
+
+        _signIn = new ClaudeSignInWindow();
+        _signIn.Finished += signedIn =>
+        {
+            _signIn = null;
+            if (signedIn)
+            {
+                _store.Update(s => s.ClaudeWebSignedIn = true);
+                ClaudeWeb?.OnSignedIn();
+            }
+
+            UpdatePlanConnection();
+        };
+        _signIn.Activate();
+        UpdatePlanConnection();
+    }
+
+    private void OnClaudeRefresh(object sender, RoutedEventArgs e) => ClaudeWeb?.RefreshNow();
+
+    private async void OnClaudeSignOut(object sender, RoutedEventArgs e)
+    {
+        _store.Update(s => s.ClaudeWebSignedIn = false);
+        if (ClaudeWeb is { } web)
+        {
+            await web.SignOutAsync();
+        }
+
+        UpdatePlanConnection();
     }
 
     private void OnConnectPlan(object sender, RoutedEventArgs e)
@@ -148,12 +212,12 @@ public sealed partial class SettingsWindow
 
         try
         {
-            var result = ClaudePlanLink.Connect(ClaudeStatusLineSetup.SettingsPath(), exe);
-            Log.Info("settings", "Claude plan usage connect", new { result = result.ToString() });
+            var result = ClaudeStatusLineSetup.Connect(ClaudeStatusLineSetup.SettingsPath(), exe);
+            Log.Info("settings", "Claude status line connect", new { result = result.ToString() });
         }
         catch (Exception ex)
         {
-            Log.Warn("settings", "Claude plan usage could not be connected", new { error = ex.GetType().Name });
+            Log.Warn("settings", "Claude status line could not be connected", new { error = ex.GetType().Name });
         }
 
         UpdatePlanConnection();
@@ -163,12 +227,12 @@ public sealed partial class SettingsWindow
     {
         try
         {
-            var result = ClaudePlanLink.Disconnect(ClaudeStatusLineSetup.SettingsPath());
-            Log.Info("settings", "Claude plan usage disconnect", new { result = result.ToString() });
+            var result = ClaudeStatusLineSetup.Disconnect(ClaudeStatusLineSetup.SettingsPath());
+            Log.Info("settings", "Claude status line disconnect", new { result = result.ToString() });
         }
         catch (Exception ex)
         {
-            Log.Warn("settings", "Claude plan usage could not be disconnected", new { error = ex.GetType().Name });
+            Log.Warn("settings", "Claude status line could not be disconnected", new { error = ex.GetType().Name });
         }
 
         UpdatePlanConnection();

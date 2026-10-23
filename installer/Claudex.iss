@@ -46,7 +46,7 @@ RestartApplications=no
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"
 Name: "autostart"; Description: "Start Claudex when I sign in"
-Name: "hooks"; Description: "Connect Claude Code and Codex usage (status line and Stop hooks)"
+Name: "hooks"; Description: "Connect Claude Code and Codex usage (status line and Codex Stop hook)"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
@@ -62,7 +62,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
     ValueData: """{app}\Claudex.exe"" --autostart"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-; Points the Claude Code status line and Stop hook, and the Codex Stop hook, at this copy (adding them if missing).
+; Points the Claude Code status line and the Codex Stop hook at this copy (adding them if missing), and removes the Claude Stop hook of versions before 0.5.14.
 Filename: "{app}\Claudex.exe"; Parameters: "--claudex-hooks connect"; Flags: runhidden waituntilterminated; Tasks: hooks
 Filename: "{app}\Claudex.exe"; Description: "Open Claudex"; Flags: nowait postinstall skipifsilent
 ; A silent install is how the in-app updater runs this installer: start the updated Claudex again.

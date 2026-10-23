@@ -5,9 +5,10 @@ namespace Claudex.Core.Plan;
 
 /// <summary>
 /// <c>Claudex.exe --claudex-hooks connect|disconnect</c>, run by the installer and uninstaller.
-/// Connect points every Claudex entry (status line, Claude Stop hook, Codex Stop hook) at this executable,
-/// wherever an earlier copy put them, and adds the ones that are missing; a status line the user set up
-/// themselves is left alone. Disconnect removes only the entries that run this executable, so a development
+/// Connect points every Claudex entry (status line, Codex Stop hook) at this executable, wherever an earlier
+/// copy put them, and adds the ones that are missing; a status line the user set up themselves is left alone.
+/// It also removes the Claude Stop hook of versions before 0.5.14 (see <see cref="LegacyClaudeStopHook"/>).
+/// Disconnect removes only the entries that run this executable, so a development
 /// build's hooks survive uninstalling the installed copy. Other settings and hooks are never touched, and
 /// each file is backed up before it is written (see <see cref="ClaudeStatusLineSetup"/>).
 /// </summary>
@@ -32,7 +33,8 @@ public static class HookInstaller
     {
         if (Repoint(claudeSettings, executable) is not null)
         {
-            ClaudePlanLink.Connect(claudeSettings, executable);
+            LegacyClaudeStopHook.Remove(claudeSettings);
+            ClaudeStatusLineSetup.Connect(claudeSettings, executable);
         }
 
         var codex = Repoint(codexHooks, executable) ?? throw new JsonException("hooks.json is not readable");
@@ -136,10 +138,6 @@ public static class HookInstaller
             {
                 changed |= Set(hook, CodexCommandFor(executable));
             }
-            else if (IsOurs(command, ClaudeStopHook.Argument))
-            {
-                changed |= Set(hook, ClaudeStopHookSetup.CommandFor(executable));
-            }
         }
 
         if (changed)
@@ -181,7 +179,7 @@ public static class HookInstaller
         command is not null && command.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(argument, StringComparer.Ordinal);
 
     private static bool IsClaudex(string command) =>
-        IsOurs(command, ClaudeStopHook.Argument) || IsOurs(command, CodexStopHook.Argument);
+        IsOurs(command, LegacyClaudeStopHook.Argument) || IsOurs(command, CodexStopHook.Argument);
 
     private static bool Runs(string command, string executable) => command.Contains(executable, StringComparison.OrdinalIgnoreCase);
 

@@ -20,8 +20,6 @@ internal static class AppPaths
 
     public static string CalibrationLog => Path.Combine(Shared, "calibration-log.jsonl");
 
-    public static string ClaudeHookTrace => Path.Combine(Shared, "stop-hook-last.json");
-
     public static string CodexHookTrace => Path.Combine(Shared, "codex-stop-hook-last.json");
 
     /// <summary>Codex's newest 5-hour and weekly readings, published for other programs (Claudex Mini).</summary>
@@ -70,8 +68,15 @@ internal static class AppPaths
 
     public static string UiState => Path.Combine(Root, "ui-state.json");
 
-    /// <summary>Plan usage handed over by Claude Code's status line (numbers only).</summary>
+    /// <summary>Plan usage read from claude.ai or handed over by Claude Code's status line (numbers only).</summary>
     public static string ClaudePlan => Path.Combine(Shared, "claude-plan.json");
+
+    /// <summary>
+    /// The browser profile of the claude.ai sign-in (<see cref="ClaudeWebReader"/>): claude.ai's cookies, on this PC only.
+    /// In the user profile like <see cref="Shared"/>, so a Claudex started from a packaged app finds the same sign-in.
+    /// Signing out clears it; it is never part of a build, an installer or the repository.
+    /// </summary>
+    public static string ClaudeWebProfile => Path.Combine(Shared, "claude-signin");
 
     public static string Settings(bool demo) => Path.Combine(Root, demo ? "settings.demo.json" : "settings.json");
 
