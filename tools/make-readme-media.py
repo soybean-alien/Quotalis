@@ -44,20 +44,27 @@ SCREENSHOTS = {
     "30-settings-modules": "settings-modules",
     "30-settings-position": "settings-position",
     "30-settings-position-end": "settings-auto-hide",
+    "30-settings-general": "settings-general",
+    "30-settings-modules-hermes": "settings-hermes",
+    "12-usage-strip": "usage-strip",
+    "50-compact-hermes": "compact-featured-hermes",
+    "72-awake-expanded": "expanded-awake",
 }
+# Never copy 30-settings-about: it prints the data folder, which contains the Windows user name.
 
 # The hero animation: (snapshot, seconds on screen, caption).
 SEQUENCE = [
     ("20-notch", 1.4, "Out of the way, as a notch"),
-    ("50-compact-claude", 1.8, "Your Claude limit, at rest"),
-    ("04-activity-claude", 1.6, "Claude Code at work"),
-    ("10-expanded-usage", 3.2, "Claude and Codex: plan limits and today's tokens"),
-    ("11-usage-tooltip", 2.6, "Every day, both tools, on one graph"),
-    ("10-expanded-music", 1.8, "Now playing"),
-    ("10-expanded-focus", 1.6, "Focus"),
-    ("10-expanded-system", 2.0, "Your PC"),
-    ("72-awake-expanded", 1.6, "Keep awake"),
-    ("50-compact-codex", 1.4, "Codex, at rest"),
+    ("50-compact-claude", 1.6, "Your Claude limit, at rest"),
+    ("04-activity-claude", 1.4, "Claude Code at work"),
+    ("10-expanded-usage", 3.4, "Claude, Codex and Hermes: plan limits, the Nous wallet, today's tokens"),
+    ("11-usage-tooltip", 2.6, "Every day, every tool, on one graph"),
+    ("12-usage-strip", 2.0, "Or keep the usage strip on screen"),
+    ("50-compact-hermes", 1.4, "Hermes's wallet, at rest"),
+    ("10-expanded-music", 1.6, "Now playing"),
+    ("10-expanded-focus", 1.4, "Focus"),
+    ("10-expanded-system", 1.8, "Your PC"),
+    ("72-awake-expanded", 1.4, "Keep awake"),
     ("50-compact-claude", 1.0, "Claudex"),
 ]
 FADE_FRAMES = 2
@@ -74,7 +81,13 @@ def capsule_box(image):
 
 def place(image, caption=None, canvas_size=CANVAS, top=TOP):
     """The render on the black stage, capsule centered and its top at `top`, with an optional caption."""
-    left, upper, right, _ = capsule_box(image)
+    left, upper, right, lower = capsule_box(image)
+    # A capsule taller than the stage (the three-column usage view with a day open) is scaled to fit above the caption.
+    room = canvas_size[1] - top - (80 if caption else 24)
+    if lower - upper > room:
+        scale = room / (lower - upper)
+        image = image.resize((round(image.width * scale), round(image.height * scale)), Image.LANCZOS)
+        left, upper, right, lower = capsule_box(image)
     canvas = Image.new("RGBA", canvas_size, STAGE + (255,))
     x = canvas_size[0] // 2 - (left + right) // 2
     canvas.alpha_composite(image, (x, top - upper))

@@ -26,7 +26,7 @@ What each module shows, where its data comes from and how it behaves. The [READM
 
 ## The modules
 
-Nine modules, each of which can be turned off or reordered in Settings. The expanded island shows them as icon tabs, in your order, with the selected module's name beside them. A turned-off module does no work at all: no watchers, timers or processes.
+Eleven modules, each of which can be turned off or reordered in Settings (Claude, Codex and Hermes share the Usage tab). The expanded island shows them as icon tabs, in your order, with the selected module's name beside them. A turned-off module does no work at all: no watchers, timers or processes.
 
 Every module has the same four honest states: working; **empty** (nothing to show yet, with what to do about it); **unavailable** (a prerequisite is missing, such as the GitHub CLI); and **error** (reading failed, with a retry). The rest of the island always keeps working.
 
@@ -52,14 +52,30 @@ Each provider shows its **plan usage** first, when it is known:
 - **ChatGPT / Codex:** sign in once from Settings, Modules, "ChatGPT plan usage" using the locally installed Codex app or CLI. Claudex asks Codex for its account rate limits every 2 minutes and after Codex activity. The card lists the shared Work/Codex allowance and every additional limit bucket the account service returns, with five-hour and weekly reset times where supplied. Codex keeps credentials in a separate local profile; usage reads send no AI requests. The Codex module uses this shared allowance when connected and its own rollout records otherwise. An optional Codex Stop hook, `Claudex.exe --claudex-codex-stop-hook` in `~/.codex/hooks.json`, has Codex end replies in sessions over 2 minutes old with that session's exact numbers, such as `🔵 Usage: Codex 5h 18% · wk 41%`.
 - A **Current / Weekly** switch picks the window. Without data the block says "Unavailable" and why. Percentages are never computed from token counts.
 
-Below it, **Today on this PC** keeps the full local breakdown. The compact island shows today's **fresh** tokens and the plan percentage when known ("Claude 1.12M · 72%", or "Claude 1.12M tokens"); the estimated API equivalent appears only in the expanded view. The expanded view shows the full breakdown, and a tooltip on the figure lists every exact count. Hovering a day in the usage graph shows a small tooltip with its date, fresh tokens, sessions and API equivalent.
+Below it, **Today on this PC** keeps the full local breakdown. The compact island shows today's **fresh** tokens and the plan percentage when known ("Claude 1.12M · 72%", or "Claude 1.12M tokens"); the estimated API equivalent appears only in the expanded view. The expanded view shows the full breakdown, and a tooltip on the figure lists every exact count. Hovering a day in the usage graph shows its date, fresh tokens per tool on one scale (Claude, Codex and Hermes), sessions and API equivalent below the graph; a click pins that day until the island closes.
+
+Above the graph, **gold totals** add up the estimated API equivalent of Claude and Codex for this week, this month and every stored day. Below it, **usage by hour** (the last 28 days) shades Anthropic's peak hours (weekdays, US Eastern time, adjustable in Settings, General), shows your share of usage in them, and compares how fast Claude's 5-hour limit drains per dollar in and out of peak hours once enough plan readings are collected. **Always display usage** (Settings, General) keeps the island as a slim usage strip: plan usage, the Hermes wallet, the gold totals and the graph.
 
 <p align="center">
-  <img src="assets/usage-tooltip.png" alt="The usage graph with a tooltip for one day: date, fresh tokens, sessions and API equivalent" width="440">
+  <img src="assets/usage-tooltip.png" alt="The Usage tab (sample data): Claude, Codex and Hermes, the gold totals, the graph and a pinned day split by tool" width="560">
 </p>
  Cache reads repeat the whole conversation context on every turn, so in long agent sessions they are often 80–90 % of processed tokens; counting them as "usage" made earlier numbers look inflated. The usage graph is shaded by fresh tokens too.
 
 The **estimated API equivalent today** in US dollars prices every category at public list prices, including cache writes (1.25× or 2× input) and cache reads (0.1× input unless listed). If you use a subscription, it is not what you pay. Models without a known list price are reported as "partly priced" instead of being guessed. Codex also shows its latest primary rate-limit usage (usually a 5-hour window), with a live activity at 50, 75 and 90 %.
+
+### Hermes
+
+[Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Research) gets a third, yellow column in the Usage tab, which widens when Hermes is on. Hermes runs on credits in a Nous Portal wallet rather than a subscription window, so its column turns the plan bar around:
+
+- **The Nous wallet.** Sign in once in Settings, Modules, "Hermes and the Nous wallet": Claudex shows a code and opens Nous's own page, where you approve it (it says "Connect Hermes", because Claudex borrows Hermes's sign-in for now). The bar is full after a top-up or a plan renewal and drains as Hermes spends; it turns amber below your threshold (default $5) and red at $0, with **Top up Nous wallet**. Hovering the amount shows plan credits, purchased credits and the renewal date.
+- **When it reads:** every second while Hermes works (the balance moved or Hermes was active in the last five minutes), every five minutes otherwise, and never while the PC is locked or asleep. Throttling and Nous's firewall challenges back off by themselves. The read is `GET /api/oauth/account`, which runs no model and costs nothing. The sign-in is encrypted for your Windows account; Nous's tokens could run models, and Claudex never uses them for that.
+- **Today on Hermes**, from Hermes's own records once a minute: fresh tokens, input, cache write, output, cache read, reasoning, API calls, sessions, and what Hermes spent (its own estimate unless Nous billed an exact amount). The source is a Hermes install on this PC (`%LOCALAPPDATA%\hermes\state.db`, read-only) or a server: the export job in [tools/hermes](../tools/hermes) writes a metadata-only JSON every minute, which Claudex copies with Windows' OpenSSH and your own key.
+- **The model** Hermes used last (it can switch models at any time), from those records.
+- Hermes's tokens join the usage graph. Its money is real spending, so it never joins the gold API-equivalent totals.
+
+<p align="center">
+  <img src="assets/settings-hermes.png" alt="Settings: the Nous Portal sign-in, where Hermes's token use comes from and the low balance warning" width="480">
+</p>
 
 ### Music
 

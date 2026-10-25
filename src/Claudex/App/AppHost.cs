@@ -421,7 +421,7 @@ internal sealed class AppHost : IDisposable
         _modules.Apply(_settings.Current); // back to the demo content after the empty and error states
 
         // The compact island featuring each module (as a single favorite).
-        foreach (var module in new[] { ModuleId.Claude, ModuleId.Codex, ModuleId.Music, ModuleId.Focus, ModuleId.System, ModuleId.Calendar, ModuleId.Git, ModuleId.GitHub, ModuleId.Tasks, ModuleId.Awake })
+        foreach (var module in new[] { ModuleId.Claude, ModuleId.Codex, ModuleId.Music, ModuleId.Focus, ModuleId.System, ModuleId.Calendar, ModuleId.Git, ModuleId.GitHub, ModuleId.Tasks, ModuleId.Awake, ModuleId.Hermes })
         {
             _viewModel.SetFavorites([module]);
             await shot("50-compact-" + module.ToString().ToLowerInvariant());
