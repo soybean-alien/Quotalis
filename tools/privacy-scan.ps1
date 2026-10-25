@@ -7,7 +7,7 @@
 #   - personal: one pattern per line in %USERPROFILE%\.claudex\privacy-scan-patterns.txt (plain text, '#' comments,
 #     optional "name = text" lines). Keep account details there: server addresses, emails, org ids. That file lives
 #     outside the repository and must never be committed.
-param([string[]]$Path)
+param([Parameter(ValueFromRemainingArguments)][string[]]$Path)
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
@@ -25,8 +25,10 @@ if (Test-Path $personal) {
         $t = $line.Trim()
         if ($t -eq '' -or $t.StartsWith('#')) { continue }
         $n++
-        if ($t -match '^(?<name>[^=]+?)\s*=\s*(?<text>.+)$') { $patterns["personal: $($Matches.name)"] = [regex]::Escape($Matches.text) }
-        else { $patterns["personal pattern $n"] = [regex]::Escape($t) }
+        # Whole words only: a short name inside another word (Brotli's dictionary in a .NET DLL spells many) is no leak.
+        if ($t -match '^(?<name>[^=]+?)\s*=\s*(?<text>.+)$') { $name = "personal: $($Matches.name)"; $text = $Matches.text }
+        else { $name = "personal pattern $n"; $text = $t }
+        $patterns[$name] = '(?<![A-Za-z0-9])' + [regex]::Escape($text) + '(?![A-Za-z0-9])'
     }
 } else {
     Write-Warning "No personal pattern file at ${personal}: only the built-in patterns are checked."

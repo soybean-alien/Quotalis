@@ -4,6 +4,12 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Build
+
+- **`tools/privacy-scan.ps1` scans every path it is given** (before, only the first: a release scan of the publish folder and the zip skipped the zip), and matches personal strings as whole words only, so a short name inside another word (Brotli's word list in a .NET DLL spells "afterwardscurrently") is no longer a finding.
+
+## [0.6.1] - 2026-10-25
+
 ### Fixed
 
 - **Sign in to Nous Portal works while Hermes is off** (version 0.6.1): it turns the Hermes column on instead of staying greyed out, and turning Hermes on no longer resets a sign-in that is waiting for approval.
