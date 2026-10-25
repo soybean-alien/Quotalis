@@ -19,6 +19,42 @@ public static class DemoData
 
     public const string ClaudeModel = "claude-opus-5-5";
     public const string CodexModel = "gpt-5-codex";
+    public const string HermesModel = "example/hermes-demo-model";
+
+    /// <summary>A made-up Nous wallet: $18.42 left of $25.00 (the scale is set by the caller).</summary>
+    public static Hermes.NousWalletReading HermesWallet(DateTimeOffset now) =>
+        new(18.42m, 6.25m, 12.17m, 20m, "Plus", now.AddDays(26), now);
+
+    /// <summary>About 26 weeks of made-up Hermes token use, lighter than Claude's, with today pinned.</summary>
+    public static Hermes.HermesUsage HermesUsage(DateTimeOffset now, TimeZoneInfo zone)
+    {
+        var random = new Random(2085);
+        var rows = new List<Hermes.HermesModelRow>();
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, zone).DateTime);
+        for (var back = 181; back >= 0; back--)
+        {
+            if (back > 0 && random.NextDouble() > 0.5)
+            {
+                continue;
+            }
+
+            var day = today.AddDays(-back);
+            var input = back == 0 ? 141_200 : (long)(random.NextDouble() * 220_000);
+            var at = new DateTimeOffset(day.ToDateTime(new TimeOnly(back == 0 ? 0 : 14, back == 0 ? 5 : 0)), zone.GetUtcOffset(day.ToDateTime(TimeOnly.MinValue)));
+            rows.Add(new Hermes.HermesModelRow($"demo-{back}", HermesModel, "", back == 0 ? 96 : 10 + random.Next(80),
+                new TokenCounts(input, input / 4, back == 0 ? 12_000 : 0, 0, input * 4), input / 8, back == 0 ? 1.27m : (decimal)(input / 150_000.0), 0m, at));
+        }
+
+        return new Hermes.HermesUsage
+        {
+            GeneratedAt = now,
+            SchemaVersion = 32,
+            LastActivity = now.AddMinutes(-1),
+            CurrentModel = HermesModel,
+            CurrentModelSeen = now.AddMinutes(-1),
+            Days = Hermes.HermesUsageParser.Aggregate(rows, zone),
+        };
+    }
 
     /// <summary>Fills the (in-memory) history with about 26 weeks of plausible, uneven usage.</summary>
     public static void SeedHistory(UsageHistoryService history, UsageDatabase focusDb, TimeProvider time)

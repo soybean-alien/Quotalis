@@ -122,12 +122,18 @@ public sealed record UsageDay(
     bool CodexPartial = false,
     bool CodexImported = false)
 {
+    /// <summary>
+    /// Hermes Agent's tokens that day (from its own records). They count in the graph; Hermes's money never joins the
+    /// API-equivalent values, which stay Claude and Codex only.
+    /// </summary>
+    public TokenCounts Hermes { get; init; }
+
     public bool ApiValuePartial => ClaudePartial || CodexPartial;
 
-    /// <summary>Fresh tokens of both tools (drives the history graph intensity).</summary>
-    public long FreshTokens => Claude.Fresh + Codex.Fresh;
+    /// <summary>Fresh tokens of every tool (drives the history graph intensity).</summary>
+    public long FreshTokens => Claude.Fresh + Codex.Fresh + Hermes.Fresh;
 
-    public long ProcessedTokens => Claude.Processed + Codex.Processed;
+    public long ProcessedTokens => Claude.Processed + Codex.Processed + Hermes.Processed;
 
     public bool HasUsage => ProcessedTokens > 0;
 

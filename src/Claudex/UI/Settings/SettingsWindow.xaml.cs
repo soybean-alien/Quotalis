@@ -42,6 +42,7 @@ public sealed partial class SettingsWindow : Window
         }
 
         InitAwake();
+        InitHermes();
         InitPeakHours();
 
 
@@ -129,6 +130,15 @@ public sealed partial class SettingsWindow : Window
                 await Task.Delay(300);
                 await UI.Components.SnapshotWriter.SaveAsync(Root, Path.Combine(directory, "30-settings-" + name.ToLowerInvariant() + "-end.png"));
             }
+
+            if (name == "Modules")
+            {
+                // The Hermes and Nous wallet card sits in the middle of the section.
+                var top = NousStatusTitle.TransformToVisual(ContentScroll.Content as UIElement).TransformPoint(default).Y - 120;
+                ContentScroll.ChangeView(null, Math.Max(0, top), null, disableAnimation: true);
+                await Task.Delay(300);
+                await UI.Components.SnapshotWriter.SaveAsync(Root, Path.Combine(directory, "30-settings-modules-hermes.png"));
+            }
         }
 
         Close();
@@ -204,6 +214,7 @@ public sealed partial class SettingsWindow : Window
             BuildAutoHideRows(s);
             LoadHomeCloud(s);
             LoadAwake(s);
+            LoadHermes(s);
             foreach (var dependent in new Control[] { SmartHideRetract, SmartHideHide, AutoHideMaximizedToggle })
             {
                 dependent.IsEnabled = s.SmartHideEnabled;

@@ -25,7 +25,7 @@ public sealed partial class UsagePanel : UserControl
             Hours.Set(value.HourFractions, value.PeakHourMask);
             value.PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName is nameof(UsageViewModel.ShowBoth) or "" or null)
+                if (e.PropertyName is nameof(UsageViewModel.ColumnCount) or nameof(UsageViewModel.ShowBoth) or "" or null)
                 {
                     ApplyColumns();
                 }
@@ -54,12 +54,13 @@ public sealed partial class UsagePanel : UserControl
         var condensed = _viewModel.IsCondensed;
         ClaudeSummary.Condensed = condensed;
         CodexSummary.Condensed = condensed;
+        HermesSummary.Condensed = condensed;
         RestDetails.Visibility = condensed ? Visibility.Collapsed : Visibility.Visible;
         Footnote.Visibility = condensed ? Visibility.Collapsed : Visibility.Visible;
         ReadoutArea.Visibility = !condensed || _viewModel.IsInspecting ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>With one provider turned off, the other takes the full width.</summary>
+    /// <summary>The shown columns (Claude, Codex, Hermes, in that order) share the width; hidden ones take none.</summary>
     private void ApplyColumns()
     {
         if (_viewModel is null)
@@ -67,9 +68,22 @@ public sealed partial class UsagePanel : UserControl
             return;
         }
 
-        var single = !_viewModel.ShowBoth;
-        ProvidersGrid.ColumnDefinitions[1].Width = single ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
-        ProvidersGrid.ColumnSpacing = single ? 0 : 24;
-        Grid.SetColumn(CodexSummary, single && !_viewModel.ShowClaude ? 0 : 1);
+        var shown = new List<FrameworkElement>();
+        if (_viewModel.ShowClaude) shown.Add(ClaudeSummary);
+        if (_viewModel.ShowCodex) shown.Add(CodexSummary);
+        if (_viewModel.ShowHermes) shown.Add(HermesSummary);
+        // Exactly one definition per shown column: Grid spaces every definition, even an empty one.
+        ProvidersGrid.ColumnDefinitions.Clear();
+        for (var i = 0; i < Math.Max(1, shown.Count); i++)
+        {
+            ProvidersGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        }
+
+        for (var i = 0; i < shown.Count; i++)
+        {
+            Grid.SetColumn(shown[i], i);
+        }
+
+        ProvidersGrid.ColumnSpacing = shown.Count > 1 ? 24 : 0;
     }
 }

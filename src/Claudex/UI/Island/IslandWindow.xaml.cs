@@ -27,7 +27,7 @@ public sealed partial class IslandWindow : Window
     public const double EdgeMargin = 40;
 
     /// <summary>Largest capsule the window must hold, in DIPs.</summary>
-    public const double MaxCapsuleWidth = 420;
+    public const double MaxCapsuleWidth = Claudex.UI.Expanded.ExpandedView.WideWidth;
     public const double MaxCapsuleHeight = 920;
 
     public static double WindowWidth => MaxCapsuleWidth + 2 * EdgeMargin;

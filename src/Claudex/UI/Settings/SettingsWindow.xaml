@@ -499,6 +499,86 @@
                             </StackPanel>
                         </Border>
 
+                        <TextBlock Text="Hermes and the Nous wallet" Style="{StaticResource SettingsGroupLabelStyle}" Margin="4,20,0,4" />
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <StackPanel>
+                                <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Spacing="6">
+                                        <TextBlock x:Name="NousStatusTitle" Text="Not signed in" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock x:Name="NousStatusText" Style="{StaticResource SettingsRowDescriptionStyle}" AutomationProperties.LiveSetting="Polite"
+                                                   Text="Sign in to Nous Portal once and the Hermes column shows your wallet: full after a top-up, draining as Hermes spends." />
+                                        <TextBlock x:Name="NousCodeText" Visibility="Collapsed" FontSize="22" FontWeight="SemiBold" IsTextSelectionEnabled="True"
+                                                   AutomationProperties.Name="Code to check on the Nous page" />
+                                        <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}"
+                                                   Text="Private: you sign in on Nous's own page; Claudex never sees your password. The sign-in is encrypted for your Windows account on this PC and is only used to read your balance. Reading it is free: it runs no model and spends no credits. The page says &#x201C;Connect Hermes&#x201D; because Claudex uses Hermes's sign-in for now." />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button x:Name="NousSignInButton" Content="Sign in to Nous Portal" Style="{StaticResource AccentButtonStyle}" Click="OnNousSignIn" />
+                                        <Button x:Name="NousCancelButton" Content="Cancel" Click="OnNousCancel" Visibility="Collapsed" />
+                                        <Button x:Name="NousRefreshButton" Content="Refresh now" Click="OnNousRefresh" Visibility="Collapsed" />
+                                        <Button x:Name="NousSignOutButton" Content="Sign out" Click="OnNousSignOut" Visibility="Collapsed" />
+                                    </StackPanel>
+                                </Grid>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Hermes's token use" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock x:Name="HermesSourceText" Style="{StaticResource SettingsRowDescriptionStyle}"
+                                                   Text="Tokens, sessions and the model from Hermes's own records, once a minute. Numbers only, never your messages." />
+                                    </StackPanel>
+                                    <ComboBox x:Name="HermesSourcePicker" Grid.Column="1" MinWidth="200" VerticalAlignment="Center"
+                                              AutomationProperties.Name="Where Hermes's token use comes from" SelectionChanged="OnHermesSourceChanged" />
+                                </Grid>
+                                <StackPanel x:Name="HermesRemoteRows" Visibility="Collapsed">
+                                    <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                    <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12" RowSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.ColumnSpan="2" Style="{StaticResource SettingsRowDescriptionStyle}" TextWrapping="Wrap"
+                                                   Text="The server writes Hermes's export once a minute (tools/hermes in the Claudex repository). Claudex copies it with Windows' OpenSSH and your own key; the server's host key must already be trusted. These stay on this PC." />
+                                        <TextBlock Grid.Row="1" Text="Server (user@host)" Style="{StaticResource SettingsRowTitleStyle}" VerticalAlignment="Center" />
+                                        <TextBox x:Name="HermesTargetBox" Grid.Row="1" Grid.Column="1" MinWidth="260" PlaceholderText="reader@your-server"
+                                                 AutomationProperties.Name="Server for Hermes's export" LostFocus="OnHermesRemoteLostFocus" />
+                                        <TextBlock Grid.Row="2" Text="Private key file" Style="{StaticResource SettingsRowTitleStyle}" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                            <TextBox x:Name="HermesKeyBox" MinWidth="180" PlaceholderText="C:\Users\you\.ssh\key"
+                                                     AutomationProperties.Name="Private key file for the server" LostFocus="OnHermesRemoteLostFocus" />
+                                            <Button Content="Browse…" Click="OnHermesKeyBrowse" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="3" Text="Export path on the server" Style="{StaticResource SettingsRowTitleStyle}" VerticalAlignment="Center" />
+                                        <TextBox x:Name="HermesPathBox" Grid.Row="3" Grid.Column="1" MinWidth="260" PlaceholderText="outbox/hermes-usage.json"
+                                                 AutomationProperties.Name="Path of Hermes's export on the server" LostFocus="OnHermesRemoteLostFocus" />
+                                    </Grid>
+                                </StackPanel>
+                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
+                                <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Low balance warning" Style="{StaticResource SettingsRowTitleStyle}" />
+                                        <TextBlock Text="The wallet bar turns amber below this amount, and red with a Top up button at $0." Style="{StaticResource SettingsRowDescriptionStyle}" />
+                                    </StackPanel>
+                                    <ComboBox x:Name="HermesLowPicker" Grid.Column="1" MinWidth="120" VerticalAlignment="Center"
+                                              AutomationProperties.Name="Warn when the Nous wallet is below" SelectionChanged="OnHermesLowChanged" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="Awake" Style="{StaticResource SettingsGroupLabelStyle}" Margin="4,20,0,4" />
                         <Border Style="{StaticResource SettingsCardStyle}">
                             <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">

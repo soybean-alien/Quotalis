@@ -11,12 +11,15 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <local:ProviderSummary x:Name="ClaudeSummary" ViewModel="{x:Bind ViewModel.Claude}" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}" />
             <local:ProviderSummary x:Name="CodexSummary" Grid.Column="1" ViewModel="{x:Bind ViewModel.Codex}" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}" />
+            <local:HermesSummary x:Name="HermesSummary" Grid.Column="2" ViewModel="{x:Bind ViewModel.Hermes}" Visibility="{x:Bind ViewModel.ShowHermes, Mode=OneWay}" />
         </Grid>
 
-        <!-- Running totals of Claude and Codex together, in gold: this week, this month, lifetime. -->
+        <!-- Running totals of Claude and Codex together, in gold: this week, this month, lifetime. Hermes spends real
+             Nous credits, a different thing, so it is never part of these (owner's rule, 2026-10-24). -->
         <StackPanel Margin="0,22,0,0" Spacing="2" AutomationProperties.Name="{x:Bind ViewModel.SpendAccessibleText, Mode=OneWay}">
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
@@ -124,6 +127,22 @@
                     </Grid>
                     <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedCodexText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
                 </Grid>
+                <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.ShowHermes, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Hermes" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource HermesBrush}" />
+                    <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
+                        <Rectangle Fill="{StaticResource HermesBrush}" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedHermesFraction, Mode=OneWay}" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedHermesText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </Grid>
                 <Grid>
                     <TextBlock Text="{x:Bind ViewModel.InspectedSessions, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
                     <TextBlock HorizontalAlignment="Right" Style="{StaticResource CaptionTextStyle}">
@@ -137,6 +156,6 @@
         </StackPanel>
 
         <TextBlock x:Name="Footnote" Margin="0,12,0,0" Style="{StaticResource FineTextStyle}"
-                   Text="Costs are API list prices, not what you pay." TextWrapping="Wrap" TextTrimming="None" />
+                   Text="{x:Bind ViewModel.FootnoteText, Mode=OneWay}" TextWrapping="Wrap" TextTrimming="None" />
     </StackPanel>
 </UserControl>

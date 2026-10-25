@@ -141,6 +141,18 @@ public sealed partial class ExpandedView : UserControl
 
     public event Action? SettingsRequested;
 
+    /// <summary>The usual island width, and the Usage panel's width with three columns (Hermes on).</summary>
+    public const double NormalWidth = 420;
+    public const double WideWidth = 620;
+
+    /// <summary>Hermes's column needs room: the Usage panel widens to three columns; every other panel keeps its width.</summary>
+    private void ApplyWidth()
+    {
+        var wide = _viewModel.SelectedTab == IslandTab.Usage && _viewModel.Usage.ColumnCount >= 3;
+        Root.Width = wide ? WideWidth : NormalWidth;
+        MoveIndicator(animate: false);
+    }
+
     /// <summary>The panel on screen changed (null when the island is not expanded).</summary>
     public event Action<IslandTab?>? VisiblePanelChanged;
 
@@ -169,11 +181,20 @@ public sealed partial class ExpandedView : UserControl
 
                 if (e.PropertyName == nameof(IslandViewModel.SelectedTab))
                 {
+                    ApplyWidth();
                     ShowSelectedPanel(reveal: true);
                     MoveIndicator(animate: true);
                 }
             };
+            value.Usage.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is nameof(UsageViewModel.ColumnCount) or "" or null)
+                {
+                    ApplyWidth();
+                }
+            };
             value.TabsChanged += () => DispatcherQueue.TryEnqueue(RebuildTabs);
+            ApplyWidth();
             RebuildTabs();
         }
     }

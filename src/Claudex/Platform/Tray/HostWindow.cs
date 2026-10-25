@@ -34,6 +34,10 @@ internal sealed class HostWindow : IDisposable
         {
             Log.Error("window", "Host window could not be created", data: new { error = Marshal.GetLastWin32Error() });
         }
+        else if (!WTSRegisterSessionNotification(Handle, NOTIFY_FOR_THIS_SESSION))
+        {
+            Log.Debug("window", "Lock notifications unavailable", new { error = Marshal.GetLastWin32Error() });
+        }
     }
 
     public IntPtr Handle { get; }
@@ -49,6 +53,9 @@ internal sealed class HostWindow : IDisposable
 
     /// <summary>WM_HOTKEY with the registered id.</summary>
     public event Action<int>? HotKey;
+
+    /// <summary>The PC was locked or went to sleep (false), or was unlocked or woke up (true).</summary>
+    public event Action<bool>? SessionActiveChanged;
 
     /// <summary>A registered power setting changed: its GUID and its DWORD value.</summary>
     public event Action<Guid, uint>? PowerSettingChanged;
@@ -86,6 +93,7 @@ internal sealed class HostWindow : IDisposable
         UnregisterPowerSettings();
         if (Handle != IntPtr.Zero)
         {
+            WTSUnRegisterSessionNotification(Handle);
             DestroyWindow(Handle);
         }
     }
@@ -127,6 +135,12 @@ internal sealed class HostWindow : IDisposable
                     }
 
                     return new IntPtr(1);
+                case WM_WTSSESSION_CHANGE when (int)wParam is WTS_SESSION_LOCK or WTS_SESSION_UNLOCK:
+                    SessionActiveChanged?.Invoke((int)wParam == WTS_SESSION_UNLOCK);
+                    break;
+                case Power.PowerNative.WM_POWERBROADCAST when (int)wParam is PBT_APMSUSPEND or PBT_APMRESUMEAUTOMATIC:
+                    SessionActiveChanged?.Invoke((int)wParam == PBT_APMRESUMEAUTOMATIC);
+                    break;
                 case >= WM_APP and < 0xC000:
                     Message?.Invoke(msg, lParam, wParam);
                     return IntPtr.Zero;
@@ -139,4 +153,17 @@ internal sealed class HostWindow : IDisposable
 
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }
+
+    private const uint WM_WTSSESSION_CHANGE = 0x02B1;
+    private const int WTS_SESSION_LOCK = 0x7;
+    private const int WTS_SESSION_UNLOCK = 0x8;
+    private const int PBT_APMSUSPEND = 0x4;
+    private const int PBT_APMRESUMEAUTOMATIC = 0x12;
+    private const int NOTIFY_FOR_THIS_SESSION = 0;
+
+    [DllImport("wtsapi32.dll", SetLastError = true)]
+    private static extern bool WTSRegisterSessionNotification(IntPtr hWnd, int dwFlags);
+
+    [DllImport("wtsapi32.dll")]
+    private static extern bool WTSUnRegisterSessionNotification(IntPtr hWnd);
 }

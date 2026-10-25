@@ -63,6 +63,9 @@ internal sealed class AppHost : IDisposable
     private PlanUsageService? _plan;
     private ClaudeWebReader? _claudeWeb;
     private ChatGptUsageReader? _chatGptUsage;
+    private HermesService? _hermes;
+    private Core.Hermes.HermesUsage? _hermesUsageShown;
+    private bool _hermesShown;
     private DispatcherQueueTimer? _planReset;
     private DispatcherQueueTimer? _historyDebounce;
     private DispatcherQueueTimer? _displaySettle;
@@ -193,6 +196,17 @@ internal sealed class AppHost : IDisposable
             _chatGptUsage = new ChatGptUsageReader(_dispatcher);
             _chatGptUsage.Changed += OnChatGptUsageChanged;
             _chatGptUsage.Configure(settings.CodexEnabled);
+            _hermes = new HermesService(_dispatcher, new NousTokenStore(AppPaths.NousSignIn), AppPaths.HermesWallet, AppPaths.HermesUsageCache);
+            _hermes.Changed += OnHermesChanged;
+            _hermes.Configure(settings);
+            _host.SessionActiveChanged += active => _hermes?.SetSessionActive(active);
+        }
+        else
+        {
+            // Demo: a made-up wallet and Hermes history, so screenshots show the column without any account.
+            var now = DateTimeOffset.UtcNow;
+            _viewModel.Usage.Hermes.SetWallet(HermesWalletState.Ready, DemoData.HermesWallet(now), new Core.Hermes.WalletGauge(25m, 18.42m), fast: true, paused: false, 5);
+            _viewModel.Usage.Hermes.SetUsage(DemoData.HermesUsage(now, TimeZoneInfo.Local), null);
         }
 
         _tray = new TrayIcon(_host, AppPaths.Icon)
@@ -613,6 +627,7 @@ internal sealed class AppHost : IDisposable
         _plan?.Dispose();
         _claudeWeb?.Dispose();
         _chatGptUsage?.Dispose();
+        _hermes?.Dispose();
         _media?.Dispose();
         _state?.Dispose();
         _fullscreen?.Dispose();
@@ -966,6 +981,8 @@ internal sealed class AppHost : IDisposable
             }
         });
         _viewModel.Usage.Claude.ConnectPlanRequested += () => OpenSettings("Modules");
+        _viewModel.Usage.Hermes.SignInRequested += () => OpenSettings("Modules");
+        _viewModel.Usage.Hermes.TopUpRequested += () => OpenInBrowser(Core.Hermes.NousPortalClient.TopUpUrl);
         _state.ModeChanged += (_, mode) =>
         {
             if (mode == Core.Island.IslandMode.Expanded)
@@ -999,6 +1016,8 @@ internal sealed class AppHost : IDisposable
         _plan?.Configure(settings.ClaudeEnabled);
         _claudeWeb?.Configure(settings.ClaudeEnabled && settings.ClaudeWebSignedIn);
         _chatGptUsage?.Configure(settings.CodexEnabled);
+        _hermes?.Configure(settings);
+        OnHermesChanged();
         _viewModel.EnsureValidTab();
         _window.SetAlwaysOnTop(settings.AlwaysOnTop && !_settingsActive);
         ApplyKeepOpen(settings);
@@ -1043,6 +1062,62 @@ internal sealed class AppHost : IDisposable
     {
         _viewModel.Usage.Claude.SetPlan(_plan?.Usage, PlanConnectionNow());
         _settingsWindow?.RefreshPlanConnection();
+    }
+
+    /// <summary>The Nous wallet or Hermes's token use changed: update the column, the graph and Settings.</summary>
+    private void OnHermesChanged()
+    {
+        if (_hermes is null)
+        {
+            return;
+        }
+
+        var state = _hermes.Status switch
+        {
+            NousStatus.SigningIn => HermesWalletState.SigningIn,
+            NousStatus.Expired => HermesWalletState.Expired,
+            NousStatus.Unavailable when _hermes.Wallet is null => HermesWalletState.Unavailable,
+            NousStatus.UnknownFormat => HermesWalletState.UnknownFormat,
+            NousStatus.SignedOut => HermesWalletState.SignedOut,
+            _ => HermesWalletState.Ready,
+        };
+        var hermes = _viewModel.Usage.Hermes;
+        hermes.SetWallet(state, _hermes.Wallet, _hermes.Gauge, _hermes.IsFast, _hermes.IsPaused, _settings.Current.HermesLowBalanceUsd);
+        // The wallet can change every second; the graph is rebuilt only when Hermes's token use (or the column) did.
+        var shown = _settings.Current.HermesEnabled;
+        if (!ReferenceEquals(_hermes.Usage, _hermesUsageShown) || shown != _hermesShown)
+        {
+            _hermesUsageShown = _hermes.Usage;
+            _hermesShown = shown;
+            hermes.SetUsage(_hermes.Usage, _hermes.UsageProblem);
+            _viewModel.Usage.RefreshHermesHistory();
+        }
+        else
+        {
+            hermes.SetUsage(_hermes.Usage, _hermes.UsageProblem);
+        }
+        if (_hermes.Status == NousStatus.SignedIn && !_settings.Current.NousSignedIn)
+        {
+            _settings.Update(s => s.NousSignedIn = true);
+        }
+        else if (_hermes.Status is NousStatus.SignedOut or NousStatus.Expired && _settings.Current.NousSignedIn)
+        {
+            _settings.Update(s => s.NousSignedIn = false);
+        }
+
+        _settingsWindow?.RefreshHermes();
+    }
+
+    private static void OpenInBrowser(Uri uri)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("hermes", "Browser could not be opened", new { error = ex.GetType().Name });
+        }
     }
 
     private void OnChatGptUsageChanged()
@@ -1152,6 +1227,7 @@ internal sealed class AppHost : IDisposable
     {
         _viewModel.Usage.Claude.IsEnabled = settings.ClaudeEnabled;
         _viewModel.Usage.Codex.IsEnabled = settings.CodexEnabled;
+        _viewModel.Usage.Hermes.IsEnabled = settings.HermesEnabled || IsSnapshot;
         _viewModel.Music.IsEnabled = settings.MusicEnabled;
         _viewModel.Focus.IsEnabled = settings.FocusEnabled;
         _viewModel.Awake.IsEnabled = settings.AwakeEnabled;
@@ -1478,6 +1554,8 @@ internal sealed class AppHost : IDisposable
             _settingsWindow.ClaudeWeb = _claudeWeb;
             _settingsWindow.ChatGptUsage = _chatGptUsage;
             _settingsWindow.RefreshChatGptUsage();
+            _settingsWindow.Hermes = _hermes;
+            _settingsWindow.RefreshHermes();
         }
 
         if (section is not null)

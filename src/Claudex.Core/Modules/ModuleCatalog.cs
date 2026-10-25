@@ -13,6 +13,7 @@ public enum ModuleId
     Tasks,
     System,
     Awake,
+    Hermes,
 }
 
 /// <summary>
@@ -58,6 +59,7 @@ public static class ModuleCatalog
     {
         ModuleId.GitHub => "GitHub",
         ModuleId.Claude => "Claude Code",
+        ModuleId.Hermes => "Hermes",
         _ => id.ToString(),
     };
 
