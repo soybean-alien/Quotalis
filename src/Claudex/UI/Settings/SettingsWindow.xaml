@@ -724,7 +724,7 @@
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="Local-first" Style="{StaticResource SettingsRowTitleStyle}" />
                                         <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}"
-                                                   Text="Your prompts never leave your device. Claudex reads only usage metadata (tokens, model, time) from local logs and stores daily totals on this PC. Its only network request of its own is the update check, through the GitHub CLI." />
+                                                   Text="Your prompts never leave your device. Claudex reads only usage metadata (tokens, model, time) from local logs and stores daily totals on this PC. It goes online only for what you switch on: the update check (through the GitHub CLI), the plan and wallet readings you sign in for (claude.ai, ChatGPT, Nous Portal), your calendar links, GitHub, and the Hermes export on your own server." />
                                     </StackPanel>
                                 </Grid>
                                 <Rectangle Style="{StaticResource SettingsDividerStyle}" />
