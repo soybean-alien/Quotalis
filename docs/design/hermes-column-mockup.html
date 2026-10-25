@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hermes Column Mock-up</title>
+<style>
+  :root{
+    --bg:#1b1b1b; --island:#0c0c0c; --panel:#202020; --card:#2a2a2a; --line:#333;
+    --text:#f2f2f2; --dim:#a7a7a7; --faint:#6d6d6d;
+    --claude:#e07a52; --codex:#3d8ef0; --hermes:#f5c542; --low:#f59e0b; --empty:#e5484d;
+    --gold:#d9b45a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 "Segoe UI Variable","Segoe UI",system-ui,sans-serif;padding:24px 16px 60px}
+  h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:36px 0 10px;color:var(--dim);font-weight:600}
+  .note{color:var(--dim);font-size:12.5px;max-width:900px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+  .controls button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:13px}
+  .controls button.on{background:#3a3a3a;border-color:#666}
+  .wrap{overflow-x:auto}
+  .island{width:680px;background:var(--island);border-radius:34px;padding:18px 20px 22px;box-shadow:0 20px 60px #000a}
+  .tabs{display:flex;align-items:center;gap:14px;color:var(--dim);font-size:13px;margin-bottom:14px}
+  .tabs .ic{width:28px;height:28px;border-radius:50%;background:#222;display:grid;place-items:center}
+  .tabs b{color:var(--text);font-weight:600;margin-left:6px}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .col h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:7px;font-weight:600}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .live{width:7px;height:7px;border-radius:50%;background:var(--hermes);box-shadow:0 0 0 0 var(--hermes);animation:pulse 1s infinite}
+  .live.idle{background:var(--faint);animation:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #f5c54288}100%{box-shadow:0 0 0 7px #f5c54200}}
+  .seg{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12px;margin-bottom:10px}
+  .seg span{background:#1e1e1e;border-radius:14px;padding:3px 9px}
+  .seg span.on{background:#2c2c2c;color:var(--text)}
+  .big{font-size:24px;font-weight:600;letter-spacing:-.3px} .big small{font-size:13px;font-weight:400;color:var(--dim);margin-left:4px}
+  .bar{height:4px;background:#2a2a2a;border-radius:2px;margin:6px 0 4px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:2px;transition:width .6s,background .3s}
+  .sub{color:var(--dim);font-size:11.5px}
+  .sec{margin-top:16px;color:var(--dim);font-size:12px}
+  .rows{margin-top:6px;font-size:12px}
+  .rows div{display:flex;justify-content:space-between;color:var(--dim);padding:1px 0}
+  .rows div b{color:var(--text);font-weight:400}
+  .cost{margin-top:8px;font-size:12px} .cost b{font-weight:600}
+  .model{margin-top:8px;font-size:11.5px;color:var(--dim)}
+  .model b{color:var(--text);font-weight:500}
+  .flash{animation:flash 1.2s}
+  @keyframes flash{0%{background:#f5c54240}100%{background:transparent}}
+  .topup{display:none;margin-top:8px;background:var(--hermes);color:#1a1400;border:0;border-radius:8px;padding:7px 12px;font:inherit;font-weight:600;font-size:12.5px;cursor:pointer;width:100%}
+  .empty .topup{display:block}
+  .warn{display:none;margin-top:6px;font-size:11.5px;color:var(--low)}
+  .low .warn{display:block}
+  .empty .warn{display:block;color:var(--empty)}
+  .heat{margin-top:22px;display:grid;grid-template-columns:repeat(30,1fr);gap:4px}
+  .heat i{aspect-ratio:1;border-radius:2px;background:#1d1d1d;position:relative}
+  .heat i.sel{outline:1.5px solid #fff}
+  .hfoot{display:flex;justify-content:space-between;color:var(--dim);font-size:11.5px;margin-top:8px}
+  .tip{margin-top:10px;background:#1a1a1a;border:1px solid #2c2c2c;border-radius:10px;padding:9px 12px;font-size:12px;width:330px}
+  .tip .r{display:flex;justify-content:space-between;color:var(--dim)} .tip .r b{color:var(--text);font-weight:400}
+  .totals{margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tot{background:#151515;border-radius:12px;padding:10px 12px}
+  .tot .l{color:var(--dim);font-size:11.5px} .tot .v{color:var(--gold);font-size:17px;font-weight:600}
+  .split{display:flex;height:4px;border-radius:2px;overflow:hidden;margin:6px 0 4px}
+  .legend{display:flex;gap:10px;font-size:11px;color:var(--dim)}
+  .legend span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;background:var(--c)}
+  .foot{margin-top:18px;color:var(--faint);font-size:11.5px}
+  /* strip */
+  .strip{display:inline-flex;align-items:center;gap:16px;background:var(--island);border-radius:20px;padding:8px 16px;font-size:12.5px}
+  .strip .m{display:flex;align-items:center;gap:6px}
+  .strip .mb{width:46px;height:4px;background:#2a2a2a;border-radius:2px;overflow:hidden}
+  .strip .mb i{display:block;height:100%}
+  /* settings */
+  .settings{width:860px;background:#202020;border-radius:10px;display:grid;grid-template-columns:220px 1fr;overflow:hidden}
+  .nav{padding:18px 12px;background:#1c1c1c}
+  .nav div{padding:9px 12px;border-radius:6px;color:var(--text);font-size:13.5px}
+  .nav div.on{background:#2d2d2d}
+  .pane{padding:22px 26px}
+  .pane h4{font-size:26px;margin:0 0 6px;font-weight:600}
+  .card{background:var(--card);border-radius:8px;margin-top:14px}
+  .row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #333}
+  .row:last-child{border:0}
+  .ico{width:32px;height:32px;border-radius:7px;background:#363636;display:grid;place-items:center;flex:none}
+  .row .t{flex:1} .row .t b{display:block;font-weight:500} .row .t span{color:var(--dim);font-size:12.5px}
+  .tog{width:40px;height:20px;border-radius:10px;background:#2a7fff;position:relative;flex:none}
+  .tog::after{content:"";position:absolute;right:4px;top:4px;width:12px;height:12px;border-radius:50%;background:#111}
+  .btn{background:#3a3a3a;border:1px solid #4a4a4a;color:var(--text);border-radius:6px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
+  .btn.y{background:var(--hermes);border-color:var(--hermes);color:#1a1400;font-weight:600}
+  .kv{display:grid;grid-template-columns:180px 1fr;gap:6px 14px;font-size:12.5px;color:var(--dim);padding:4px 16px 14px 62px}
+  .kv b{color:var(--text);font-weight:400}
+  .ok{color:#6fd08c}
+  select{background:#333;color:var(--text);border:1px solid #4a4a4a;border-radius:6px;padding:4px 8px;font:inherit;font-size:12.5px}
+</style>
+</head>
+<body>
+<h1>Hermes column mock-up</h1>
+<p class="note">Sample data only: every amount, model switch and time below is made up. The wallet balance and model change on their own here to show the 1-second live behaviour. Use the buttons to see each state.</p>
+
+<div class="controls" id="ctl">
+  <button data-s="healthy" class="on">Healthy</button>
+  <button data-s="low">Low (under $5)</button>
+  <button data-s="empty">Empty, top up</button>
+  <button data-s="refill">Top-up arrives</button>
+  <button id="idleBtn">Hermes: working</button>
+  <button id="modelBtn">Switch model</button>
+</div>
+
+<h2>1. Full island, three columns</h2>
+<div class="wrap"><div class="island">
+  <div class="tabs"><span class="ic">✳</span><span class="ic">♫</span><span class="ic">⑂</span><span class="ic">◷</span><b>Usage</b></div>
+  <div class="cols">
+    <!-- Claude -->
+    <div class="col">
+      <h3><span class="dot" style="background:var(--claude)"></span>Claude Code</h3>
+      <div class="seg">Plan usage <span class="on">Current</span><span>Weekly</span></div>
+      <div class="big">68%<small>Current</small></div>
+      <div class="bar"><i style="width:68%;background:var(--claude)"></i></div>
+      <div class="sub">Resets in 2 h 14 min</div>
+      <div class="sec">Today on this PC</div>
+      <div class="big" style="font-size:20px">376k<small>fresh tokens</small></div>
+      <div class="rows"><div>Input<b>107k</b></div><div>Cache write<b>188k</b></div><div>Output<b>80.5k</b></div><div>Cache read<b>2.31M</b></div><div>Sessions<b>3</b></div></div>
+      <div class="cost"><b>$3.44</b> estimated API equivalent today</div>
+      <div class="model">Model <b>Opus 5.5</b></div>
+    </div>
+    <!-- Codex -->
+    <div class="col">
+      <h3><span class="dot" style="background:var(--codex)"></span>Codex</h3>
+      <div class="seg">Plan usage <span class="on">Current</span><span>Weekly</span></div>
+      <div class="big">31%<small>Current</small></div>
+      <div class="bar"><i style="width:31%;background:var(--codex)"></i></div>
+      <div class="sub">Resets in 3 h 40 min</div>
+      <div class="sec">Today on this PC</div>
+      <div class="big" style="font-size:20px">86.7k<small>fresh tokens</small></div>
+      <div class="rows"><div>Input<b>24.8k</b></div><div>Cache write<b>43.3k</b></div><div>Output<b>18.6k</b></div><div>Cache read<b>532k</b></div><div>Sessions<b>2</b></div></div>
+      <div class="cost"><b>$0.35</b> estimated API equivalent today</div>
+      <div class="model">Model <b>gpt-5-codex</b></div>
+    </div>
+    <!-- Hermes -->
+    <div class="col" id="hcol">
+      <h3><span class="dot" style="background:var(--hermes)"></span>Hermes <span class="live" id="live" title="Live"></span></h3>
+      <div class="seg">Nous Wallet <span class="on">Balance</span></div>
+      <div class="big"><span id="bal">$18.42</span><small>left</small></div>
+      <div class="bar"><i id="hbar" style="width:74%;background:var(--hermes)"></i></div>
+      <div class="sub" id="full">Full was $25.00 at the last top-up</div>
+      <div class="sub" id="asof">Read 1 s ago · every 1 s while Hermes works</div>
+      <div class="warn" id="warn">Running low. Top up soon.</div>
+      <button class="topup" id="topup">Top up Nous Wallet</button>
+      <div class="sec">Today on Hermes</div>
+      <div class="big" style="font-size:20px">212k<small>fresh tokens</small></div>
+      <div class="rows"><div>Input<b>141k</b></div><div>Cache write<b>12.0k</b></div><div>Output<b>39.4k</b></div><div>Cache read<b>604k</b></div><div>Reasoning<b>19.6k</b></div><div>Sessions<b>4</b></div></div>
+      <div class="cost"><b id="spent">$1.27</b> spent today from the Nous Wallet (real credits)</div>
+      <div class="model" id="modelRow">Model <b id="model">deepseek-v4.1-flash</b> via Nous</div>
+    </div>
+  </div>
+
+  <div class="heat" id="heat"></div>
+  <div class="hfoot"><span>122 active days, combined fresh tokens (Claude, Codex and Hermes)</span><span>Less ▪▪▪ More</span></div>
+  <div class="tip">
+    <div style="margin-bottom:4px;font-weight:600">Wed 21 Oct (pinned day)</div>
+    <div class="r"><span>Claude Code</span><b>402k · $3.80</b></div>
+    <div class="r"><span>Codex</span><b>91k · $0.41</b></div>
+    <div class="r"><span style="color:var(--hermes)">Hermes</span><b>230k tokens</b></div>
+  </div>
+
+  <div class="totals">
+    <div class="tot"><div class="l">This week</div><div class="v">$31.21</div>
+      <div class="split"><i style="flex:82;background:var(--claude)"></i><i style="flex:18;background:var(--codex)"></i></div></div>
+    <div class="tot"><div class="l">This month</div><div class="v">$131.12</div>
+      <div class="split"><i style="flex:81;background:var(--claude)"></i><i style="flex:19;background:var(--codex)"></i></div></div>
+    <div class="tot"><div class="l">Lifetime</div><div class="v">$451.22</div>
+      <div class="split"><i style="flex:80;background:var(--claude)"></i><i style="flex:20;background:var(--codex)"></i></div></div>
+  </div>
+  <div class="legend" style="margin-top:8px"><span style="--c:var(--claude)">Claude</span><span style="--c:var(--codex)">Codex</span><span>API equivalent, Claude and Codex only</span></div>
+  <div class="foot">Claude and Codex costs are API list prices, not what you pay. Hermes is left out of these totals: it spends real Nous Wallet credits, shown in its own column. Hermes tokens still count in the heatmap.</div>
+</div></div>
+
+<h2>2. Usage strip ("Always display usage")</h2>
+<div class="strip">
+  <span class="m"><span class="dot" style="background:var(--claude)"></span>68%<span class="mb"><i style="width:68%;background:var(--claude)"></i></span></span>
+  <span class="m"><span class="dot" style="background:var(--codex)"></span>31%<span class="mb"><i style="width:31%;background:var(--codex)"></i></span></span>
+  <span class="m"><span class="dot" style="background:var(--hermes)"></span><span id="sbal">$18.42</span><span class="mb"><i id="sbar" style="width:74%;background:var(--hermes)"></i></span></span>
+</div>
+<p class="note">Hermes shows dollars left (draining bar). Claude and Codex show percent used (filling bar), as today.</p>
+
+<h2>3. Settings, Modules: Hermes card with the Nous Wallet sign-in</h2>
+<div class="wrap"><div class="settings">
+  <div class="nav"><div>General</div><div>Position</div><div class="on">Modules</div><div>Home Cloud</div><div>Appearance</div><div>About</div></div>
+  <div class="pane">
+    <h4>Modules</h4>
+    <div class="sub">Turn modules on or off and set their order in the island.</div>
+    <div class="card">
+      <div class="row"><span class="ico" style="color:var(--claude)">✳</span><div class="t"><b>Claude Code</b><span>Token usage and API equivalent from local Claude Code logs.</span></div><span class="tog"></span></div>
+      <div class="row"><span class="ico" style="color:var(--codex)">◉</span><div class="t"><b>Codex</b><span>Token usage, rate limits and API equivalent from local Codex logs.</span></div><span class="tog"></span></div>
+      <div class="row"><span class="ico" style="color:var(--hermes)">☿</span><div class="t"><b>Hermes</b><span>Nous Wallet balance, current model and Hermes usage. Sign in to Nous Portal to show it.</span></div><span class="tog"></span></div>
+      <div id="signedOut">
+        <div class="kv"><span>Nous Wallet</span><b>Not signed in</b>
+          <span></span><span><button class="btn y" id="signin">Sign in to Nous Portal</button></span>
+          <span></span><span>Opens the Nous Portal sign-in in a Claudex window. Claudex keeps the sign-in on this PC only and only reads your balance: reading it is free and never spends credits. It never sees your password and never changes your plan.</span></div>
+      </div>
+      <div id="signedIn" style="display:none">
+        <div class="kv"><span>Nous Wallet</span><b class="ok">Signed in · balance read 1 s ago</b>
+          <span>Balance</span><b id="setBal">$18.42 left of $25.00</b>
+          <span>Polling</span><b>Every 1 s while Hermes works. After 5 min with no calls: one check every 5 min. Paused while the PC is locked or asleep. Slower if Nous throttles.</b>
+          <span>Hermes usage from</span><span><select><option>Local Hermes (this PC)</option><option>Remote outbox (set up on this PC only)</option><option>Wallet only</option></select></span>
+          <span>Low balance warning</span><span><select><option>Under $5</option><option>Under $10</option><option>Off</option></select></span>
+          <span></span><span><button class="btn" id="signout">Sign out</button></span></div>
+      </div>
+      <div class="row"><span class="ico">♫</span><div class="t"><b>Music</b><span>What's playing in Spotify, Apple Music, browsers and other media apps.</span></div><span class="tog"></span></div>
+    </div>
+  </div>
+</div></div>
+
+<script>
+  const st={bal:18.42,full:25,mode:'healthy',working:true,models:['deepseek-v4.1-flash','hermes-5-70b','kimi-k3'],mi:0,sec:1};
+  const $=id=>document.getElementById(id), col=$('hcol');
+  // heatmap (sample)
+  const heat=$('heat'),shades=['#1d1d1d','#2f2560','#4a3a9a','#6d5ad6','#a99cf0'];
+  let seed=7;const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+  for(let i=0;i<210;i++){const e=document.createElement('i');e.style.background=shades[Math.floor(rnd()*5)];if(i===187)e.className='sel';heat.appendChild(e)}
+  function render(){
+    const pct=Math.max(0,Math.min(100,st.bal/st.full*100));
+    const color=st.bal<=0?'var(--empty)':st.bal<5?'var(--low)':'var(--hermes)';
+    col.classList.toggle('low',st.bal>0&&st.bal<5);col.classList.toggle('empty',st.bal<=0);
+    $('bal').textContent='$'+Math.max(0,st.bal).toFixed(2);$('sbal').textContent=$('bal').textContent;
+    [$('hbar'),$('sbar')].forEach(b=>{b.style.width=pct+'%';b.style.background=color});
+    $('warn').textContent=st.bal<=0?'Wallet empty. Hermes can\'t run paid models until you top up.':'Running low. Top up soon.';
+    $('full').textContent='Full was $'+st.full.toFixed(2)+' at the last top-up';
+    $('asof').textContent=st.working?'Read '+st.sec+' s ago · every 1 s while Hermes works':'Read '+st.sec+' s ago · every 5 min while idle (fast checks stopped after 5 min with no calls)';
+    $('live').classList.toggle('idle',!st.working);
+    $('setBal').textContent='$'+Math.max(0,st.bal).toFixed(2)+' left of $'+st.full.toFixed(2);
+  }
+  setInterval(()=>{ if(st.working&&st.bal>0){st.bal=Math.max(0,st.bal-0.003-Math.random()*0.004);st.sec=1}else{st.sec=st.sec+1} render() },1000);
+  document.querySelectorAll('#ctl [data-s]').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#ctl [data-s]').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    const s=b.dataset.s; if(s==='healthy')st.bal=18.42; if(s==='low')st.bal=3.71; if(s==='empty')st.bal=0;
+    if(s==='refill'){st.full=Math.max(0,st.bal)+25;st.bal=st.full} render()});
+  $('idleBtn').onclick=e=>{st.working=!st.working;st.sec=1;e.target.textContent='Hermes: '+(st.working?'working':'idle');render()};
+  $('modelBtn').onclick=()=>{st.mi=(st.mi+1)%st.models.length;$('model').textContent=st.models[st.mi];$('modelRow').classList.remove('flash');void $('modelRow').offsetWidth;$('modelRow').classList.add('flash')};
+  $('topup').onclick=()=>alert('Opens portal.nousresearch.com/billing?topup=open in your browser.');
+  $('signin').onclick=()=>{$('signedOut').style.display='none';$('signedIn').style.display='block'};
+  $('signout').onclick=()=>{$('signedIn').style.display='none';$('signedOut').style.display='block'};
+  render();
+</script>
+</body>
+</html>

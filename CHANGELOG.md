@@ -4,6 +4,21 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+
+- **A third column for Hermes Agent (version 0.6.0), in yellow.** Turn on **Hermes** in Settings, Modules. The Usage panel widens to three columns: Claude, Codex and Hermes.
+  - **The Nous wallet, draining instead of filling.** Where Claude and Codex show plan usage climbing, Hermes shows the credits left in your Nous Portal wallet: a yellow bar that is full after a top-up (or a plan renewal) and drains as Hermes spends. It turns amber below a threshold you choose (default $5) and red at $0, with a **Top up Nous wallet** button that opens the portal's top-up page. Hover the amount for plan credits, purchased credits and the renewal date.
+  - **Sign in once in Settings.** Settings, Modules, "Hermes and the Nous wallet", **Sign in to Nous Portal** shows a code and opens Nous's own page; approve it there and the column fills. This is Nous's device sign-in, the one Hermes itself uses, and for now Claudex borrows Hermes's app name, so the page says "Connect Hermes". Sign out forgets it.
+  - **Read every second while Hermes works, every 5 minutes when it is quiet, never while the PC is locked or asleep.** After 5 minutes without a balance change or Hermes activity the fast reads stop; the next sign of activity starts them again. Throttling and Nous's firewall challenges back off by themselves. Reading the balance is a free account read: it runs no model and spends no credits.
+  - **Hermes's own numbers, once a minute.** Today's fresh tokens (input, cache write, output, cache read, reasoning), API calls, sessions, what Hermes spent today (actual when Nous reported it, otherwise marked "estimated by Hermes"), and the model Hermes used last, which can change at any time. They come from Hermes's records: a Hermes install on this PC (`%LOCALAPPDATA%\hermes\state.db`, read-only), or a server's export copied with Windows' OpenSSH and your own key (the export job is in `tools/hermes`). Numbers only: no message text, prompts, titles or chat ids are ever read.
+  - **The heatmap counts Hermes's tokens; the gold totals do not count its money.** Hermes spends real credits, a different thing from the API list-price equivalent of Claude and Codex, so the week, month and lifetime totals stay Claude and Codex only. A hovered day shows Hermes's tokens on a yellow bar.
+  - **The usage strip** shows the wallet and the model.
+- **`tools/privacy-scan.ps1`** fails when personal data would leave this PC: this PC's user name and profile path, private keys and tokens, plus your own strings listed in `%USERPROFILE%\.claudex\privacy-scan-patterns.txt` (kept outside the repository). It scans every file Git would commit, or a publish folder or portable zip, and prints only the file and the pattern's name.
+
+### Security
+
+- **The Nous sign-in is encrypted for your Windows account** (DPAPI) in `%USERPROFILE%\.claudex\nous-signin.bin`. Nous grants its tokens permission to run models, so they are never logged or written anywhere else, and Claudex never calls a model with them. Nous's refresh tokens work once: the new one is saved before it is used.
+
 ## [0.5.16] - 2026-10-23
 
 ### Security

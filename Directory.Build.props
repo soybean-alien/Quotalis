@@ -6,7 +6,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Company>soybean_alien</Company>
     <Product>Claudex</Product>
-    <Version>0.5.16</Version>
+    <Version>0.6.0</Version>
     <Copyright>Copyright © 2026 Maximilian Köhlenbeck</Copyright>
     <!-- Keep the build machine's folders (and so the Windows user name) out of the binaries' embedded PDB paths. -->
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=/_/</PathMap>

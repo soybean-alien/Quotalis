@@ -40,6 +40,7 @@ public sealed class ModuleIcon : UserControl
         ModuleId.Calendar => "",
         ModuleId.Tasks => "",
         ModuleId.System => "",
+        ModuleId.Hermes => "",
         _ => null,
     };
 

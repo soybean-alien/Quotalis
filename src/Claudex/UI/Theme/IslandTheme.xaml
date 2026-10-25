@@ -37,6 +37,11 @@
     <Color x:Key="GoldColor">#FFE8B84A</Color>
     <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource GoldColor}" />
     <SolidColorBrush x:Key="CodexBrush" Color="{StaticResource CodexColor}" />
+    <!-- Hermes yellow: the Nous wallet bar, its mark and its heatmap row. Amber when low, red when empty. -->
+    <Color x:Key="HermesColor">#FFF5C542</Color>
+    <SolidColorBrush x:Key="HermesBrush" Color="{StaticResource HermesColor}" />
+    <SolidColorBrush x:Key="HermesLowBrush" Color="#FFF59E0B" />
+    <SolidColorBrush x:Key="HermesEmptyBrush" Color="#FFE5484D" />
 
     <!-- Status colors: semantic only, used as small dots and icons, never as fills. -->
     <SolidColorBrush x:Key="SuccessBrush" Color="#FF30D158" />

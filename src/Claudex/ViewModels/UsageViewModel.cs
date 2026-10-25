@@ -11,6 +11,7 @@ public sealed class UsageViewModel : ObservableObject
     public const int HistoryWeeks = 26;
 
     private IReadOnlyList<UsageDay> _days = [];
+    private IReadOnlyList<UsageDay> _storedDays = [];
     private int[] _levels = [];
     private int _inspectedIndex = -1;
     private long _maxProviderFresh;
@@ -19,6 +20,14 @@ public sealed class UsageViewModel : ObservableObject
     {
         Claude.PropertyChanged += (_, _) => OnProvidersChanged();
         Codex.PropertyChanged += (_, _) => OnProvidersChanged();
+        Hermes.PropertyChanged += (_, e) =>
+        {
+            // Only the switch: the wallet updates every second while Hermes works and must not re-lay the panel.
+            if (e.PropertyName == nameof(HermesViewModel.IsEnabled))
+            {
+                OnProvidersChanged();
+            }
+        };
     }
 
     /// <summary>Raised after new history was loaded (the graph rebuilds its cells).</summary>
@@ -27,6 +36,8 @@ public sealed class UsageViewModel : ObservableObject
     public AiProviderViewModel Claude { get; } = new(AiProviderKind.Claude);
 
     public AiProviderViewModel Codex { get; } = new(AiProviderKind.Codex);
+
+    public HermesViewModel Hermes { get; } = new();
 
     public IReadOnlyList<UsageDay> Days => _days;
 
@@ -38,7 +49,16 @@ public sealed class UsageViewModel : ObservableObject
 
     public bool ShowBoth => ShowClaude && ShowCodex;
 
-    public bool HasAnyProvider => ShowClaude || ShowCodex;
+    public bool ShowHermes => Hermes.IsEnabled;
+
+    /// <summary>How many columns the Usage panel shows (Hermes widens the island).</summary>
+    public int ColumnCount => (ShowClaude ? 1 : 0) + (ShowCodex ? 1 : 0) + (ShowHermes ? 1 : 0);
+
+    public bool HasAnyProvider => ShowClaude || ShowCodex || ShowHermes;
+
+    public string FootnoteText => ShowHermes
+        ? "Claude and Codex costs are API list prices, not what you pay. Hermes spends real Nous credits, shown in its column and kept out of these totals; its tokens count in the graph."
+        : "Costs are API list prices, not what you pay.";
 
     public bool HasHistory => _days.Any(d => d.HasUsage);
 
@@ -57,6 +77,12 @@ public sealed class UsageViewModel : ObservableObject
 
     public string InspectedCodex => IsInspecting ? DisplayFormat.Tokens(_days[_inspectedIndex].Codex.Fresh) : string.Empty;
 
+    public double InspectedHermesFraction => Fraction(IsInspecting ? _days[_inspectedIndex].Hermes.Fresh : 0);
+
+    /// <summary>Tokens only: Hermes's money is real spending, shown in its column, never as an API equivalent.</summary>
+    public string InspectedHermesText => !IsInspecting ? string.Empty
+        : _days[_inspectedIndex].Hermes.Fresh > 0 ? DisplayFormat.Tokens(_days[_inspectedIndex].Hermes.Fresh) + " tokens" : "None";
+
     /// <summary>Complete breakdown of the inspected day (second readout line).</summary>
     public string InspectedDetail
     {
@@ -68,7 +94,7 @@ public sealed class UsageViewModel : ObservableObject
             }
 
             var d = _days[_inspectedIndex];
-            var all = d.Claude + d.Codex;
+            var all = d.Claude + d.Codex + d.Hermes;
             return all.IsZero
                 ? "No usage"
                 : $"Input {DisplayFormat.Tokens(all.Input)}, cache write {DisplayFormat.Tokens(all.CacheWrite)}, output {DisplayFormat.Tokens(all.Output)}, cache read {DisplayFormat.Tokens(all.CacheRead)}";
@@ -94,7 +120,7 @@ public sealed class UsageViewModel : ObservableObject
 
     public bool HasInspectedPlan => InspectedPlan.Length > 0;
 
-    /// <summary>Readout: the day's fresh tokens (Claude and Codex together).</summary>
+    /// <summary>Readout: the day's fresh tokens (every tool together).</summary>
     public string InspectedTooltipTokens => !IsInspecting ? string.Empty
         : _days[_inspectedIndex].FreshTokens == 0 ? "No usage"
         : $"{DisplayFormat.Tokens(_days[_inspectedIndex].FreshTokens)} fresh tokens";
@@ -120,7 +146,7 @@ public sealed class UsageViewModel : ObservableObject
         }
     }
 
-    public double ReadoutHeight => _planPeaks.Count > 0 ? 100 : 82;
+    public double ReadoutHeight => (_planPeaks.Count > 0 ? 100 : 82) + (ShowHermes ? 18 : 0);
 
     // Per-tool bars of the inspected day: Claude above Codex, on one scale (the busiest single-tool day).
 
@@ -362,11 +388,29 @@ public sealed class UsageViewModel : ObservableObject
 
     public void SetHistory(IReadOnlyList<UsageDay> days)
     {
+        _storedDays = days;
+        ApplyHistory();
+    }
+
+    /// <summary>Hermes's token use changed (it comes from Hermes's own records, not the usage database).</summary>
+    public void RefreshHermesHistory()
+    {
+        if (_storedDays.Count > 0)
+        {
+            ApplyHistory();
+        }
+    }
+
+    private void ApplyHistory()
+    {
+        var hermes = ShowHermes ? Hermes.TokensByDay : new Dictionary<DateOnly, Core.Models.TokenCounts>();
+        var days = hermes.Count == 0 ? _storedDays
+            : _storedDays.Select(d => hermes.TryGetValue(d.Day, out var t) ? d with { Hermes = t } : d).ToList();
         var showingPinned = IsShowingPinned;
         _days = days;
         // Intensity follows fresh tokens: cache reads would let one long session flatten every other day.
         _levels = UsageAggregator.IntensityLevels(days.Select(d => d.FreshTokens).ToList());
-        _maxProviderFresh = days.Count == 0 ? 0 : days.Max(d => Math.Max(d.Claude.Fresh, d.Codex.Fresh));
+        _maxProviderFresh = days.Count == 0 ? 0 : days.Max(d => Math.Max(Math.Max(d.Claude.Fresh, d.Codex.Fresh), d.Hermes.Fresh));
 
         // The pinned day is kept by date: live reloads (and the new day at midnight) shift indexes, not the pin.
         if (_pinnedDay is { } pinned)
@@ -474,6 +518,8 @@ public sealed class UsageViewModel : ObservableObject
         OnPropertyChanged(nameof(InspectedCodexFraction));
         OnPropertyChanged(nameof(InspectedClaudeText));
         OnPropertyChanged(nameof(InspectedCodexText));
+        OnPropertyChanged(nameof(InspectedHermesFraction));
+        OnPropertyChanged(nameof(InspectedHermesText));
         OnPropertyChanged(nameof(InspectedSessions));
         OnPropertyChanged(nameof(InspectedAccessibleText));
     }
@@ -483,6 +529,10 @@ public sealed class UsageViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowClaude));
         OnPropertyChanged(nameof(ShowCodex));
         OnPropertyChanged(nameof(ShowBoth));
+        OnPropertyChanged(nameof(ShowHermes));
+        OnPropertyChanged(nameof(ColumnCount));
+        OnPropertyChanged(nameof(ReadoutHeight));
+        OnPropertyChanged(nameof(FootnoteText));
         OnPropertyChanged(nameof(HasAnyProvider));
         OnPropertyChanged(nameof(PeekTitle));
         OnPropertyChanged(nameof(PeekSubtitle));

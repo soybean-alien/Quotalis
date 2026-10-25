@@ -51,6 +51,7 @@ public sealed class IslandViewModel : ObservableObject
         Usage.PropertyChanged += (_, _) => OnCompactChanged();
         Usage.Claude.PropertyChanged += (_, _) => OnCompactChanged();
         Usage.Codex.PropertyChanged += (_, _) => OnCompactChanged();
+        Usage.Hermes.PropertyChanged += (_, _) => OnCompactChanged();
         Music.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is not (nameof(MusicViewModel.PositionText) or nameof(MusicViewModel.Progress)))
@@ -172,6 +173,7 @@ public sealed class IslandViewModel : ObservableObject
     {
         ModuleId.Claude => Usage.Claude.ShortName,
         ModuleId.Codex => Usage.Codex.ShortName,
+        ModuleId.Hermes => Usage.Hermes.ShortName,
         ModuleId.Focus when !Focus.IsActive => "Focus",
         ModuleId.Awake when !Awake.IsActive => "Awake",
         _ => string.Empty,
@@ -183,6 +185,7 @@ public sealed class IslandViewModel : ObservableObject
     {
         ModuleId.Claude => ProviderValue(Usage.Claude),
         ModuleId.Codex => ProviderValue(Usage.Codex),
+        ModuleId.Hermes => Usage.Hermes.HasWallet ? Usage.Hermes.BalanceText : Usage.Hermes.WalletStatusText,
         ModuleId.Music => Music.HasTrack ? Music.Title : "Nothing playing",
         ModuleId.Focus => Focus.IsActive ? Focus.RemainingText : "Ready",
         ModuleId.Calendar => Calendar.CompactNextText,
@@ -232,9 +235,9 @@ public sealed class IslandViewModel : ObservableObject
         RefreshCompactModule();
     }
 
-    /// <summary>The enabled modules a tab shows, which its star stands for (Usage: Claude and Codex).</summary>
+    /// <summary>The enabled modules a tab shows, which its star stands for (Usage: Claude, Codex and Hermes).</summary>
     public IReadOnlyList<ModuleId> FavoriteModulesOf(IslandTab tab) => tab == IslandTab.Usage
-        ? new[] { ModuleId.Claude, ModuleId.Codex }.Where(IsModuleEnabled).ToList()
+        ? new[] { ModuleId.Claude, ModuleId.Codex, ModuleId.Hermes }.Where(IsModuleEnabled).ToList()
         : [TabModule(tab)];
 
     public bool IsTabFavorite(IslandTab tab) => TabFavorite.IsFavorite(FavoriteModulesOf(tab), _favorites);
@@ -260,6 +263,7 @@ public sealed class IslandViewModel : ObservableObject
     {
         ModuleId.Claude => Usage.Claude.IsWorthShowingCompact,
         ModuleId.Codex => Usage.Codex.IsWorthShowingCompact,
+        ModuleId.Hermes => Usage.Hermes.HasWallet,
         ModuleId.Music => Music.IsEnabled && Music.HasTrack,
         ModuleId.Focus => Focus.IsActive,
         ModuleId.Calendar => Calendar.IsReady && Calendar.HasNext,
@@ -275,6 +279,7 @@ public sealed class IslandViewModel : ObservableObject
     {
         ModuleId.Claude => Usage.Claude.IsEnabled,
         ModuleId.Codex => Usage.Codex.IsEnabled,
+        ModuleId.Hermes => Usage.Hermes.IsEnabled,
         ModuleId.Music => Music.IsEnabled,
         ModuleId.Focus => Focus.IsEnabled,
         ModuleId.Git => Git.IsEnabled,
@@ -393,7 +398,7 @@ public sealed class IslandViewModel : ObservableObject
             {
                 var tab = module switch
                 {
-                    ModuleId.Claude or ModuleId.Codex => IslandTab.Usage,
+                    ModuleId.Claude or ModuleId.Codex or ModuleId.Hermes => IslandTab.Usage,
                     ModuleId.Music => IslandTab.Music,
                     ModuleId.Git => IslandTab.Git,
                     ModuleId.GitHub => IslandTab.GitHub,
@@ -423,10 +428,10 @@ public sealed class IslandViewModel : ObservableObject
         set => SetProperty(ref _selectedTab, value);
     }
 
-    /// <summary>The tab that shows a module (Claude and Codex share Usage).</summary>
+    /// <summary>The tab that shows a module (Claude, Codex and Hermes share Usage).</summary>
     public static IslandTab TabFor(ModuleId module) => module switch
     {
-        ModuleId.Claude or ModuleId.Codex => IslandTab.Usage,
+        ModuleId.Claude or ModuleId.Codex or ModuleId.Hermes => IslandTab.Usage,
         ModuleId.Music => IslandTab.Music,
         ModuleId.Git => IslandTab.Git,
         ModuleId.GitHub => IslandTab.GitHub,
@@ -441,6 +446,7 @@ public sealed class IslandViewModel : ObservableObject
     public ModuleId ModuleForTab(IslandTab tab) => tab switch
     {
         IslandTab.Usage when Usage.Codex.IsEnabled && (!Usage.Claude.IsEnabled || (Usage.Codex.IsActive && !Usage.Claude.IsActive)) => ModuleId.Codex,
+        IslandTab.Usage when !Usage.Claude.IsEnabled && Usage.Hermes.IsEnabled => ModuleId.Hermes,
         IslandTab.Usage => ModuleId.Claude,
         _ => TabModule(tab),
     };
@@ -452,7 +458,7 @@ public sealed class IslandViewModel : ObservableObject
     public void NoteTabOpened(IslandTab tab)
     {
         // Usage holds both providers: keep the one already featured if it is one of them.
-        var module = tab == IslandTab.Usage && _compactModule is ModuleId.Claude or ModuleId.Codex
+        var module = tab == IslandTab.Usage && _compactModule is ModuleId.Claude or ModuleId.Codex or ModuleId.Hermes
             ? _compactModule.Value
             : ModuleForTab(tab);
         ModuleOpened?.Invoke(module);
@@ -683,6 +689,10 @@ public sealed class IslandViewModel : ObservableObject
             case ModuleId.Claude or ModuleId.Codex:
                 var provider = module == ModuleId.Claude ? Usage.Claude : Usage.Codex;
                 Activity.Set(ActivityKind.Usage, provider.DisplayName, provider.PeekLine, provider.PlanPeekTrailing, mark: provider.ShortName);
+                break;
+            case ModuleId.Hermes:
+                Activity.Set(ActivityKind.Usage, "Hermes", Usage.Hermes.HasWallet ? Usage.Hermes.CompactValue + " in the Nous wallet" : Usage.Hermes.WalletStatusText,
+                    Usage.Hermes.HasModel ? Usage.Hermes.ModelText : string.Empty, glyph: "");
                 break;
             case ModuleId.Music when Music.IsEnabled && Music.HasTrack:
                 SetMusicActivity();

@@ -81,6 +81,15 @@ internal static class AppPaths
     /// <summary>Codex-managed ChatGPT credentials for Claudex only; separate from the user's normal Codex account.</summary>
     public static string ChatGptProfile => Path.Combine(Shared, "chatgpt-signin");
 
+    /// <summary>Claudex's Nous Portal sign-in, encrypted for this Windows account (see <see cref="NousTokenStore"/>).</summary>
+    public static string NousSignIn => Path.Combine(Shared, "nous-signin.bin");
+
+    /// <summary>The Hermes wallet bar's scale ("full" since the last top-up) and the last reading, numbers only.</summary>
+    public static string HermesWallet => Path.Combine(Shared, "hermes-wallet.json");
+
+    /// <summary>The last copy of a server's Hermes export (numbers, model and surface names only).</summary>
+    public static string HermesUsageCache => Path.Combine(Root, "hermes-usage.json");
+
     public static string Settings(bool demo) => Path.Combine(Root, demo ? "settings.demo.json" : "settings.json");
 
     public static string Assets => Path.Combine(AppContext.BaseDirectory, "Assets");

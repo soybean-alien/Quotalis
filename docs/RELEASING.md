@@ -12,7 +12,12 @@ Releases are built locally and published as GitHub releases with three files: th
    powershell -ExecutionPolicy Bypass -File tools/build-release.ps1
    ```
 
-   It runs the tests and writes to `artifacts/`:
+   It runs the tests and writes to `artifacts/`. Then check that nothing personal is in the build:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools/privacy-scan.ps1 artifacts/publish artifacts/Claudex-<version>-win-x64-portable.zip
+   ```
+
 
    | File | What it is |
    |---|---|
@@ -21,7 +26,8 @@ Releases are built locally and published as GitHub releases with three files: th
    | `SHA256SUMS-<version>.txt` | Checksums of both |
 
 4. **Smoke test** on a machine (or a fresh user account) without the .NET SDK: install, start, open each module in normal and demo mode, check Settings, About shows the version, uninstall.
-5. **Commit and tag:**
+5. **Privacy scan of the commit** (every file Git would track): `powershell -ExecutionPolicy Bypass -File tools/privacy-scan.ps1`. Fix every finding first.
+6. **Commit and tag:**
 
    ```powershell
    git commit -am "release: 0.1.0"
@@ -29,7 +35,7 @@ Releases are built locally and published as GitHub releases with three files: th
    git push origin main v0.1.0
    ```
 
-6. **Publish** the release on GitHub (Releases, Draft a new release, tag `v0.1.0`), with the changelog section as notes and the three files attached. With the [GitHub CLI](https://cli.github.com):
+7. **Publish** the release on GitHub (Releases, Draft a new release, tag `v0.1.0`), with the changelog section as notes and the three files attached. With the [GitHub CLI](https://cli.github.com):
 
    ```powershell
    gh release create v0.1.0 --title "Claudex 0.1.0" --notes-file notes.md `

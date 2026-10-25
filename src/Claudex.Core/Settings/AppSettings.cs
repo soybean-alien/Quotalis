@@ -54,6 +54,19 @@ public sealed class CalendarFeed
     public CalendarFeed Clone() => (CalendarFeed)MemberwiseClone();
 }
 
+/// <summary>Where the Hermes column reads Hermes's token use.</summary>
+public enum HermesUsageSource
+{
+    /// <summary>Only the wallet; no token use.</summary>
+    Off,
+
+    /// <summary>This PC's Hermes install (<c>%LOCALAPPDATA%\hermes\state.db</c>, read-only).</summary>
+    Local,
+
+    /// <summary>The export file on a server, copied over SSH with the user's own key (see tools/hermes).</summary>
+    Remote,
+}
+
 /// <summary>User settings, persisted as JSON. Every property has a safe default.</summary>
 public sealed class AppSettings
 {
@@ -105,6 +118,26 @@ public sealed class AppSettings
     public bool ClaudeWebSignedIn { get; set; }
 
     public bool CodexEnabled { get; set; } = true;
+
+    /// <summary>Hermes Agent's column: the Nous wallet, the model and Hermes's token use. Off until turned on.</summary>
+    public bool HermesEnabled { get; set; }
+
+    /// <summary>Signed in to Nous Portal (the tokens themselves are encrypted in a file of their own, never here).</summary>
+    public bool NousSignedIn { get; set; }
+
+    /// <summary>Where Hermes's token use comes from (the wallet needs only the Nous sign-in).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<HermesUsageSource>))]
+    public HermesUsageSource HermesSource { get; set; } = HermesUsageSource.Local;
+
+    /// <summary>Remote export over SSH (<c>user@host</c>), the private key file and the export's path on the server.</summary>
+    public string HermesRemoteTarget { get; set; } = "";
+
+    public string HermesRemoteKeyPath { get; set; } = "";
+
+    public string HermesRemotePath { get; set; } = "outbox/hermes-usage.json";
+
+    /// <summary>The wallet turns amber below this many dollars; 0 turns the warning off.</summary>
+    public int HermesLowBalanceUsd { get; set; } = 5;
 
     public bool MusicEnabled { get; set; } = true;
 
@@ -218,6 +251,7 @@ public sealed class AppSettings
         ModuleId.Tasks => TasksEnabled,
         ModuleId.System => SystemEnabled,
         ModuleId.Awake => AwakeEnabled,
+        ModuleId.Hermes => HermesEnabled,
         _ => false,
     };
 
@@ -235,6 +269,7 @@ public sealed class AppSettings
             case ModuleId.Tasks: TasksEnabled = enabled; break;
             case ModuleId.System: SystemEnabled = enabled; break;
             case ModuleId.Awake: AwakeEnabled = enabled; break;
+            case ModuleId.Hermes: HermesEnabled = enabled; break;
         }
     }
 
