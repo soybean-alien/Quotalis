@@ -63,7 +63,7 @@ public sealed partial class SettingsWindow
         (NousStatusTitle.Text, NousStatusText.Text) = (_isDemo, enabled, status) switch
         {
             (true, _, _) => ("Demo mode", "The Hermes column shows made-up numbers. Sign in from the normal Claudex."),
-            (_, false, _) => ("Hermes is off", "Turn on Hermes in the module list above to show its column."),
+            (_, false, _) => ("Hermes is off", "Sign in to Nous Portal and Claudex turns the Hermes column on, or switch Hermes on in the module list above."),
             (_, _, NousStatus.SigningIn) => ("Finish signing in", "Sign in on the Nous page in your browser, check that it shows this code, then connect."),
             (_, _, NousStatus.Expired) => ("Nous sign-in expired", "Sign in again to keep the wallet up to date."),
             (_, _, NousStatus.Unavailable) => ("Nous Portal not reachable", "Claudex keeps the last balance and tries again by itself."),
@@ -79,7 +79,8 @@ public sealed partial class SettingsWindow
         NousCodeText.Text = code ?? string.Empty;
         NousCodeText.Visibility = code is null ? Visibility.Collapsed : Visibility.Visible;
         NousSignInButton.Visibility = status is NousStatus.SignedOut or NousStatus.Expired ? Visibility.Visible : Visibility.Collapsed;
-        NousSignInButton.IsEnabled = !_isDemo && enabled && service is not null;
+        // Works while Hermes is off too: signing in turns the column on (see OnNousSignIn).
+        NousSignInButton.IsEnabled = !_isDemo && service is not null;
         NousCancelButton.Visibility = status == NousStatus.SigningIn ? Visibility.Visible : Visibility.Collapsed;
         NousRefreshButton.Visibility = status is NousStatus.SignedIn or NousStatus.Unavailable or NousStatus.UnknownFormat ? Visibility.Visible : Visibility.Collapsed;
         NousSignOutButton.Visibility = status is NousStatus.SignedIn or NousStatus.Unavailable or NousStatus.UnknownFormat ? Visibility.Visible : Visibility.Collapsed;
@@ -97,6 +98,12 @@ public sealed partial class SettingsWindow
     {
         if (_isDemo || Hermes is not { } service) return;
         NousSignInButton.IsEnabled = false;
+        if (!_store.Current.HermesEnabled)
+        {
+            _store.Update(s => s.HermesEnabled = true);
+            Log.Info("settings", "Hermes turned on by the Nous sign-in");
+        }
+
         try
         {
             var code = await service.StartSignInAsync();

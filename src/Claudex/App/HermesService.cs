@@ -92,7 +92,12 @@ internal sealed class HermesService : IDisposable
             if (enabled)
             {
                 _tokens ??= _store.Load();
-                SetStatus(_tokens is null ? NousStatus.SignedOut : NousStatus.SignedIn);
+                // A sign-in started from Settings may already be waiting (it turns Hermes on): keep it.
+                if (Status != NousStatus.SigningIn)
+                {
+                    SetStatus(_tokens is null ? NousStatus.SignedOut : NousStatus.SignedIn);
+                }
+
                 _schedule.Wake(DateTimeOffset.UtcNow);
                 ArmWallet();
                 ArmUsage(TimeSpan.FromMilliseconds(1));

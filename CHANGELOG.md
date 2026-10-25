@@ -4,6 +4,16 @@ All notable changes to Claudex are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+
+- **Sign in to Nous Portal works while Hermes is off** (version 0.6.1): it turns the Hermes column on instead of staying greyed out, and turning Hermes on no longer resets a sign-in that is waiting for approval.
+
+### Changed
+
+- **New banner and social preview** with the Hermes column: Hermes yellow in the headline, "Claude, Codex and Hermes" in the subtitle.
+
+## [0.6.0] - 2026-10-25
+
 ### Added
 
 - **A third column for Hermes Agent (version 0.6.0), in yellow.** Turn on **Hermes** in Settings, Modules. The Usage panel widens to three columns: Claude, Codex and Hermes.
