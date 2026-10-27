@@ -1,6 +1,6 @@
-# Claudex by soybean_alien. Renders tools/banner/banner.html to docs/assets/banner.png (2560x1280) and
+# Quotalis by soybean_alien. Renders tools/banner/banner.html to docs/assets/banner.png (2560x1280) and
 # docs/assets/social-preview.png (1280x640, GitHub's social preview; must stay under 1 MB) with a local headless Chrome or Edge.
-#   powershell -ExecutionPolicy Bypass -File tools/banner/render.ps1 -Shots <dir from Claudex.exe --demo --snapshot=<dir> --culture=en-US>
+#   powershell -ExecutionPolicy Bypass -File tools/banner/render.ps1 -Shots <dir from Quotalis.exe --demo --snapshot=<dir> --culture=en-US>
 param([Parameter(Mandatory)][string]$Shots)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
@@ -14,7 +14,7 @@ Copy-Item (Join-Path $Shots "50-compact-claude.png") "$PSScriptRoot\shots\compac
 Copy-Item (Join-Path $Shots "10-expanded-usage.png") "$PSScriptRoot\shots\usage.png"
 
 $html = (Resolve-Path "$PSScriptRoot\banner.html").Path
-$profile = Join-Path $env:TEMP "claudex-banner-profile"
+$profile = Join-Path $env:TEMP "quotalis-banner-profile"
 foreach ($r in @(@{ Out = "$root\docs\assets\banner.png"; Scale = "1" }, @{ Out = "$root\docs\assets\social-preview.png"; Scale = "0.5" })) {
     $p = Start-Process $browser -PassThru -WindowStyle Hidden -ArgumentList @("--headless=new", "--disable-gpu", "--hide-scrollbars",
         "--user-data-dir=$profile", "--force-device-scale-factor=$($r.Scale)", "--window-size=2560,1280",

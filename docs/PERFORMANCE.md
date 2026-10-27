@@ -1,22 +1,17 @@
 # Performance
 
-Claudex runs all day, so idle cost matters more than peak speed.
+Quotalis runs all day, so idle cost matters more than peak speed.
 
 ## Measurements
 
 ### Iteration 3 (2026-10-01)
 
-Lenovo laptop (i7-13700H, Intel Iris Xe, battery), Windows 11, no administrator rights. The user's own instance kept running during the measurements, so normal-mode figures come from the parts that changed.
+Lenovo laptop (i7-13700H, Intel Iris Xe, battery), Windows 11, no administrator rights. This iteration measured the System module's sensor sampling and a ticking Focus timer; both modules were removed in 0.7, so those figures no longer apply. What still applies from it:
 
 | Scenario | Result |
 |---|---|
-| System module sampling (1 Hz, GPU every second, temperatures and fans every 5 s), Release, 60 s | 125 ms CPU (0.2 % of one core) |
-| Same after switching off sensor groups that deliver nothing, Debug, 30 s | 78 ms |
-| Demo island with a running focus timer, Debug, 45 s, before this iteration | 1.2-2.0 s (the capsule re-measured and morphed every second) |
-| Same with tabular figures | 0.84-0.95 s |
-| Disabled modules | No timers, watchers, sensors or processes (covered by tests) |
-
-The hardware sensor library adds memory while the System module is on (the measuring process had a 113 MB working set, 84 MB private); turning System off closes it. On this device LibreHardwareMonitor's CPU group would cost about 9 ms per update without delivering temperatures (they need a driver and administrator rights), so it is switched off after detection.
+| Compact values with tabular figures and width reserves | A ticking value no longer re-measures and re-morphs the capsule (the demo island's CPU over 45 s fell from 1.2-2.0 s to 0.84-0.95 s) |
+| Disabled modules | No timers, watchers or processes (covered by tests) |
 
 ### V1
 
@@ -39,15 +34,14 @@ Measured with `Get-Process` over the stated window, after the startup scan.
 
 ## What keeps it cheap
 
-- **Modules that are off do nothing.** No watchers, timers, sensors or child processes. System samples once a second only while enabled and wakes the UI only while its panel is open or it is featured; Git starts `git` only while its panel is open (or once for a new repository); the favorite rotation runs only while the compact capsule is visible; the outside-click hook exists only while expanded.
+- **Modules that are off do nothing.** No watchers, timers or child processes. Git starts `git` only while its panel is open (or once for a new repository); the favorite rotation runs only while the compact capsule is visible; the outside-click hook exists only while expanded.
 - **Event-driven only.**
-  - FileSystemWatcher and SMTC events feed the providers.
+  - FileSystemWatcher events feed the providers.
   - One-shot timers handle midnight and the active-flag timeout.
-  - The focus timer ticks only while a session runs.
-  - The media position ticks only while the expanded Music tab is visible and playing.
+- **Account reads only as often as they are useful.** claude.ai is read a few seconds after a Claude reply (at most every 15 s) and every 2 minutes otherwise; ChatGPT every 2 minutes or shortly after Codex activity. The Nous wallet is read every second only while Hermes works, every 5 minutes once it has been quiet for 5 minutes, and never while the PC is locked or asleep; Hermes's token use once a minute. Failures back off.
 - **Camera and microphone without polling.** One background thread waits on two registry change notifications and reads the consent store only after Windows signals a change.
 - **Auto-hide fallback check.** While auto-hide can apply, a 750 ms timer reads the foreground window (a handful of Win32 calls, a cached process name); it never runs when auto-hide is off or the island sits elsewhere.
-- **No re-layout on ticks.** Compact values reserve their widest form, so a ticking timer or CPU figure no longer resizes and re-morphs the capsule.
+- **No re-layout on ticks.** Compact values reserve their widest form, so a ticking figure no longer resizes and re-morphs the capsule.
 - **No rendering loop.** All motion is composition animation (springs, key frames and expressions). Nothing redraws while idle, and there are no perpetual animations.
 - **Incremental work.**
   - File cursors mean only appended bytes are parsed.
@@ -61,7 +55,7 @@ Measured with `Get-Process` over the stated window, after the startup scan.
 ## Reproduce
 
 ```powershell
-$p = Start-Process .\Claudex.exe -PassThru; Start-Sleep 25
+$p = Start-Process .\Quotalis.exe -PassThru; Start-Sleep 25
 $c1 = $p.TotalProcessorTime; Start-Sleep 60; $p.Refresh()
 "{0:N1} MB, CPU {1} ms" -f ($p.WorkingSet64/1MB), ($p.TotalProcessorTime - $c1).TotalMilliseconds
 ```

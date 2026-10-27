@@ -1,12 +1,12 @@
 name: Bug report
-description: Something in Claudex does not work as expected.
+description: Something in Quotalis does not work as expected.
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for reporting! Please do not paste secrets: no calendar links, tokens, prompts or private paths.
-        Security problems belong in a [private report](https://github.com/soybean-alien/Claudex/security/advisories/new), not here.
+        Security problems belong in a [private report](https://github.com/soybean-alien/Quotalis/security/advisories/new), not here.
   - type: textarea
     id: what
     attributes:
@@ -27,7 +27,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Claudex version
+      label: Quotalis version
       description: Settings, About (or the installer or zip name).
       placeholder: 0.1.0
     validations:
@@ -70,10 +70,10 @@ body:
     attributes:
       label: Logs
       description: |
-        From `%LOCALAPPDATA%\Claudex\logs` (the lines around the problem). Logs never contain prompts, titles or calendar links, but please look through them before posting.
+        From `%LOCALAPPDATA%\Quotalis\logs` (the lines around the problem). Logs never contain prompts, titles or calendar links, but please look through them before posting.
       render: text
   - type: textarea
     id: screenshots
     attributes:
       label: Screenshot or recording
-      description: If it is visual. Demo mode (`Claudex.exe --demo`) avoids showing your own data.
+      description: If it is visual. Demo mode (`Quotalis.exe --demo`) avoids showing your own data.

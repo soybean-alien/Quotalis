@@ -1,17 +1,17 @@
-# Generates the Claudex icon: Assets/Claudex.ico (multi-resolution PNG frames), Assets/Claudex-256.png,
+# Generates the Quotalis icon: Assets/Quotalis.ico (multi-resolution PNG frames), Assets/Quotalis-256.png,
 # and the installer's wizard images (installer/wizard-*.bmp).
 # The mark: on a black rounded square, the Claude mark's left half (Claude orange) and the OpenAI mark's right
 # half (Codex blue), ringed by an orange arc on the left and a blue arc on the right. Each size is drawn from
 # vectors; at 32 px and below the arcs get thicker so they survive the tray and taskbar.
 # Runs in Windows PowerShell (WPF): powershell -STA -ExecutionPolicy Bypass -File tools/make-icon.ps1
 param(
-    [string]$AssetsDir = "$PSScriptRoot\..\src\Claudex\Assets",
+    [string]$AssetsDir = "$PSScriptRoot\..\src\Quotalis\Assets",
     [string]$InstallerDir = "$PSScriptRoot\..\installer"
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
 
-$marks = Get-Content "$PSScriptRoot\..\src\Claudex\UI\Components\BrandMarks.cs" -Raw
+$marks = Get-Content "$PSScriptRoot\..\src\Quotalis\UI\Components\BrandMarks.cs" -Raw
 $claude = [regex]::Match($marks, 'Claude = "([^"]+)"').Groups[1].Value
 $openai = [regex]::Match($marks, 'OpenAI = "([^"]+)"').Groups[1].Value
 $orange = '#D97757'; $blue = '#3A9BFF'; $black = '#0A0A0B'
@@ -84,8 +84,8 @@ foreach ($frame in $frames) {
 }
 foreach ($frame in $frames) { $writer.Write([byte[]]$frame[1]) }
 $writer.Flush()
-[IO.File]::WriteAllBytes((Join-Path $AssetsDir 'Claudex.ico'), $out.ToArray())
-Save-Image (Get-Icon 256) (Join-Path $AssetsDir 'Claudex-256.png') 'png'
+[IO.File]::WriteAllBytes((Join-Path $AssetsDir 'Quotalis.ico'), $out.ToArray())
+Save-Image (Get-Icon 256) (Join-Path $AssetsDir 'Quotalis-256.png') 'png'
 
 # Installer wizard: the tall welcome panel (black, icon centred) and the small header image (icon on white),
 # each at 100 % and 200 % scale.

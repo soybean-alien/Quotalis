@@ -1,4 +1,4 @@
-# Hermes usage export for Claudex: metadata only, read-only.
+# Hermes usage export for Quotalis: metadata only, read-only.
 # Runs inside the Hermes container (python3 -), prints one JSON document to stdout.
 # Never reads message text, reasoning, system prompts, titles, chat or user ids, paths or URLs.
 import hashlib, json, sqlite3, sys, time

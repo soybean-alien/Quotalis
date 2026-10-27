@@ -1,0 +1,58 @@
+using Quotalis.ViewModels;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+
+namespace Quotalis.UI.Expanded;
+
+public sealed partial class ProviderSummary : UserControl
+{
+    private AiProviderViewModel _viewModel = null!;
+
+    public ProviderSummary()
+    {
+        InitializeComponent();
+    }
+
+    /// <summary>The usage strip: hides today's local usage, keeping the name and plan usage.</summary>
+    public bool Condensed
+    {
+        set => TodayDetails.Visibility = value ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public AiProviderViewModel ViewModel
+    {
+        get => _viewModel;
+        set
+        {
+            _viewModel = value;
+            value.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is nameof(AiProviderViewModel.ShowWeekly) or "" or null)
+                {
+                    ApplySegments();
+                }
+            };
+            ApplySegments();
+        }
+    }
+
+    /// <summary>The selected window gets the raised pill and primary text.</summary>
+    private void ApplySegments()
+    {
+        var resources = Application.Current.Resources;
+        var weekly = _viewModel.ShowWeekly;
+        CurrentButton.Background = (Brush)resources[weekly ? "TransparentBrush" : "SurfaceHoverBrush"];
+        WeeklyButton.Background = (Brush)resources[weekly ? "SurfaceHoverBrush" : "TransparentBrush"];
+        CurrentButton.Foreground = (Brush)resources[weekly ? "TextSecondaryBrush" : "TextPrimaryBrush"];
+        WeeklyButton.Foreground = (Brush)resources[weekly ? "TextPrimaryBrush" : "TextSecondaryBrush"];
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(CurrentButton, weekly ? string.Empty : "Selected");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(WeeklyButton, weekly ? "Selected" : string.Empty);
+    }
+
+    private void OnShowCurrent(object sender, RoutedEventArgs e) => _viewModel.ShowWeekly = false;
+
+    private void OnShowWeekly(object sender, RoutedEventArgs e) => _viewModel.ShowWeekly = true;
+
+    private void OnConnectPlan(object sender, RoutedEventArgs e) => _viewModel.RequestConnectPlan();
+}

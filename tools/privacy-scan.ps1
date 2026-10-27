@@ -1,10 +1,10 @@
-# Claudex privacy scan: fails when personal data would leave this PC.
+# Quotalis privacy scan: fails when personal data would leave this PC.
 # Run before every commit (no arguments: every file Git would track, staged or not) and before every release
 # (pass the publish folder and/or the portable zip). Matches are printed as file and pattern NAME only, never the text.
 #
 # Patterns:
 #   - built in: this PC's user name and profile path, private keys, JWTs (Nous/OAuth tokens), bearer tokens;
-#   - personal: one pattern per line in %USERPROFILE%\.claudex\privacy-scan-patterns.txt (plain text, '#' comments,
+#   - personal: one pattern per line in %USERPROFILE%\.quotalis\privacy-scan-patterns.txt (plain text, '#' comments,
 #     optional "name = text" lines). Keep account details there: server addresses, emails, org ids. That file lives
 #     outside the repository and must never be committed.
 param([Parameter(ValueFromRemainingArguments)][string[]]$Path)
@@ -18,7 +18,11 @@ $patterns = [ordered]@{
     'JWT token'          = 'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'
     'bearer token'       = 'Bearer\s+[A-Za-z0-9._~+/-]{24,}'
 }
-$personal = Join-Path $env:USERPROFILE '.claudex\privacy-scan-patterns.txt'
+$personal = Join-Path $env:USERPROFILE '.quotalis\privacy-scan-patterns.txt'
+if (-not (Test-Path $personal)) {
+    # Before Quotalis first starts on this PC, the file is still in Claudex's folder (the name before 0.7.0).
+    $personal = Join-Path $env:USERPROFILE '.claudex\privacy-scan-patterns.txt'
+}
 if (Test-Path $personal) {
     $n = 0
     foreach ($line in Get-Content $personal) {
@@ -41,7 +45,7 @@ if ($Path) {
     foreach ($p in $Path) {
         $full = (Resolve-Path $p).Path
         if ($full -like '*.zip') {
-            $temp = Join-Path ([IO.Path]::GetTempPath()) ("claudex-scan-" + [guid]::NewGuid().ToString('N'))
+            $temp = Join-Path ([IO.Path]::GetTempPath()) ("quotalis-scan-" + [guid]::NewGuid().ToString('N'))
             Expand-Archive $full $temp
             $files += Get-ChildItem $temp -Recurse -File
         } elseif (Test-Path $full -PathType Container) {

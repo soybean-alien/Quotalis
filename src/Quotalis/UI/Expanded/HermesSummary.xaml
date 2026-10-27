@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Hermes Agent's column, laid out like ProviderSummary. Where Claude and Codex show plan usage filling up, Hermes shows
+    the Nous wallet draining: full yellow after a top-up, amber when low, red with "Top up" when empty. Then today's
+    token use from Hermes's own records, the money Hermes spent (real credits, never part of the gold totals) and the model.
+-->
+<UserControl
+    x:Class="Quotalis.UI.Expanded.HermesSummary"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Style x:Key="BreakdownLabel" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextStyle}">
+            <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
+        </Style>
+        <Style x:Key="BreakdownValue" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextStyle}">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel Spacing="2">
+        <!-- Header: the yellow mark, the name and the live dot (reads run every second while Hermes works). -->
+        <StackPanel Orientation="Horizontal" Spacing="7" Height="32" Margin="0,-8,0,-6">
+            <Ellipse Width="11" Height="11" Fill="{StaticResource HermesBrush}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock Text="{x:Bind ViewModel.DisplayName}" Style="{StaticResource CaptionTextStyle}" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Ellipse x:Name="LiveDot" Width="6" Height="6" Fill="{StaticResource HermesBrush}" VerticalAlignment="Center"
+                     Visibility="{x:Bind ViewModel.IsLive, Mode=OneWay}" AutomationProperties.Name="Hermes working, wallet read every second" />
+        </StackPanel>
+
+        <!-- The wallet -->
+        <Grid Margin="0,6,0,0" MinHeight="22">
+            <TextBlock Text="Nous wallet" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
+        </Grid>
+        <StackPanel Visibility="{x:Bind ViewModel.HasWallet, Mode=OneWay}" Spacing="2" Background="Transparent" ToolTipService.Placement="Bottom">
+            <ToolTipService.ToolTip>
+                <ToolTip>
+                    <TextBlock Text="{x:Bind ViewModel.BreakdownText, Mode=OneWay}" FontFamily="{StaticResource TextFont}" FontSize="12" TextWrapping="Wrap" />
+                </ToolTip>
+            </ToolTipService.ToolTip>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="{x:Bind ViewModel.BalanceText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" />
+                <TextBlock Text="left" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Bottom" Margin="0,0,0,5" />
+            </StackPanel>
+            <Grid Height="3" Margin="0,2,0,0" CornerRadius="1.5" Background="{StaticResource ProgressTrackBrush}">
+                <Rectangle Fill="{x:Bind ViewModel.WalletBrush, Mode=OneWay}" RadiusX="1.5" RadiusY="1.5" RenderTransformOrigin="0,0.5">
+                    <Rectangle.RenderTransform>
+                        <ScaleTransform ScaleX="{x:Bind ViewModel.WalletFraction, Mode=OneWay}" />
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+            </Grid>
+            <TextBlock Text="{x:Bind ViewModel.FullText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" Margin="0,2,0,0" />
+            <TextBlock Text="{x:Bind ViewModel.ReadText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" TextWrapping="Wrap" TextTrimming="None" />
+            <TextBlock Text="{x:Bind ViewModel.WarningText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" Foreground="{x:Bind ViewModel.WarningBrush, Mode=OneWay}"
+                       TextWrapping="Wrap" TextTrimming="None" Visibility="{x:Bind ViewModel.HasWarning, Mode=OneWay}" />
+            <Button Style="{StaticResource IslandPillButtonStyle}" Height="32" MinWidth="0" Padding="14,0" FontSize="12" Margin="0,4,0,0"
+                    Content="Top up Nous wallet" Click="OnTopUp" Visibility="{x:Bind ViewModel.ShowTopUp, Mode=OneWay}"
+                    AutomationProperties.Name="Top up the Nous wallet in the browser" />
+        </StackPanel>
+        <StackPanel Visibility="{x:Bind ViewModel.HasNoWallet, Mode=OneWay}" Spacing="2">
+            <TextBlock Text="Unavailable" Style="{StaticResource LabelTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" />
+            <TextBlock Text="{x:Bind ViewModel.WalletStatusText, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
+                       TextWrapping="Wrap" TextTrimming="None" MaxLines="2" HorizontalAlignment="Left" />
+            <Button Style="{StaticResource IslandPillButtonStyle}" Height="32" MinWidth="0" Padding="14,0" FontSize="12" Margin="0,4,0,0"
+                    Content="Sign in…" Click="OnSignIn" Visibility="{x:Bind ViewModel.CanSignIn, Mode=OneWay}"
+                    AutomationProperties.Name="Sign in to Nous Portal in Settings" />
+        </StackPanel>
+
+        <!-- Today on Hermes (hidden in the usage strip) -->
+        <StackPanel x:Name="TodayDetails" Spacing="2">
+            <TextBlock Text="Today on Hermes" Style="{StaticResource FineTextStyle}" Margin="0,12,0,0" />
+            <StackPanel Visibility="{x:Bind ViewModel.HasUsage, Mode=OneWay}" Spacing="2">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="{x:Bind ViewModel.TokensText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.TokensUnit}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Bottom" Margin="0,0,0,5" />
+                </StackPanel>
+                <Grid ColumnSpacing="12" RowSpacing="1" Margin="0,6,0,0" Visibility="{x:Bind ViewModel.HasUsageToday, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Input" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.InputText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                    <TextBlock Grid.Row="1" Text="Cache write" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.CacheWriteText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                    <TextBlock Grid.Row="2" Text="Output" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.OutputText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                    <TextBlock Grid.Row="3" Text="Cache read" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind ViewModel.CacheReadText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                    <TextBlock Grid.Row="4" Text="Reasoning" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{x:Bind ViewModel.ReasoningText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                    <TextBlock Grid.Row="5" Text="API calls" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{x:Bind ViewModel.ApiCallsText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                    <TextBlock Grid.Row="6" Text="Sessions" Style="{StaticResource BreakdownLabel}" />
+                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{x:Bind ViewModel.SessionsText, Mode=OneWay}" Style="{StaticResource BreakdownValue}" />
+                </Grid>
+                <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None">
+                    <Run Text="{x:Bind ViewModel.SpentText, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" /><Run Text=" " /><Run Text="{x:Bind ViewModel.SpentCaption, Mode=OneWay}" />
+                </TextBlock>
+            </StackPanel>
+            <TextBlock Text="{x:Bind ViewModel.UsageProblem, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" TextTrimming="None"
+                       Visibility="{x:Bind ViewModel.HasUsageProblem, Mode=OneWay}" />
+        </StackPanel>
+
+        <!-- The model, from Hermes's records (it can change at any time) -->
+        <StackPanel Visibility="{x:Bind ViewModel.HasModel, Mode=OneWay}" Margin="0,4,0,0">
+            <TextBlock Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" TextTrimming="None">
+                <Run Text="Model " /><Run Text="{x:Bind ViewModel.ModelText, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
+            </TextBlock>
+            <TextBlock Text="{x:Bind ViewModel.ModelCaption, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

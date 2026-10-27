@@ -1,12 +1,12 @@
 """Builds the README media from the app's own offscreen renders (demo data only).
 
-    Claudex.exe --demo --snapshot=<dir>       # renders every state to PNG
+    Quotalis.exe --demo --snapshot=<dir>       # renders every state to PNG
     python tools/make-readme-media.py <dir>           # needs Pillow (pip install pillow)
 
 Writes to docs/assets/:
   - the screenshots, copied under stable names (no editing, no mockups)
-  - hero.gif: 1270 x 840, about 20 s: the notch, the capsule, a live activity, Claude and Codex usage,
-    Music, Focus, System and Awake, each with a one-line caption, joined by short crossfades (the live
+  - hero.gif: 1270 x 840, about 18 s: the notch, the capsule, a live activity, Claude, Codex and Hermes usage,
+    the usage strip and Git, each with a one-line caption, joined by short crossfades (the live
     app morphs with springs instead; see docs/RECORDING.md to record that)
   - hero.png: the expanded usage view on the same stage
 The banner and social preview come from tools/banner/render.ps1.
@@ -27,45 +27,35 @@ CAPTION = (134, 134, 139)
 SCREENSHOTS = {
     "01-compact": "compact",
     "50-compact-claude": "compact-featured-claude",
-    "50-compact-system": "compact-featured-system",
-    "03-activity-music": "activity-music",
+    "50-compact-hermes": "compact-featured-hermes",
+    "50-compact-git": "compact-featured-git",
     "04-activity-claude": "activity-claude",
     "10-expanded-usage": "expanded-usage",
     "11-usage-tooltip": "usage-tooltip",
-    "10-expanded-music": "expanded-music",
-    "10-expanded-system": "expanded-system",
-    "10-expanded-focus": "expanded-focus",
-    "10-expanded-calendar": "expanded-calendar",
+    "12-usage-strip": "usage-strip",
     "10-expanded-git": "expanded-git",
-    "10-expanded-github": "expanded-github",
-    "10-expanded-tasks": "expanded-tasks",
     "20-notch": "notch",
     "60-privacy-compact-mic": "privacy-compact",
     "30-settings-modules": "settings-modules",
+    "30-settings-modules-hermes": "settings-hermes",
+    "30-settings-general": "settings-general",
     "30-settings-position": "settings-position",
     "30-settings-position-end": "settings-auto-hide",
-    "30-settings-general": "settings-general",
-    "30-settings-modules-hermes": "settings-hermes",
-    "12-usage-strip": "usage-strip",
-    "50-compact-hermes": "compact-featured-hermes",
-    "72-awake-expanded": "expanded-awake",
 }
 # Never copy 30-settings-about: it prints the data folder, which contains the Windows user name.
 
 # The hero animation: (snapshot, seconds on screen, caption).
 SEQUENCE = [
     ("20-notch", 1.4, "Out of the way, as a notch"),
-    ("50-compact-claude", 1.6, "Your Claude limit, at rest"),
+    ("01-compact", 1.6, "Your Claude and Codex limits, at rest"),
     ("04-activity-claude", 1.4, "Claude Code at work"),
     ("10-expanded-usage", 3.4, "Claude, Codex and Hermes: plan limits, the Nous wallet, today's tokens"),
     ("11-usage-tooltip", 2.6, "Every day, every tool, on one graph"),
     ("12-usage-strip", 2.0, "Or keep the usage strip on screen"),
     ("50-compact-hermes", 1.4, "Hermes's wallet, at rest"),
-    ("10-expanded-music", 1.6, "Now playing"),
-    ("10-expanded-focus", 1.4, "Focus"),
-    ("10-expanded-system", 1.8, "Your PC"),
-    ("72-awake-expanded", 1.4, "Keep awake"),
-    ("50-compact-claude", 1.0, "Claudex"),
+    ("10-expanded-git", 2.4, "Your repository, from the session you're in"),
+    ("50-compact-git", 1.4, "Git, at rest"),
+    ("01-compact", 1.0, "Quotalis"),
 ]
 FADE_FRAMES = 2
 FADE_SECONDS = 0.24

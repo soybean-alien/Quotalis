@@ -1,7 +1,7 @@
 #!/bin/sh
-# Hermes usage export for Claudex. Run every minute by a root cron, for example /etc/cron.d/hermes-usage-export:
+# Hermes usage export for Quotalis. Run every minute by a root cron, for example /etc/cron.d/hermes-usage-export:
 #   * * * * * root HERMES_CONTAINER=... HERMES_OUTBOX=... HERMES_READER=... /usr/local/sbin/hermes-usage-export.sh 2>&1 | logger -t hermes-usage-export
-# Writes $HERMES_OUTBOX/hermes-usage.json (mode 400, owned by $HERMES_READER, the read-only account Claudex copies it with).
+# Writes $HERMES_OUTBOX/hermes-usage.json (mode 400, owned by $HERMES_READER, the read-only account Quotalis copies it with).
 set -eu
 C=${HERMES_CONTAINER:?set HERMES_CONTAINER to the Hermes container name}
 O=${HERMES_OUTBOX:?set HERMES_OUTBOX to the folder the reader account can read}
