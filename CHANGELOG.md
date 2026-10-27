@@ -2,6 +2,12 @@
 
 All notable changes to Quotalis (called Claudex before 0.7.0) are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Release notes no longer start with a byte-order mark.** `tools/publish-release.ps1` reads `CHANGELOG.md` and writes the notes as UTF-8 without a BOM (Windows PowerShell's `Set-Content -Encoding utf8` added one, which kept the first heading from rendering on GitHub), and reads accented letters correctly. First used for the v0.7.1 release.
+
 ## [0.7.1] - 2026-10-27
 
 ### Changed
