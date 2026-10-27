@@ -2,7 +2,7 @@
 
 All notable changes to Quotalis (called Claudex before 0.7.0) are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.7.0] - 2026-10-27
 
 ### Added
 

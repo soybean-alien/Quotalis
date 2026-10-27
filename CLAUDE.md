@@ -1,6 +1,6 @@
 # Quotalis
 
-Personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck. Private repo, not published. Called **Claudex** until 0.7.0 (the local folder is still `Claudex`).
+Personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck. Private repo, not published. Called **Claudex** until 0.7.0. The working folder is `Desktop\Quotalis`; the old `Desktop\Claudex` copy is deprecated, so don't work in it.
 
 ## Rename compatibility (keep these Claudex literals)
 - `NousTokenStore`'s DPAPI entropy stays `"Claudex Nous sign-in"`, or saved Nous sign-ins stop opening.
