@@ -2,6 +2,14 @@
 
 All notable changes to Quotalis (called Claudex before 0.7.0) are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] - 2026-10-27
+
+### Changed
+
+- **New icon, the "Gauge Q".** An original mark replaces the icon built from the Claude and OpenAI logos: on a dark graphite rounded square, a glass ring three quarters filled with a mint gauge arc, with a polished needle as the Q's tail. It is the app, tray, taskbar, desktop shortcut, Settings and installer icon. `tools/make-icon.ps1` draws every size from vectors (no glow or highlight and a thicker ring and needle at 32 px and below) and writes the installer's wizard images on graphite.
+- **Brand files** in `design/brand/`: `quotalis-mark.svg` (the mark as SVG) and `quotalis-wordmark.svg` (the mark with the name). The six concepts it was picked from are in `design/icon-concepts/concepts.html`.
+- **New banner and social preview** with the new mark, a mint glow behind the product, and a subtitle that matches 0.7.0 ("Claude, Codex and Hermes limits, plus your Git state").
+
 ## [0.7.0] - 2026-10-27
 
 ### Added

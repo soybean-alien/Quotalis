@@ -1,8 +1,9 @@
 # Generates the Quotalis icon: Assets/Quotalis.ico (multi-resolution PNG frames), Assets/Quotalis-256.png,
 # and the installer's wizard images (installer/wizard-*.bmp).
-# The mark: on a black rounded square, the Claude mark's left half (Claude orange) and the OpenAI mark's right
-# half (Codex blue), ringed by an orange arc on the left and a blue arc on the right. Each size is drawn from
-# vectors; at 32 px and below the arcs get thicker so they survive the tray and taskbar.
+# The mark, "Gauge Q": on a dark graphite rounded square, a glass ring that is three quarters filled with a mint
+# gauge arc, and a polished needle as the Q's tail. Each size is drawn from vectors; at 32 px and below the glow
+# and highlight are dropped and the ring and needle get thicker so they survive the tray and taskbar.
+# design/brand/quotalis-mark.svg is the same mark as SVG, for the banner, the Stream Deck key art and the web.
 # Runs in Windows PowerShell (WPF): powershell -STA -ExecutionPolicy Bypass -File tools/make-icon.ps1
 param(
     [string]$AssetsDir = "$PSScriptRoot\..\src\Quotalis\Assets",
@@ -11,27 +12,52 @@ param(
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
 
-$marks = Get-Content "$PSScriptRoot\..\src\Quotalis\UI\Components\BrandMarks.cs" -Raw
-$claude = [regex]::Match($marks, 'Claude = "([^"]+)"').Groups[1].Value
-$openai = [regex]::Match($marks, 'OpenAI = "([^"]+)"').Groups[1].Value
-$orange = '#D97757'; $blue = '#3A9BFF'; $black = '#0A0A0B'
+$graphite = '#101512'
 
-# The icon on a 256-unit canvas. $small: thicker arcs and a slightly larger mark for 32 px and below.
+# The icon on a 256-unit canvas. $small: no glow or highlight, thicker ring and needle for 32 px and below.
 function Get-IconXaml([bool]$small, [string]$background = 'Transparent') {
-    $arc = if ($small) { 16 } else { 10 }
-    $r = if ($small) { 96 } else { 100 }
-    $s = if ($small) { 5.9 } else { 5.5 }
-    $o = 128 - 12 * $s
-    $top = 128 - $r; $bottom = 128 + $r
-    $half = { param($data, $fill, $clip) "<Canvas Clip='$clip'><Path Data='$data' Fill='$fill' RenderTransform='$s,0,0,$s,$o,$o'/></Canvas>" }
+    $c = if ($small) { 120 } else { 122 }
+    $r = if ($small) { 66 } else { 62 }
+    $ring = if ($small) { 34 } else { 26 }
+    $arc = if ($small) { 30 } else { 22 }
+    $needle = if ($small) { 30 } else { 20 }
+    # The gauge runs clockwise from 12 o'clock through 268 degrees, ending just past 9 o'clock.
+    $end = 268 - 90
+    $ex = [Math]::Round($c + $r * [Math]::Cos($end * [Math]::PI / 180), 2)
+    $ey = [Math]::Round($c + $r * [Math]::Sin($end * [Math]::PI / 180), 2)
+    $gauge = "M$c,$($c - $r) A$r,$r 0 1 1 $ex,$ey"
+    $n0 = if ($small) { 154 } else { 150 }; $n1 = if ($small) { 204 } else { 196 }
+    $mint = "<LinearGradientBrush StartPoint='0,0' EndPoint='1,1'><GradientStop Offset='0' Color='#D9FBE3'/><GradientStop Offset='0.45' Color='#7FE0B0'/><GradientStop Offset='1' Color='#1F9E7A'/></LinearGradientBrush>"
+    $extras = if ($small) { '' } else { @"
+  <Path Data='$gauge' StrokeThickness='26' StrokeStartLineCap='Round' StrokeEndLineCap='Round' Stroke='#7FE0B0' Opacity='0.55'>
+    <Path.Effect><BlurEffect Radius='14'/></Path.Effect>
+  </Path>
+"@ }
+    $shine = if ($small) { '' } else { @"
+  <Path Data='M86,84 A62,62 0 0 1 158,76' StrokeThickness='6' StrokeStartLineCap='Round' StrokeEndLineCap='Round' Opacity='0.8'>
+    <Path.Stroke><LinearGradientBrush StartPoint='0,0' EndPoint='0,1'><GradientStop Offset='0' Color='#BFFFFFFF'/><GradientStop Offset='1' Color='#00FFFFFF'/></LinearGradientBrush></Path.Stroke>
+  </Path>
+  <Ellipse Canvas.Left='191' Canvas.Top='191' Width='10' Height='10' Fill='#B3FFFFFF'/>
+"@ }
+    $tile = if ($small) { "<Rectangle Canvas.Left='4' Canvas.Top='4' Width='248' Height='248' RadiusX='56' RadiusY='56'" } else { "<Rectangle Canvas.Left='12' Canvas.Top='12' Width='232' Height='232' RadiusX='56' RadiusY='56'" }
     @"
 <Canvas xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Width='256' Height='256' Background='$background'>
-  <Rectangle Width='256' Height='256' RadiusX='58' RadiusY='58' Fill='$black'/>
-  $(& $half $claude $orange 'M0,0 H128 V256 H0 Z')
-  $(& $half $openai $blue 'M128,0 H256 V256 H128 Z')
-  <Path Data='M128,$top A$r,$r 0 0 0 128,$bottom' Stroke='$orange' StrokeThickness='$arc' StrokeStartLineCap='Round' StrokeEndLineCap='Round'/>
-  <Path Data='M128,$top A$r,$r 0 0 1 128,$bottom' Stroke='$blue' StrokeThickness='$arc' StrokeStartLineCap='Round' StrokeEndLineCap='Round'/>
-</Canvas>
+  $tile>
+    <Rectangle.Fill><LinearGradientBrush StartPoint='0,0' EndPoint='0,1'><GradientStop Offset='0' Color='#26302B'/><GradientStop Offset='1' Color='$graphite'/></LinearGradientBrush></Rectangle.Fill>
+  </Rectangle>
+  $tile>
+    <Rectangle.Fill><RadialGradientBrush Center='0.5,0.55' GradientOrigin='0.5,0.55' RadiusX='0.6' RadiusY='0.6'><GradientStop Offset='0' Color='#473FBF86'/><GradientStop Offset='1' Color='#003FBF86'/></RadialGradientBrush></Rectangle.Fill>
+    <Rectangle.Stroke><LinearGradientBrush StartPoint='0,0' EndPoint='0,1'><GradientStop Offset='0' Color='#38FFFFFF'/><GradientStop Offset='0.5' Color='#0AFFFFFF'/><GradientStop Offset='1' Color='#4D000000'/></LinearGradientBrush></Rectangle.Stroke>
+  </Rectangle>
+  <Path StrokeThickness='$ring'>
+    <Path.Data><EllipseGeometry Center='$c,$c' RadiusX='$r' RadiusY='$r'/></Path.Data>
+    <Path.Stroke><LinearGradientBrush StartPoint='0,0' EndPoint='0,1'><GradientStop Offset='0' Color='#57FFFFFF'/><GradientStop Offset='1' Color='#14FFFFFF'/></LinearGradientBrush></Path.Stroke>
+  </Path>
+$extras  <Path Data='$gauge' StrokeThickness='$arc' StrokeStartLineCap='Round' StrokeEndLineCap='Round'><Path.Stroke>$mint</Path.Stroke></Path>
+  <Path Data='M$n0,$n0 L$n1,$n1' StrokeThickness='$needle' StrokeStartLineCap='Round' StrokeEndLineCap='Round'>
+    <Path.Stroke><LinearGradientBrush StartPoint='0,0' EndPoint='1,1'><GradientStop Offset='0' Color='#F4F7F5'/><GradientStop Offset='1' Color='#8D9A93'/></LinearGradientBrush></Path.Stroke>
+  </Path>
+$shine</Canvas>
 "@
 }
 
@@ -87,12 +113,12 @@ $writer.Flush()
 [IO.File]::WriteAllBytes((Join-Path $AssetsDir 'Quotalis.ico'), $out.ToArray())
 Save-Image (Get-Icon 256) (Join-Path $AssetsDir 'Quotalis-256.png') 'png'
 
-# Installer wizard: the tall welcome panel (black, icon centred) and the small header image (icon on white),
+# Installer wizard: the tall welcome panel (graphite, icon centred) and the small header image (icon on white),
 # each at 100 % and 200 % scale.
 foreach ($scale in 1, 2) {
     $w = 164 * $scale; $h = 314 * $scale; $icon = 112 * $scale
     $panel = New-Object Windows.Controls.Canvas
-    $panel.Width = $w; $panel.Height = $h; $panel.Background = [Windows.Media.BrushConverter]::new().ConvertFrom($black)
+    $panel.Width = $w; $panel.Height = $h; $panel.Background = [Windows.Media.BrushConverter]::new().ConvertFrom($graphite)
     $box = New-Object Windows.Controls.Viewbox
     $box.Width = $icon; $box.Height = $icon
     $box.Child = [Windows.Markup.XamlReader]::Parse((Get-IconXaml $false))
