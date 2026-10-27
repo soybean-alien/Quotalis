@@ -1,6 +1,6 @@
 # Third-party notices
 
-Claudex is a personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck. Its code, including the original Developer Island code, is licensed under the [MIT License](LICENSE). It uses and ships the third-party components below, which keep their own licenses. The MIT License of this project does not apply to them.
+Quotalis is a personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck. Its code, including the original Developer Island code, is licensed under the [MIT License](LICENSE). It uses and ships the third-party components below, which keep their own licenses. The MIT License of this project does not apply to them.
 
 ## Trademarks
 
@@ -20,14 +20,8 @@ Other icons are glyphs of the Segoe Fluent Icons font that ships with Windows (n
 | Microsoft.Data.Sqlite | 10.0.12 | MIT | [dotnet/efcore](https://github.com/dotnet/efcore) |
 | SQLitePCLRaw (bundle, core, provider, e_sqlite3) | 2.1.12 | Apache-2.0 | [ericsink/SQLitePCL.raw](https://github.com/ericsink/SQLitePCL.raw) |
 | SQLite (inside e_sqlite3) | | Public domain | [sqlite.org](https://sqlite.org/copyright.html) |
-| LibreHardwareMonitorLib | 0.9.6 | MPL-2.0 | [LibreHardwareMonitor/LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) |
-| BlackSharp.Core, DiskInfoToolkit, RAMSPDToolkit-NDD (dependencies of LibreHardwareMonitorLib) | 1.0.7, 1.1.2, 1.4.2 | MPL-2.0 | [Blacktempel/BlackSharp](https://github.com/Blacktempel/BlackSharp) and [nuget.org](https://www.nuget.org/packages/LibreHardwareMonitorLib/0.9.6#dependencies-body-tab) |
-| HidSharp | 2.6.4 | Apache-2.0 | [software.seekye.com/hidsharp](https://software.seekye.com/hidsharp) |
-| System.Management, System.CodeDom, System.IO.Ports | 10.0 | MIT | [dotnet/runtime](https://github.com/dotnet/runtime) |
-| Mono.Posix.NETStandard | 1.0.0 | [Mono license](https://github.com/mono/mono/blob/master/LICENSE) (class libraries: MIT) | [mono/mono](https://github.com/mono/mono) |
 | .NET runtime (self-contained release) | 10.0 | MIT | [dotnet/runtime](https://github.com/dotnet/runtime) |
 
-The MPL-2.0 components are used unmodified; their source code is available at the links above. Developer Island reads hardware sensors through LibreHardwareMonitorLib in read-only mode.
 
 ## Development and test dependencies (not shipped)
 

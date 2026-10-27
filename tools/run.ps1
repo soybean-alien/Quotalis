@@ -1,4 +1,4 @@
-# Builds and starts Claudex from source (no installer, no need to find the exe).
+# Builds and starts Quotalis from source (no installer, no need to find the exe).
 #   .\run.cmd              normal mode, your real data
 #   .\run.cmd -Demo        demo data, separate demo settings
 #   .\run.cmd -Release     optimized build (slower to build, what users get)
@@ -15,7 +15,7 @@ $configuration = if ($Release) { "Release" } else { "Debug" }
 $appArgs = @()
 if ($Demo) { $appArgs += "--demo" }
 
-Write-Host "Building and starting Claudex ($configuration$(if ($Demo) { ', demo' }))..." -ForegroundColor Cyan
+Write-Host "Building and starting Quotalis ($configuration$(if ($Demo) { ', demo' }))..." -ForegroundColor Cyan
 Write-Host "The island appears at the top of your screen. Quit it from the tray icon (right-click, Quit)."
-& $dotnet run --project "$root\src\Claudex" -c $configuration -- @appArgs
-if ($LASTEXITCODE -ne 0) { throw "Claudex exited with code $LASTEXITCODE" }
+& $dotnet run --project "$root\src\Quotalis" -c $configuration -- @appArgs
+if ($LASTEXITCODE -ne 0) { throw "Quotalis exited with code $LASTEXITCODE" }

@@ -1,4 +1,4 @@
-# Builds a Claudex release: tests, self-contained publish, portable zip and installer.
+# Builds a Quotalis release: tests, self-contained publish, portable zip and installer.
 #   powershell -ExecutionPolicy Bypass -File tools/build-release.ps1 [-Version 0.1.0] [-Runtime win-x64] [-SkipTests] [-SkipInstaller]
 # Requirements: .NET 10 SDK. Installer: Inno Setup 6 (ISCC.exe), e.g. `winget install JRSoftware.InnoSetup`.
 param(
@@ -19,20 +19,20 @@ if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'Version must have thr
 $platform = if ($Runtime -eq "win-arm64") { "ARM64" } else { "x64" }
 $artifacts = Join-Path $root "artifacts"
 $publish = Join-Path $artifacts "publish\$Runtime"
-Write-Host "Claudex $Version ($Runtime)" -ForegroundColor Cyan
+Write-Host "Quotalis $Version ($Runtime)" -ForegroundColor Cyan
 
 . "$PSScriptRoot\dotnet-sdk.ps1"
 $dotnet = Use-DotnetSdk
 Write-Host "Using $dotnet"
 
 # A running copy of the published app locks its files.
-$running = Get-Process Claudex -ErrorAction SilentlyContinue | Where-Object {
+$running = Get-Process Quotalis -ErrorAction SilentlyContinue | Where-Object {
     $_.Path -and $_.Path.StartsWith([IO.Path]::GetFullPath($publish), [StringComparison]::OrdinalIgnoreCase)
 }
-if ($running) { throw "Claudex is running from $publish. Quit it (tray icon, Quit) and run the script again." }
+if ($running) { throw "Quotalis is running from $publish. Quit it (tray icon, Quit) and run the script again." }
 
 if (-not $SkipTests) {
-    & $dotnet test "$root\tests\Claudex.Tests" -c Release
+    & $dotnet test "$root\tests\Quotalis.Tests" -c Release
     if ($LASTEXITCODE -ne 0) { throw "Tests failed" }
 }
 
@@ -48,7 +48,7 @@ if (Test-Path -LiteralPath $publish) {
     }
     Remove-Item -LiteralPath $publish -Recurse -Force
 }
-& $dotnet publish "$root\src\Claudex\Claudex.csproj" -c Release -r $Runtime -p:Platform=$platform `
+& $dotnet publish "$root\src\Quotalis\Quotalis.csproj" -c Release -r $Runtime -p:Platform=$platform `
     -p:Version=$Version -p:PublishReadyToRun=true -o $publish
 if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
 
@@ -59,7 +59,7 @@ Get-ChildItem $publish -Filter *.pdb -Recurse | Remove-Item -Force
 Copy-Item (Join-Path $root "LICENSE") (Join-Path $publish "LICENSE.txt")
 Copy-Item (Join-Path $root "THIRD_PARTY_NOTICES.md") (Join-Path $publish "THIRD_PARTY_NOTICES.md")
 
-$zip = Join-Path $artifacts "Claudex-$Version-$Runtime-portable.zip"
+$zip = Join-Path $artifacts "Quotalis-$Version-$Runtime-portable.zip"
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path "$publish\*" -DestinationPath $zip
 Write-Host "Portable: $zip"
@@ -75,18 +75,20 @@ if (-not $SkipInstaller) {
     if (-not $iscc) { throw "Inno Setup (ISCC.exe) not found. Install it with: winget install JRSoftware.InnoSetup" }
     # Inno Setup writes Setup.exe's icons in place, which fails (EndUpdateResource, 110) when OneDrive or antivirus
     # opens the new file first. The repository lives on a OneDrive-synced Desktop, so build outside it and copy back.
-    $installerOut = Join-Path ([IO.Path]::GetTempPath()) "claudex-installer-$Version"
+    $installerOut = Join-Path ([IO.Path]::GetTempPath()) "quotalis-installer-$Version"
     New-Item -ItemType Directory -Force $installerOut | Out-Null
-    & $iscc "/DAppVersion=$Version" "/DSourceDir=$publish" "/DOutputDir=$installerOut" "$root\installer\Claudex.iss"
+    & $iscc "/DAppVersion=$Version" "/DSourceDir=$publish" "/DOutputDir=$installerOut" "$root\installer\Quotalis.iss"
     if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
-    $setup = Join-Path $installerOut "Claudex-Setup-$Version.exe"
+    $setup = Join-Path $installerOut "Quotalis-Setup-$Version.exe"
     Copy-Item -LiteralPath $setup -Destination $artifacts -Force
     Remove-Item -LiteralPath $setup -Force
-    Write-Host "Installer: $(Join-Path $artifacts "Claudex-Setup-$Version.exe")"
+    Write-Host "Installer: $(Join-Path $artifacts "Quotalis-Setup-$Version.exe")"
+    # Copies still called Claudex (before 0.7.0) only look for Claudex-Setup-X.Y.Z.exe: the same installer under that name.
+    Copy-Item -LiteralPath (Join-Path $artifacts "Quotalis-Setup-$Version.exe") -Destination (Join-Path $artifacts "Claudex-Setup-$Version.exe") -Force
 }
 
 # Checksums for the release page.
-$files = @($zip) + @(Get-ChildItem $artifacts -Filter "Claudex-Setup-$Version.exe" | ForEach-Object FullName)
+$files = @($zip) + @(Get-ChildItem $artifacts -Filter "*-Setup-$Version.exe" | Where-Object Name -in "Quotalis-Setup-$Version.exe", "Claudex-Setup-$Version.exe" | ForEach-Object FullName)
 $sums = Join-Path $artifacts "SHA256SUMS-$Version.txt"
 $files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLowerInvariant(), (Split-Path $_ -Leaf) } | Set-Content -Encoding ascii $sums
 Write-Host "Checksums: $sums"

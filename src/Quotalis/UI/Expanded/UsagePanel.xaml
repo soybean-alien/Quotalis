@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Quotalis.UI.Expanded.UsagePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Quotalis.UI.Expanded"
+    xmlns:components="using:Quotalis.UI.Components">
+
+    <StackPanel>
+        <Grid x:Name="ProvidersGrid" ColumnSpacing="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <local:ProviderSummary x:Name="ClaudeSummary" ViewModel="{x:Bind ViewModel.Claude}" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}" />
+            <local:ProviderSummary x:Name="CodexSummary" Grid.Column="1" ViewModel="{x:Bind ViewModel.Codex}" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}" />
+            <local:HermesSummary x:Name="HermesSummary" Grid.Column="2" ViewModel="{x:Bind ViewModel.Hermes}" Visibility="{x:Bind ViewModel.ShowHermes, Mode=OneWay}" />
+        </Grid>
+
+        <!-- Running totals of Claude and Codex together, in gold: this week, this month, lifetime. Hermes spends real
+             Nous credits, a different thing, so it is never part of these (owner's rule, 2026-10-24). -->
+        <StackPanel Margin="0,22,0,0" Spacing="2" AutomationProperties.Name="{x:Bind ViewModel.SpendAccessibleText, Mode=OneWay}">
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.WeekTotalText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" FontSize="22"
+                               Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="This week" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.MonthTotalText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" FontSize="22"
+                               Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="This month" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.LifetimeTotalText, Mode=OneWay}" Style="{StaticResource FigureTextStyle}" FontSize="22"
+                               Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="Lifetime" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Text="{x:Bind ViewModel.SpendNote, Mode=OneWay}" Style="{StaticResource FineTextStyle}" HorizontalAlignment="Center"
+                       Visibility="{x:Bind ViewModel.SpendPartial, Mode=OneWay}" />
+        </StackPanel>
+
+        <components:UsageHeatmap x:Name="Heatmap" Margin="0,20,0,0" HorizontalAlignment="Left" />
+
+        <!-- Below the graph: the summary, the hours block (always), then the inspected or pinned day underneath it. -->
+        <StackPanel Margin="0,10,0,0" Spacing="4">
+            <!-- Hidden in the usage strip: the summary and the hours block. -->
+            <StackPanel x:Name="RestDetails" Spacing="4">
+            <Grid Height="18">
+                <TextBlock Text="{x:Bind ViewModel.HistorySummary, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                    <TextBlock Text="Less" Style="{StaticResource FineTextStyle}" Margin="0,0,4,0" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FF3B2A6B" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FF6A52C4" />
+                    <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="#FFA996FF" />
+                    <TextBlock Text="More" Style="{StaticResource FineTextStyle}" Margin="4,0,0,0" />
+                </StackPanel>
+            </Grid>
+            <!-- Usage by hour of day (last 28 days), peak hours shaded yellow; then the peak share and limit drain. -->
+            <StackPanel Spacing="3" Visibility="{x:Bind ViewModel.HasHourProfile, Mode=OneWay}" Margin="0,6,0,0">
+                <components:HourStrip x:Name="Hours" />
+                <Grid AutomationProperties.AccessibilityView="Raw">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="12 AM" Style="{StaticResource FineTextStyle}" />
+                    <TextBlock Grid.Column="1" Text="6 AM" Style="{StaticResource FineTextStyle}" />
+                    <TextBlock Grid.Column="2" Text="12 PM" Style="{StaticResource FineTextStyle}" />
+                    <TextBlock Grid.Column="3" Text="6 PM" Style="{StaticResource FineTextStyle}" />
+                </Grid>
+                <TextBlock Text="{x:Bind ViewModel.HourDetailText, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Text="{x:Bind ViewModel.PeakShareText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
+                <TextBlock Text="{x:Bind ViewModel.DrainText, Mode=OneWay}" Style="{StaticResource FineTextStyle}" />
+            </StackPanel>
+            </StackPanel>
+
+            <!-- The inspected or pinned day, in a fixed-height area so hovering never moves the layout. -->
+            <Grid x:Name="ReadoutArea" Height="{x:Bind ViewModel.ReadoutHeight, Mode=OneWay}" Margin="0,8,0,0">
+            <TextBlock Visibility="{x:Bind ViewModel.IsNotInspecting, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Top"
+                       Text="Hover a day in the graph for its numbers, or click it to keep them here." />
+            <!-- Inspected day: pooled total, then Claude (orange) above Codex (blue) on one scale. -->
+            <StackPanel Visibility="{x:Bind ViewModel.IsInspecting, Mode=OneWay}" Spacing="4">
+                <Grid>
+                    <TextBlock Text="{x:Bind ViewModel.InspectedDate, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="{x:Bind ViewModel.InspectedTooltipTokens, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Right" />
+                </Grid>
+                <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.ShowClaude, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Claude" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource ClaudeBrush}" />
+                    <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
+                        <Rectangle Fill="{StaticResource ClaudeBrush}" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedClaudeFraction, Mode=OneWay}" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedClaudeText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </Grid>
+                <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.ShowCodex, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Codex" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource CodexBrush}" />
+                    <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
+                        <Rectangle Fill="{StaticResource CodexBrush}" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedCodexFraction, Mode=OneWay}" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedCodexText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </Grid>
+                <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.ShowHermes, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Hermes" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource HermesBrush}" />
+                    <Grid Grid.Column="1" Height="6" CornerRadius="3" VerticalAlignment="Center" Background="{StaticResource ProgressTrackBrush}">
+                        <Rectangle Fill="{StaticResource HermesBrush}" RadiusX="3" RadiusY="3" RenderTransformOrigin="0,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform ScaleX="{x:Bind ViewModel.InspectedHermesFraction, Mode=OneWay}" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.InspectedHermesText, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextPrimaryBrush}" />
+                </Grid>
+                <Grid>
+                    <TextBlock Text="{x:Bind ViewModel.InspectedSessions, Mode=OneWay}" Style="{StaticResource FineTextStyle}" VerticalAlignment="Center" />
+                    <TextBlock HorizontalAlignment="Right" Style="{StaticResource CaptionTextStyle}">
+                        <Run Text="Total " /><Run Text="{x:Bind ViewModel.InspectedValue, Mode=OneWay}" Foreground="{StaticResource TextPrimaryBrush}" />
+                    </TextBlock>
+                </Grid>
+                <TextBlock Text="{x:Bind ViewModel.InspectedPlan, Mode=OneWay}" Style="{StaticResource FineTextStyle}"
+                           Visibility="{x:Bind ViewModel.HasInspectedPlan, Mode=OneWay}" />
+            </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <TextBlock x:Name="Footnote" Margin="0,12,0,0" Style="{StaticResource FineTextStyle}"
+                   Text="{x:Bind ViewModel.FootnoteText, Mode=OneWay}" TextWrapping="Wrap" TextTrimming="None" />
+    </StackPanel>
+</UserControl>

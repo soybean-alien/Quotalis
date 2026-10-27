@@ -1,5 +1,5 @@
 # Generates three abstract album covers used only by --demo (Assets/demo-art-*.png).
-param([string]$OutDir = "$PSScriptRoot\..\src\Claudex\Assets")
+param([string]$OutDir = "$PSScriptRoot\..\src\Quotalis\Assets")
 Add-Type -AssemblyName System.Drawing
 
 function New-Cover([string]$path, [int[]]$a, [int[]]$b, [int[]]$orb, [single]$orbX, [single]$orbY) {

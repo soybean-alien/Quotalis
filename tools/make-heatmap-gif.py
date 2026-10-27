@@ -1,6 +1,6 @@
-"""Claudex by soybean_alien. Builds docs/assets/heatmap-demo.gif: the usage graph being hovered and clicked (demo data).
+"""Quotalis by soybean_alien. Builds docs/assets/heatmap-demo.gif: the usage graph being hovered and clicked (demo data).
 
-    Claudex.exe --demo --snapshot=<dir> --culture=en-US        # renders 80-walk-NN-<action>.png among the states
+    Quotalis.exe --demo --snapshot=<dir> --culture=en-US        # renders 80-walk-NN-<action>.png among the states
     python tools/make-heatmap-gif.py <dir>                    # needs Pillow
 
 Each walk frame is the app's own render. A cursor is drawn on the hovered day, found by its white ring; on "leave"
@@ -84,7 +84,7 @@ def main():
             cursor(draw, x0 + pos[0], y0 + pos[1], pressed=action == "pin")
         text = captions.get(action, "")
         draw.text((60, CANVAS[1] - 70), text, font=caption_font, fill=(134, 134, 139))
-        draw.text((60, CANVAS[1] - 40), "Claudex usage graph (sample data)", font=font(16), fill=(90, 90, 95))
+        draw.text((60, CANVAS[1] - 40), "Quotalis usage graph (sample data)", font=font(16), fill=(90, 90, 95))
         frames.append(stage.convert("RGB"))
         durations.append(1600 if action != "hover" else 1100)
 
