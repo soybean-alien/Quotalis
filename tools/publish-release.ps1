@@ -42,11 +42,13 @@ function Test-Gh([string[]]$GhArgs) {
 if (-not (Test-Gh @("api", "repos/$repo/git/ref/tags/$tag", "--silent"))) { throw "Tag $tag is not on GitHub yet. Push it first: git push origin $tag" }
 
 # Release notes: this version's section of the changelog.
-$changelog = Get-Content (Join-Path $root "CHANGELOG.md") -Raw
+# Read and written as UTF-8 without a byte-order mark: Windows PowerShell's Set-Content -Encoding utf8 adds one, which
+# GitHub shows as a stray character and which stops the first heading from rendering.
+$changelog = [IO.File]::ReadAllText((Join-Path $root "CHANGELOG.md"), [Text.Encoding]::UTF8)
 $m = [regex]::Match($changelog, "(?ms)^## \[$([regex]::Escape($Version))\][^\n]*\n(.*?)(?=^## \[)")
 $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "Quotalis $Version" }
 $notesFile = Join-Path $env:TEMP "quotalis-release-notes-$Version.md"
-Set-Content -Path $notesFile -Value $notes -Encoding utf8
+[IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
 
 if (Test-Gh @("release", "view", $tag, "--repo", $repo)) {
     & gh release upload $tag $installer $legacyInstaller $zip $sums --repo $repo --clobber
