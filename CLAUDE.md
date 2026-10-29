@@ -5,7 +5,7 @@ Personal fork of [Developer Island](https://github.com/maximilian467/Developer-I
 ## Rename compatibility (keep these Claudex literals)
 - `NousTokenStore`'s DPAPI entropy stays `"Claudex Nous sign-in"`, or saved Nous sign-ins stop opening.
 - `LegacyNames` (Core): old `--claudex-…` arguments still work, `MoveFolder` brings over `%LOCALAPPDATA%\Claudex` and `%USERPROFILE%\.claudex` at startup, `OldName` names the old Run entry and folders. `LegacyClaudeStopHook.Argument` stays `--claudex-stop-hook`.
-- The installer keeps Claudex's AppId and removes `Programs\Claudex`; releases also attach the installer as `Claudex-Setup-X.Y.Z.exe` for copies that haven't updated yet.
+- The installer keeps Claudex's AppId and removes `Programs\Claudex`. Releases no longer attach a `Claudex-Setup-X.Y.Z.exe` copy (dropped after 0.7.1, once no Claudex installs were left), so a Claudex older than 0.7.0 can't self-update; install Quotalis fresh instead.
 
 ## License and credit
 - Quotalis is **MIT**, inherited from Developer Island. Do not switch it to GPL-3.0 (the default for soybean_alien's own projects).

@@ -2,7 +2,15 @@
 
 All notable changes to Quotalis (called Claudex before 0.7.0) are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.7.2] - 2026-10-29
+
+### Changed
+
+- **The Nous wallet is switched off until Quotalis has its own Nous Portal sign-in.** The sign-in borrowed Hermes's app name, which is fine for the author but not for everyone, so Settings no longer offers it and Quotalis reads no wallet. Settings and the Hermes column say "Nous wallet coming soon". Hermes's token use, sessions and model work as before.
+
+### Removed
+
+- **Releases no longer carry a `Claudex-Setup-X.Y.Z.exe` copy.** `tools/build-release.ps1` and `tools/publish-release.ps1` now build, checksum and upload only `Quotalis-Setup-X.Y.Z.exe`, the portable zip and `SHA256SUMS`. A copy still called Claudex can't update itself any more; install Quotalis fresh. The copy was also removed from the v0.7.1 release.
 
 ### Fixed
 

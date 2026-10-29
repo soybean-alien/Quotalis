@@ -59,10 +59,13 @@ public sealed partial class SettingsWindow
     {
         var service = _isDemo ? null : Hermes;
         var enabled = _store.Current.HermesEnabled;
-        var status = service?.Status ?? NousStatus.SignedOut;
+        var locked = !_store.Current.NousWalletUnlocked;
+        var status = locked ? NousStatus.SignedOut : service?.Status ?? NousStatus.SignedOut;
         (NousStatusTitle.Text, NousStatusText.Text) = (_isDemo, enabled, status) switch
         {
             (true, _, _) => ("Demo mode", "The Hermes column shows made-up numbers. Sign in from the normal Quotalis."),
+            _ when locked => ("Nous wallet coming soon", "The wallet needs Quotalis's own Nous Portal sign-in, which isn't ready yet. "
+                + "Hermes's token use below works now."),
             (_, false, _) => ("Hermes is off", "Sign in to Nous Portal and Quotalis turns the Hermes column on, or switch Hermes on in the module list above."),
             (_, _, NousStatus.SigningIn) => ("Finish signing in", "Sign in on the Nous page in your browser, check that it shows this code, then connect."),
             (_, _, NousStatus.Expired) => ("Nous sign-in expired", "Sign in again to keep the wallet up to date."),
@@ -75,10 +78,12 @@ public sealed partial class SettingsWindow
             _ => ("Not signed in", "Sign in to Nous Portal once and the Hermes column shows your wallet: full after a top-up, draining as Hermes spends."),
         };
 
+        NousPrivacyText.Visibility = locked && !_isDemo ? Visibility.Collapsed : Visibility.Visible;
+        HermesLowRow.Visibility = HermesLowDivider.Visibility = NousPrivacyText.Visibility;
         var code = status == NousStatus.SigningIn ? service?.PendingCode?.UserCode : null;
         NousCodeText.Text = code ?? string.Empty;
         NousCodeText.Visibility = code is null ? Visibility.Collapsed : Visibility.Visible;
-        NousSignInButton.Visibility = status is NousStatus.SignedOut or NousStatus.Expired ? Visibility.Visible : Visibility.Collapsed;
+        NousSignInButton.Visibility = !locked && status is NousStatus.SignedOut or NousStatus.Expired ? Visibility.Visible : Visibility.Collapsed;
         // Works while Hermes is off too: signing in turns the column on (see OnNousSignIn).
         NousSignInButton.IsEnabled = !_isDemo && service is not null;
         NousCancelButton.Visibility = status == NousStatus.SigningIn ? Visibility.Visible : Visibility.Collapsed;
@@ -96,7 +101,7 @@ public sealed partial class SettingsWindow
 
     private async void OnNousSignIn(object sender, RoutedEventArgs e)
     {
-        if (_isDemo || Hermes is not { } service) return;
+        if (_isDemo || !_store.Current.NousWalletUnlocked || Hermes is not { } service) return;
         NousSignInButton.IsEnabled = false;
         if (!_store.Current.HermesEnabled)
         {

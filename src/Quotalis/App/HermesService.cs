@@ -32,6 +32,7 @@ internal sealed class HermesService : IDisposable
     private NousTokens? _tokens;
     private CancellationTokenSource? _signIn;
     private bool _enabled;
+    private bool _walletUnlocked;
     private bool _walletBusy;
     private bool _usageBusy;
     private bool _disposed;
@@ -71,6 +72,9 @@ internal sealed class HermesService : IDisposable
 
     public bool IsPaused => _schedule.Paused;
 
+    /// <summary>The wallet is locked (see <see cref="AppSettings.NousWalletUnlocked"/>): no sign-in and no reads.</summary>
+    public bool WalletLocked => !_walletUnlocked;
+
     public HermesUsage? Usage { get; private set; }
 
     /// <summary>Why token use is missing ("No Hermes install on this PC"), or null.</summary>
@@ -79,6 +83,15 @@ internal sealed class HermesService : IDisposable
     public void Configure(AppSettings settings)
     {
         var enabled = settings.HermesEnabled;
+        var unlockChanged = settings.NousWalletUnlocked != _walletUnlocked;
+        _walletUnlocked = settings.NousWalletUnlocked;
+        if (unlockChanged && !_walletUnlocked)
+        {
+            CancelSignIn();
+            Wallet = null;
+            _walletTimer.Stop();
+        }
+
         var sourceChanged = settings.HermesSource != _source || settings.HermesRemoteTarget != _remoteTarget
             || settings.HermesRemoteKeyPath != _remoteKey || settings.HermesRemotePath != _remotePath;
         _source = settings.HermesSource;
@@ -116,6 +129,12 @@ internal sealed class HermesService : IDisposable
             ArmUsage(TimeSpan.FromMilliseconds(1));
             Changed?.Invoke();
         }
+
+        if (unlockChanged)
+        {
+            ArmWallet(force: _walletUnlocked);
+            Changed?.Invoke();
+        }
     }
 
     /// <summary>The PC was locked or went to sleep (false), or came back (true). No wallet reads while away.</summary>
@@ -142,6 +161,11 @@ internal sealed class HermesService : IDisposable
     /// <summary>Starts the device sign-in; the caller opens <see cref="NousDeviceCode.VerificationUri"/> in the browser.</summary>
     public async Task<NousDeviceCode> StartSignInAsync()
     {
+        if (!_walletUnlocked)
+        {
+            throw new InvalidOperationException("The Nous wallet is locked.");
+        }
+
         CancelSignIn();
         var code = await _portal.RequestCodeAsync(DateTimeOffset.UtcNow, _shutdown.Token);
         PendingCode = code;
@@ -226,7 +250,7 @@ internal sealed class HermesService : IDisposable
     private void ArmWallet(bool force = false)
     {
         _walletTimer.Stop();
-        if (!_enabled || _disposed || _tokens is null || Status is NousStatus.Expired or NousStatus.SigningIn)
+        if (!_enabled || !_walletUnlocked || _disposed || _tokens is null || Status is NousStatus.Expired or NousStatus.SigningIn)
         {
             return;
         }
@@ -249,7 +273,7 @@ internal sealed class HermesService : IDisposable
 
     private async Task ReadWalletAsync()
     {
-        if (!_enabled || _walletBusy || _disposed || _tokens is null || _schedule.Paused)
+        if (!_enabled || !_walletUnlocked || _walletBusy || _disposed || _tokens is null || _schedule.Paused)
         {
             return;
         }
