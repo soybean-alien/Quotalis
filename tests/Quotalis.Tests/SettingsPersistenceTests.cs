@@ -16,7 +16,20 @@ public class SettingsPersistenceTests
         Assert.True(store.Current.AlwaysOnTop);
         Assert.True(store.Current.ClaudeEnabled && store.Current.CodexEnabled && store.Current.GitEnabled);
         Assert.False(store.Current.HermesEnabled);
+        Assert.False(store.Current.NousWalletUnlocked);
         Assert.False(store.Current.HasCustomPosition);
+    }
+
+    [Fact]
+    public void Nous_wallet_unlock_is_read_from_a_hand_edited_file_and_kept_on_save()
+    {
+        File.WriteAllText(_path, """{ "hermesEnabled": true, "nousWalletUnlocked": true }""");
+        var store = new SettingsStore(_path);
+        Assert.True(store.Current.NousWalletUnlocked);
+
+        store.Update(s => s.HermesLowBalanceUsd = 10);
+
+        Assert.True(new SettingsStore(_path).Current.NousWalletUnlocked);
     }
 
     [Fact]

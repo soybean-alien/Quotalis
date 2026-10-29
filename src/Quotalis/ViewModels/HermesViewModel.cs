@@ -6,7 +6,7 @@ using Quotalis.Core.Models;
 namespace Quotalis.ViewModels;
 
 /// <summary>Where the Nous sign-in stands, as the Hermes column needs it.</summary>
-public enum HermesWalletState { SignedOut, SigningIn, Ready, Expired, Unavailable, UnknownFormat }
+public enum HermesWalletState { SignedOut, SigningIn, Ready, Expired, Unavailable, UnknownFormat, Locked }
 
 /// <summary>
 /// The Hermes column: a wallet that drains (Nous credits) instead of a plan that fills, today's token use from Hermes's
@@ -161,6 +161,7 @@ public sealed class HermesViewModel : ObservableObject
         HermesWalletState.Expired => "Nous sign-in expired",
         HermesWalletState.Unavailable => "Nous Portal not reachable",
         HermesWalletState.UnknownFormat => "Nous answered in an unknown format",
+        HermesWalletState.Locked => "Nous wallet coming soon",
         _ => "Not signed in to Nous",
     };
 

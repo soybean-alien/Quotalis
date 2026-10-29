@@ -413,6 +413,13 @@ public class HookInstallerTests
     }
 
     [Fact]
+    public void The_Codex_command_starts_with_the_PowerShell_call_operator()
+    {
+        // Codex runs hooks through powershell.exe -Command, where a leading quoted path is a parse error.
+        Assert.Equal($"& \"{Installed}\" --quotalis-codex-stop-hook", HookInstaller.CodexCommandFor(Installed));
+    }
+
+    [Fact]
     public void A_status_line_of_someone_else_is_kept()
     {
         var dir = TestData.TempDirectory();
@@ -450,6 +457,8 @@ public class HookInstallerTests
         Assert.DoesNotContain("Claudex", claudeText + codexText);
         Assert.Contains("--quotalis-statusline", claudeText);
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(codexText, "--quotalis-codex-stop-hook"));
+        Assert.Equal(HookInstaller.CodexCommandFor(Installed),
+            System.Text.Json.Nodes.JsonNode.Parse(codexText)!["hooks"]!["Stop"]![0]!["hooks"]![0]!["command"]!.GetValue<string>());
         Assert.Contains("Quotalis usage check", codexText);
         Assert.False(File.Exists(untouched));   // nothing to point, nothing added
     }

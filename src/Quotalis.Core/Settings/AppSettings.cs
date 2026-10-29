@@ -108,6 +108,13 @@ public sealed class AppSettings
     /// <summary>Signed in to Nous Portal (the tokens themselves are encrypted in a file of their own, never here).</summary>
     public bool NousSignedIn { get; set; }
 
+    /// <summary>
+    /// The Nous wallet sign-in borrows Hermes's app name until Nous issues one for Quotalis, so it is locked: no
+    /// sign-in button and no wallet reads. There is no switch in Settings; the owner sets
+    /// <c>"nousWalletUnlocked": true</c> in settings.json by hand. Hermes's token use works either way.
+    /// </summary>
+    public bool NousWalletUnlocked { get; set; }
+
     /// <summary>Where Hermes's token use comes from (the wallet needs only the Nous sign-in).</summary>
     [JsonConverter(typeof(JsonStringEnumConverter<HermesUsageSource>))]
     public HermesUsageSource HermesSource { get; set; } = HermesUsageSource.Local;

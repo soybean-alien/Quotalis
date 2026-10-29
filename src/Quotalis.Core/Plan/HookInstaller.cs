@@ -32,7 +32,11 @@ public static class HookInstaller
         return Path.Combine(dir, "hooks.json");
     }
 
-    public static string CodexCommandFor(string executable) => $"\"{executable}\" {CodexStopHook.Argument}";
+    /// <summary>
+    /// Codex on Windows runs hooks as <c>powershell.exe -Command</c>, which reads a leading quoted path as a string and
+    /// fails to parse; the call operator <c>&amp;</c> makes PowerShell run it.
+    /// </summary>
+    public static string CodexCommandFor(string executable) => $"& \"{executable}\" {CodexStopHook.Argument}";
 
     public static void Connect(string claudeSettings, string codexHooks, string executable)
     {

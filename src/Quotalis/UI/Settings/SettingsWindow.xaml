@@ -444,7 +444,7 @@
                                                    Text="Sign in to Nous Portal once and the Hermes column shows your wallet: full after a top-up, draining as Hermes spends." />
                                         <TextBlock x:Name="NousCodeText" Visibility="Collapsed" FontSize="22" FontWeight="SemiBold" IsTextSelectionEnabled="True"
                                                    AutomationProperties.Name="Code to check on the Nous page" />
-                                        <TextBlock Style="{StaticResource SettingsRowDescriptionStyle}"
+                                        <TextBlock x:Name="NousPrivacyText" Style="{StaticResource SettingsRowDescriptionStyle}"
                                                    Text="Private: you sign in on Nous's own page; Quotalis never sees your password. The sign-in is encrypted for your Windows account on this PC and is only used to read your balance. Reading it is free: it runs no model and spends no credits. The page says &#x201C;Connect Hermes&#x201D; because Quotalis uses Hermes's sign-in for now." />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -494,8 +494,8 @@
                                                  AutomationProperties.Name="Path of Hermes's export on the server" LostFocus="OnHermesRemoteLostFocus" />
                                     </Grid>
                                 </StackPanel>
-                                <Rectangle Style="{StaticResource SettingsDividerStyle}" />
-                                <Grid Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">
+                                <Rectangle x:Name="HermesLowDivider" Style="{StaticResource SettingsDividerStyle}" />
+                                <Grid x:Name="HermesLowRow" Style="{StaticResource SettingsRowStyle}" ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />

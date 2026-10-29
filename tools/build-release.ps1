@@ -83,12 +83,10 @@ if (-not $SkipInstaller) {
     Copy-Item -LiteralPath $setup -Destination $artifacts -Force
     Remove-Item -LiteralPath $setup -Force
     Write-Host "Installer: $(Join-Path $artifacts "Quotalis-Setup-$Version.exe")"
-    # Copies still called Claudex (before 0.7.0) only look for Claudex-Setup-X.Y.Z.exe: the same installer under that name.
-    Copy-Item -LiteralPath (Join-Path $artifacts "Quotalis-Setup-$Version.exe") -Destination (Join-Path $artifacts "Claudex-Setup-$Version.exe") -Force
 }
 
 # Checksums for the release page.
-$files = @($zip) + @(Get-ChildItem $artifacts -Filter "*-Setup-$Version.exe" | Where-Object Name -in "Quotalis-Setup-$Version.exe", "Claudex-Setup-$Version.exe" | ForEach-Object FullName)
+$files = @($zip) + @(Get-ChildItem $artifacts -Filter "Quotalis-Setup-$Version.exe" | ForEach-Object FullName)
 $sums = Join-Path $artifacts "SHA256SUMS-$Version.txt"
 $files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLowerInvariant(), (Split-Path $_ -Leaf) } | Set-Content -Encoding ascii $sums
 Write-Host "Checksums: $sums"

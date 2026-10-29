@@ -2,8 +2,7 @@
 # copies can update themselves (Settings, About, Updates). Run it after tools/build-release.ps1 and after the vX.Y.Z tag
 # is pushed:
 #   powershell -ExecutionPolicy Bypass -File tools/publish-release.ps1 [-Version 0.5.4]
-# It uploads the installer, the portable zip and SHA256SUMS-X.Y.Z.txt, with the version's CHANGELOG section as notes,
-# plus the same installer as Claudex-Setup-X.Y.Z.exe for copies still called Claudex (their updater looks for that name).
+# It uploads the installer, the portable zip and SHA256SUMS-X.Y.Z.txt, with the version's CHANGELOG section as notes.
 # Needs the GitHub CLI signed in (gh auth login) with access to the repository.
 param([string]$Version)
 $ErrorActionPreference = "Stop"
@@ -17,17 +16,14 @@ $tag = "v$Version"
 
 $installer = Join-Path $root "artifacts\Quotalis-Setup-$Version.exe"
 $zip = Join-Path $root "artifacts\Quotalis-$Version-win-x64-portable.zip"
-$legacyInstaller = Join-Path $root "artifacts\Claudex-Setup-$Version.exe"
 $sums = Join-Path $root "artifacts\SHA256SUMS-$Version.txt"
-foreach ($f in $installer, $legacyInstaller, $zip, $sums) { if (-not (Test-Path $f)) { throw "Missing $f. Run tools/build-release.ps1 first." } }
+foreach ($f in $installer, $zip, $sums) { if (-not (Test-Path $f)) { throw "Missing $f. Run tools/build-release.ps1 first." } }
 
-# The checksums must describe these exact files (the updater refuses an installer that doesn't match).
-foreach ($f in $installer, $legacyInstaller) {
-    $leaf = Split-Path $f -Leaf
-    $listed = Get-Content $sums | Where-Object { ($_ -split '\s+')[1] -eq $leaf }
-    $actual = (Get-FileHash $f -Algorithm SHA256).Hash.ToLowerInvariant()
-    if (-not $listed -or ($listed -split '\s+')[0] -ne $actual) { throw "SHA256SUMS does not match $leaf. Rebuild with tools/build-release.ps1." }
-}
+# The checksums must describe this exact installer (the updater refuses one that doesn't match).
+$leaf = Split-Path $installer -Leaf
+$listed = Get-Content $sums | Where-Object { ($_ -split '\s+')[1] -eq $leaf }
+$actual = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+if (-not $listed -or ($listed -split '\s+')[0] -ne $actual) { throw "SHA256SUMS does not match $leaf. Rebuild with tools/build-release.ps1." }
 
 $gh = Get-Command gh -ErrorAction SilentlyContinue
 if (-not $gh) { throw "GitHub CLI not found. Install it with: winget install GitHub.cli" }
@@ -51,9 +47,9 @@ $notesFile = Join-Path $env:TEMP "quotalis-release-notes-$Version.md"
 [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
 
 if (Test-Gh @("release", "view", $tag, "--repo", $repo)) {
-    & gh release upload $tag $installer $legacyInstaller $zip $sums --repo $repo --clobber
+    & gh release upload $tag $installer $zip $sums --repo $repo --clobber
 } else {
-    & gh release create $tag $installer $legacyInstaller $zip $sums --repo $repo --title "Quotalis $Version" --notes-file $notesFile --latest
+    & gh release create $tag $installer $zip $sums --repo $repo --title "Quotalis $Version" --notes-file $notesFile --latest
 }
 if ($LASTEXITCODE -ne 0) { throw "gh failed to publish $tag." }
 Write-Host "Published $tag to $repo" -ForegroundColor Green

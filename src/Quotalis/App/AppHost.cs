@@ -675,7 +675,7 @@ internal sealed class AppHost : IDisposable
             return;
         }
 
-        var state = _hermes.Status switch
+        var state = _hermes.WalletLocked ? HermesWalletState.Locked : _hermes.Status switch
         {
             NousStatus.SigningIn => HermesWalletState.SigningIn,
             NousStatus.Expired => HermesWalletState.Expired,
