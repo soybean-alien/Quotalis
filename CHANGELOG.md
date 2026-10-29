@@ -2,6 +2,12 @@
 
 All notable changes to Quotalis (called Claudex before 0.7.0) are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.3] - 2026-10-29
+
+### Fixed
+
+- **The Claude column no longer says "Couldn't read logs" after a start.** The first scan of `.claude\projects` followed linked folders (junctions and symlinks), and one Windows refuses to enter, such as a `memory` junction, failed the whole scan until your next Claude turn wrote a log. Linked folders are now skipped; the tools never keep their logs there, and skipping them also stops a linked folder's files being counted twice.
+
 ## [0.7.2] - 2026-10-29
 
 ### Changed

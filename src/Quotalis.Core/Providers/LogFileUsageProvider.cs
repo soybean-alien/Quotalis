@@ -218,6 +218,18 @@ public abstract class LogFileUsageProvider : IAiUsageProvider
         }
     }
 
+    /// <summary>
+    /// Linked folders (junctions, symlinks) are skipped: the tools never put their logs there, and one Windows won't
+    /// traverse (an "untrusted mount point", such as a <c>memory</c> junction under <c>.claude\projects</c>) used to
+    /// fail the whole scan, so the column said "Couldn't read logs" until the next write.
+    /// </summary>
+    private static readonly EnumerationOptions ScanOptions = new()
+    {
+        RecurseSubdirectories = true,
+        AttributesToSkip = FileAttributes.ReparsePoint,
+        IgnoreInaccessible = true,
+    };
+
     private void ScanAll(CancellationToken ct)
     {
         if (!Directory.Exists(LogDirectory))
@@ -231,7 +243,7 @@ public abstract class LogFileUsageProvider : IAiUsageProvider
         var files = 0;
         var events = 0;
 
-        foreach (var path in Directory.EnumerateFiles(LogDirectory, "*.jsonl", SearchOption.AllDirectories))
+        foreach (var path in Directory.EnumerateFiles(LogDirectory, "*.jsonl", ScanOptions))
         {
             ct.ThrowIfCancellationRequested();
             var info = new FileInfo(path);
