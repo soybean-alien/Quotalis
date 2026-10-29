@@ -135,6 +135,34 @@ public class ProviderIsolationTests
     }
 
     [Fact]
+    public async Task Claude_provider_skips_linked_folders_in_the_initial_scan()
+    {
+        using var db = UsageDatabase.OpenInMemory();
+        var history = new UsageHistoryService(db, new ModelPricingService());
+        var root = TestData.TempDirectory();
+        var project = Directory.CreateDirectory(Path.Combine(root, "projects", "c--code-island")).FullName;
+        var now = DateTimeOffset.Now;
+        File.WriteAllText(Path.Combine(project, "session.jsonl"),
+            TestData.ClaudeAssistantLine("m1", "r1", now, input: 100, output: 10, cacheCreation: 0, cacheRead: 0) + "\n");
+        var outside = Directory.CreateDirectory(Path.Combine(TestData.TempDirectory(), "elsewhere")).FullName;
+        File.WriteAllText(Path.Combine(outside, "other.jsonl"),
+            TestData.ClaudeAssistantLine("m9", "r9", now, input: 5000, output: 500, cacheCreation: 0, cacheRead: 0) + "\n");
+        var junction = Path.Combine(project, "memory");
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{junction}\" \"{outside}\"")
+               { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true }))
+        {
+            await mklink!.WaitForExitAsync(TestContext.Current.CancellationToken);
+        }
+        Assert.True(Directory.Exists(junction));
+
+        using var provider = new ClaudeUsageProvider(root, history, db);
+        await provider.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(ProviderState.Ready, provider.Snapshot.State);
+        Assert.Equal(110, provider.Snapshot.Today.Processed);
+    }
+
+    [Fact]
     public async Task Codex_provider_reports_rate_limit_from_local_logs()
     {
         using var db = UsageDatabase.OpenInMemory();
