@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="760" height="200" viewBox="0 0 760 200">
-  <!-- Quotalis by soybean_alien. Wordmark: the Gauge Q mark (quotalis-mark.svg) and the name in Segoe UI Variable Display
-       Semibold, mint-to-teal on the "Q" so it echoes the gauge. Set on dark backgrounds; for light ones swap #f5f7f6 for #101512. -->
-  <defs>
-    <linearGradient id="q" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9fbe3"/><stop offset=".45" stop-color="#7fe0b0"/><stop offset="1" stop-color="#1f9e7a"/></linearGradient>
-  </defs>
-  <image href="quotalis-mark.svg" xlink:href="quotalis-mark.svg" x="20" y="20" width="160" height="160"/>
-  <text x="208" y="132" font-family="Segoe UI Variable Display, Segoe UI, system-ui, sans-serif" font-size="104" font-weight="600" letter-spacing="-2" fill="#f5f7f6"><tspan fill="url(#q)">Q</tspan>uotalis</text>
-</svg>

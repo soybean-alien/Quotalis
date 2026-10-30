@@ -1,52 +1,52 @@
 <!doctype html>
-<!-- Quotalis by soybean_alien. Repo banner, rendered to docs/assets/banner.png (2560x1280) and
-     docs/assets/social-preview.png (1280x640) by tools/banner/render.ps1, from the app's own demo renders
-     (Quotalis.exe --demo --snapshot=<dir> --culture=en-US; the script copies the ones it needs into shots/). -->
+<!-- Quotalis by soybean_alien. Repo banner and social preview in the Risograph design language (overprinted ink circles on
+     cream stock, Instrument Serif, JetBrains Mono captions). Rendered by tools/banner/render.ps1 to docs/assets/banner.png
+     (2560x1280) and docs/assets/social-preview.png (1280x640). Numbers are sample data. -->
 <html>
 <head>
 <meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
-  :root { --claude: #d97757; --codex: #3a9bff; --hermes: #f5c542; --purple: #a78bfa; --ink: #f5f5f7; --grey: #86868b; --dim: #6e6e73; }
+  :root { --paper: #efe7d6; --ink: #1d2040; --soft: #5a5a6e; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 2560px; height: 1280px; overflow: hidden; background: #000; }
-  body { position: relative; color: var(--ink); -webkit-font-smoothing: antialiased;
-    font-family: 'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; background: var(--paper); color: var(--ink);
+    font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .dot { position: absolute; border-radius: 50%; mix-blend-mode: multiply; }
+  .claude { left: 640px; top: 70px; width: 380px; height: 380px; background: #ff7a45; }
+  .codex { left: 850px; top: 70px; width: 380px; height: 380px; background: #4f9bff; transform: translate(3px, -2px); }
+  .hermes { left: 745px; top: 230px; width: 380px; height: 380px; background: #ffd23a; transform: translate(-2px, 3px); }
+  .halftone { position: absolute; left: 600px; top: 40px; width: 680px; height: 600px; mix-blend-mode: multiply; opacity: .22;
+    background: radial-gradient(circle, #1d2040 1.1px, transparent 1.4px) 0 0 / 7px 7px;
+    -webkit-mask: radial-gradient(closest-side at 70% 55%, #000, transparent); }
+  .grain { position: absolute; inset: 0; mix-blend-mode: multiply; opacity: .22; }
+  .lbl { position: absolute; font: 500 13px 'JetBrains Mono', monospace; letter-spacing: .24em; color: var(--ink); }
 
-  /* The compact island, tucked under the top edge like it sits on a real screen. */
-  .notch { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); width: 520px; }
-
-  .copy { position: absolute; top: 236px; left: 0; right: 0; text-align: center; }
-  .name { display: inline-flex; align-items: center; gap: 18px; font-size: 44px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
-  .name img { width: 72px; height: 72px; }
-  h1 { margin-top: 26px; font-size: 136px; font-weight: 700; letter-spacing: -0.035em; line-height: 1; }
-  h1 span { background: linear-gradient(90deg, var(--claude) 0%, var(--purple) 38%, var(--codex) 70%, var(--hermes) 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .sub { margin-top: 34px; font-size: 40px; font-weight: 400; color: var(--grey); letter-spacing: -0.005em; }
-
-  /* The product, large and running off the bottom edge. */
-  .light { position: absolute; left: 50%; top: 760px; width: 1900px; height: 900px; transform: translateX(-50%);
-    background: radial-gradient(closest-side, rgba(63, 191, 134, 0.16), rgba(63, 191, 134, 0) 100%); }
-  .product { position: absolute; left: 50%; top: 640px; width: 1150px; transform: translateX(-50%); }
-
-  .credit { position: absolute; left: 90px; bottom: 64px; font-size: 24px; line-height: 1.55; color: var(--dim); }
-  .credit b { color: var(--grey); font-weight: 600; }
-  .by { position: absolute; right: 90px; bottom: 56px; display: flex; align-items: center; gap: 22px; font-size: 26px; font-weight: 600; color: var(--grey); }
-  .by img { width: 96px; height: 96px; border-radius: 50%; box-shadow: 0 0 0 2px #2a2a2d; }
+  .copy { position: absolute; left: 64px; top: 72px; width: 560px; }
+  .kicker { font: 500 12px 'JetBrains Mono', monospace; letter-spacing: .26em; color: var(--soft); }
+  h1 { margin-top: 18px; font: italic 400 150px/0.9 'Instrument Serif', serif; letter-spacing: -.035em; }
+  .tag { margin-top: 26px; font: 400 40px/1.08 'Instrument Serif', serif; }
+  .sub { margin-top: 22px; font-size: 16px; line-height: 1.55; color: var(--soft); width: 420px; }
+  .foot { position: absolute; left: 64px; bottom: 44px; font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .24em; color: var(--soft); }
 </style>
 </head>
 <body>
-  <img class="notch" src="shots/compact.png" alt="" />
+  <div class="dot claude"></div>
+  <div class="dot codex"></div>
+  <div class="dot hermes"></div>
+  <div class="halftone"></div>
+  <span class="lbl" style="left:700px;top:200px">CLAUDE</span>
+  <span class="lbl" style="left:1110px;top:200px">CODEX</span>
+  <span class="lbl" style="left:900px;top:540px">HERMES</span>
+  <span class="lbl" style="left:902px;top:300px;letter-spacing:.3em;color:#efe7d6">YOU</span>
 
   <div class="copy">
-    <div class="name"><img src="../../src/Quotalis/Assets/Quotalis-256.png" alt="" />Quotalis</div>
-    <h1>Every limit. <span>At a glance.</span></h1>
-    <div class="sub">Claude, Codex and Hermes limits, plus your Git state, in one quiet capsule at the top of Windows.</div>
+    <div class="kicker">QUOTALIS · FOR WINDOWS</div>
+    <h1>Quotalis</h1>
+    <div class="tag">Three tools.<br />One quiet capsule.</div>
+    <p class="sub">Every limit, wallet and token count where you already look: the top of your screen.</p>
   </div>
+  <div class="foot">PRINTED IN THREE INKS · 68% · 31% · $18.42</div>
 
-  <div class="light"></div>
-  <img class="product" src="shots/usage.png" alt="" />
-
-  <div class="credit">Based on Developer Island by Maximilian Köhlenbeck · MIT</div>
-  <div class="by">by soybean_alien<img src="soybean_alien-logo.png" alt="" /></div>
+  <svg class="grain" width="1280" height="640"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch" /><feColorMatrix values="0 0 0 0 .2  0 0 0 0 .18  0 0 0 0 .15  0 0 0 .6 0" /></filter><rect width="100%" height="100%" filter="url(#n)" /></svg>
 </body>
 </html>
