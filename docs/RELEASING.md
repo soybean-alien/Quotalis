@@ -49,3 +49,13 @@ Releases are built locally and published as GitHub releases with three files: th
 - The installer is not code-signed yet, so Windows SmartScreen asks for confirmation on first run. Mention this in the release notes.
 - Only x64 is built and tested. `-Runtime win-arm64 -SkipInstaller` produces an experimental ARM64 zip that has not been validated.
 - Uninstalling keeps `%LOCALAPPDATA%\Quotalis` (history and settings), so a reinstall continues where it left off.
+
+## Quotalis for Linux
+
+The optional Linux download is built from `linux/`, with its own version in `linux/src/Quotalis.Linux/Quotalis.Linux.csproj` and its own `linux/CHANGELOG.md`. It never gets a `vX.Y.Z` tag, because the in-app updater reads those releases:
+
+1. In Git Bash: `cd linux && ./packaging/build.sh`.
+2. Tag the commit `linux-vX.Y.Z` and push that tag by name.
+3. Upload the tarball and its checksum to the newest Windows release with `gh release upload <tag> <files> --repo soybean-alien/Quotalis`, and update the link under "If you're on Linux" in the README.
+
+Don't attach a file named `SHA256SUMS-X.Y.Z.txt` for Linux; that name belongs to the Windows release.

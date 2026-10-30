@@ -1,0 +1,53 @@
+# Build output
+bin/
+obj/
+artifacts/
+*.user
+.vs/
+TestResults/
+
+# Local agent tooling (design skills are installed per machine, see README)
+.agents/
+.claude/
+skills-lock.json
+
+# Local data that must never be committed (the app keeps its own under %LOCALAPPDATA%)
+*.log
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+
+# Launch video output (/brag)
+brag-output*/
+
+# Editors and tools
+.vscode/
+.idea/
+__pycache__/
+*.orig
+
+# OS
+Thumbs.db
+Desktop.ini
+
+
+# Reference screenshots kept in the project root (not part of the repo)
+/Quotalis-*.png
+/image-*.png
+
+# Agent handoff notes (local working notes, see CLAUDE.md)
+CODEX_HANDOFF.md
+AGENTS.md
+
+# Token Savior index cache (local tool data)
+.token-savior-cache.json
+
+dist/

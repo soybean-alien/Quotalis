@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Quotalis.Core/Quotalis.Core.csproj" />
+    <Project Path="src/Quotalis.Linux/Quotalis.Linux.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Quotalis.Tests/Quotalis.Tests.csproj" />
+  </Folder>
+</Solution>
