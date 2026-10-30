@@ -1,6 +1,6 @@
 # Quotalis
 
-![Quotalis: three tools, one quiet capsule](docs/assets/banner.png)
+![Quotalis: three tools, one quiet capsule, on Windows and Linux](docs/assets/banner.png)
 
 > A fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT), renamed and extended by **soybean_alien**. Upstream is tracked as the `upstream` remote; see [CHANGELOG.md](CHANGELOG.md) for everything Quotalis added.
 
@@ -8,10 +8,13 @@
 
 Quotalis is a native, floating capsule at the top of your screen. It shows how much of your **Claude**, **Codex** and **Hermes Agent** allowance is left, what each of them used today and where your current repository stands, and opens into a full view when you click it.
 
+**On Linux?** There's a terminal and status bar version too: [jump to it](#if-youre-on-linux).
+
 [![CI](https://github.com/soybean-alien/Quotalis/actions/workflows/ci.yml/badge.svg)](https://github.com/soybean-alien/Quotalis/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/soybean-alien/Quotalis?include_prereleases&label=release)](https://github.com/soybean-alien/Quotalis/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Windows 10 and 11, x64](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4.svg)
+![Linux x64, optional download](https://img.shields.io/badge/Linux-x64%20optional%20download-FCC624.svg)
 ![.NET 10, WinUI 3](https://img.shields.io/badge/.NET%2010-WinUI%203-512BD4.svg)
 
 <p align="center">
@@ -97,6 +100,27 @@ Later versions install from inside the app (Settings, About, Updates). The insta
 
 **Requirements:** Windows 11 x64 (tested). Windows 10 version 2004 or later is supported by the build but not yet tested. The Git module needs [Git for Windows](https://git-scm.com/download/win), its GitHub heatmap the [GitHub CLI](https://cli.github.com/), ChatGPT plan usage the Codex app or CLI, and a server's Hermes export Windows' built-in OpenSSH client.
 
+### If you're on Linux
+
+A smaller version for Arch and Hyprland ([Omarchy](https://omarchy.org)): the same usage numbers in a terminal screen and your bar, in your theme's colours. It has no island, no claude.ai sign-in and no Nous wallet.
+
+<p align="center">
+  <img src="docs/assets/linux-screen.png" alt="Quotalis for Linux on Omarchy (sample data): Claude, Codex and Hermes usage in a small terminal window" width="420">
+</p>
+
+1. Download [`quotalis-0.1.1-linux-x64.tar.gz`](https://github.com/soybean-alien/Quotalis/releases/download/v0.8.0/quotalis-0.1.1-linux-x64.tar.gz) (x64, no .NET needed).
+2. Install it:
+
+   ```bash
+   tar xzf quotalis-0.1.1-linux-x64.tar.gz
+   cd quotalis-0.1.1-linux-x64
+   ./install.sh
+   ```
+
+3. Run `quotalis`, or click its module in the bar. `quotalis setup --remove` undoes the install.
+
+**Tested so far:** on Omarchy 4.0.6 in a virtual machine with made-up usage, not yet with real Claude Code or Codex use on Linux. Everything else is in [its own README](linux/README.md), and it has [its own version numbers](linux/CHANGELOG.md).
+
 ## Quick start
 
 | Do this | And you get |
@@ -169,7 +193,7 @@ powershell -ExecutionPolicy Bypass -File tools/build-release.ps1
 powershell -ExecutionPolicy Bypass -File tools/privacy-scan.ps1 artifacts/publish/win-x64 artifacts/Quotalis-<version>-win-x64-portable.zip
 ```
 
-More, including offscreen snapshots and the README media: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) and [docs/RELEASING.md](docs/RELEASING.md).
+More, including offscreen snapshots and the README media: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) and [docs/RELEASING.md](docs/RELEASING.md). The Linux version is built separately, from [linux/](linux/README.md).
 
 ## Accessibility
 
@@ -200,6 +224,6 @@ No dates; priorities follow feedback.
 - Based on [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT). Third-party components keep their own licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Built on [.NET 10](https://github.com/dotnet/runtime) and [WinUI 3 / Windows App SDK](https://github.com/microsoft/WindowsAppSDK).
 - Claude is a trademark of Anthropic, Codex and ChatGPT of OpenAI, and Hermes Agent and Nous Portal belong to Nous Research. Quotalis is an unofficial project and isn't affiliated with or endorsed by any of them. Claude Code and Codex are shown with the Claude and OpenAI marks (from Simple Icons, CC0).
-- **AI disclosure:** Quotalis was designed with and written by **Claude Code (Anthropic, Claude Opus 5.5)**, with some releases by **Codex (OpenAI)**, directed and tested in the real app by the author on Windows 11.
+- **AI disclosure:** Quotalis was designed with and written by **Claude Code (Anthropic, Claude Opus 5.5)**, with some releases by **Codex (OpenAI)**, directed and tested in the real app by the author on Windows 11. The Linux version was tested in a virtual machine with made-up usage.
 
 The design follows an [Apple design analysis](docs/design/apple-design-analysis.md), the [Taste Skill](https://github.com/Leonxlnx/taste-skill) and the [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines).

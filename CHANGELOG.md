@@ -4,8 +4,13 @@ All notable changes to Quotalis (called Claudex before 0.7.0) are documented her
 
 ## [Unreleased]
 
+### Added
+
+- **Quotalis for Linux, as an optional download.** Its source is in `linux/` with its own version numbers and changelog (now 0.1.1, tag `linux-v0.1.1`). The Windows app and its updater don't change.
+
 ### Changed
 
+- The banner and social preview say "Windows + Linux".
 - The README matches public builds: the Nous wallet sign-in is described as coming soon (Quick start, Settings, privacy and limits), and the intro no longer mentions the old name.
 
 ## [0.8.0] - 2026-10-29

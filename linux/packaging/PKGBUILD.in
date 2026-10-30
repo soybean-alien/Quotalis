@@ -1,0 +1,30 @@
+# Quotalis for Linux by soybean_alien. MIT, see LICENSE.
+# Filled in by packaging/build.sh. Put the PKGBUILD next to the tarball in dist/ and run makepkg -si.
+pkgname=quotalis-bin
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='AI usage limits for Claude Code, Codex and Hermes in your terminal and bar'
+arch=('x86_64')
+url='https://github.com/soybean-alien/Quotalis'
+license=('MIT')
+depends=('gcc-libs' 'glibc' 'openssl' 'zlib')
+optdepends=(
+  'waybar: the bar module, where Omarchy 4'"'"'s own bar is not in use'
+  'git: the Git page'
+  'github-cli: the GitHub contributions graph'
+  'openssh: reading Hermes usage from a server'
+)
+provides=('quotalis')
+conflicts=('quotalis')
+# A .NET single-file binary carries its payload after the ELF sections, and stripping destroys it.
+options=('!strip' '!debug')
+source=("quotalis-$pkgver-linux-x64.tar.gz")
+sha256sums=('@SHA256@')
+
+package() {
+  cd "quotalis-$pkgver-linux-x64"
+  install -Dm755 quotalis "$pkgdir/usr/bin/quotalis"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 THIRD_PARTY_NOTICES.md "$pkgdir/usr/share/licenses/$pkgname/THIRD_PARTY_NOTICES.md"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

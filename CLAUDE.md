@@ -21,4 +21,5 @@ Personal fork of [Developer Island](https://github.com/maximilian467/Developer-I
 - `CODEX_HANDOFF.md` (candid state for the next agent) and a short `AGENTS.md` pointing to it live in the root, gitignored. Keep the handoff current when work changes.
 - Build and test: `run.cmd` (or `run.cmd -Demo`), `dotnet test tests/Quotalis.Tests`. Needs the .NET 10 SDK.
 - The Claude status line argument is `--quotalis-statusline` (`--claudex-statusline` still works), which keeps it apart from Developer Island's `--claude-statusline`.
+- Quotalis for Linux lives in `linux/` on `main`, self-contained, with its own version, changelog, Core copy and tests (`dotnet test linux/tests/Quotalis.Tests`). Tags are `linux-vX.Y.Z`, never `vX.Y.Z`. Its tarball is an extra asset on a Windows release, never a release of its own, so the updater is unaffected. See `docs/RELEASING.md`.
 - UX: never show "~" before numbers; estimates are marked in words (e.g. "estimated" next to the reset time).
