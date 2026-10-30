@@ -11,8 +11,9 @@ internal static class OmarchyBarConfig
 {
     public const string ModuleId = "quotalis";
 
-    // Each refresh starts the program, about 0.2 s of CPU, and the percentages move slowly.
-    private const int IntervalSeconds = 30;
+    // Each refresh shows the next tool's turn. 0.1.1 and earlier wrote this interval, before the tools took turns.
+    private const int IntervalSeconds = WaybarOutput.CycleSeconds;
+    private const int OldIntervalSeconds = 30;
 
     private static readonly JsonSerializerOptions Written = new()
     {
@@ -28,9 +29,16 @@ internal static class OmarchyBarConfig
             return null;
         }
 
-        if (right.Any(IsOurs))
+        if (right.FirstOrDefault(IsOurs) is { } ours)
         {
-            return config;
+            // A different interval is the user's own choice, so only the old default moves.
+            if (ours["interval"]?.GetValueKind() != JsonValueKind.Number || ours["interval"]!.GetValue<int>() != OldIntervalSeconds)
+            {
+                return config;
+            }
+
+            ours["interval"] = IntervalSeconds;
+            return root.ToJsonString(Written) + "\n";
         }
 
         // The bar runs these through bash, so a path with a space needs quoting there too.

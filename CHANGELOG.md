@@ -6,7 +6,7 @@ All notable changes to Quotalis (called Claudex before 0.7.0) are documented her
 
 ### Added
 
-- **Quotalis for Linux, as an optional download.** Its source is in `linux/` with its own version numbers and changelog (now 0.1.1, tag `linux-v0.1.1`). The Windows app and its updater don't change.
+- **Quotalis for Linux, as an optional download.** Its source is in `linux/` with its own version numbers and changelog (now 0.1.2, tag `linux-v0.1.2`). The Windows app and its updater don't change.
 
 ### Changed
 
