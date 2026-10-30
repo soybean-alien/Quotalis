@@ -4,6 +4,10 @@ All notable changes to Quotalis (called Claudex before 0.7.0) are documented her
 
 ## [Unreleased]
 
+### Changed
+
+- The README matches public builds: the Nous wallet sign-in is described as coming soon (Quick start, Settings, privacy and limits), and the intro no longer mentions the old name.
+
 ## [0.8.0] - 2026-10-29
 
 ### Added
