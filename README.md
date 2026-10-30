@@ -2,7 +2,7 @@
 
 ![Quotalis: three tools, one quiet capsule](docs/assets/banner.png)
 
-> Personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT), renamed and extended by **soybean_alien**. Called **Claudex** before 0.7.0; updating from Claudex keeps your settings, history and sign-ins. Upstream is tracked as the `upstream` remote; see [CHANGELOG.md](CHANGELOG.md) for everything Quotalis added.
+> A fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT), renamed and extended by **soybean_alien**. Upstream is tracked as the `upstream` remote; see [CHANGELOG.md](CHANGELOG.md) for everything Quotalis added.
 
 > **Every AI limit, wallet and token, plus your Git state, in one quiet capsule at the top of your screen.**
 
@@ -80,9 +80,9 @@ Quotalis is **local-first**. It has no account, no telemetry and no cloud sync, 
 - **Sign-ins stay on this PC and Quotalis never sees your passwords:**
   - claude.ai: its cookies stay in a browser profile (`.quotalis\claude-signin`); Quotalis never reads the cookie values.
   - ChatGPT: handled by the locally installed Codex in an isolated profile (`.quotalis\chatgpt-signin`); Quotalis never reads those credentials.
-  - Nous Portal: Nous's device sign-in (you approve a code on Nous's page). The tokens are encrypted for your Windows account (`.quotalis\nous-signin.bin`), never logged, and used only to read the wallet. Nous lets them run models; Quotalis never does.
+  - Nous Portal (once the wallet ships; public builds have no Nous sign-in yet): Nous's device sign-in (you approve a code on Nous's page). The tokens are encrypted for your Windows account (`.quotalis\nous-signin.bin`), never logged, and used only to read the wallet. Nous lets them run models; Quotalis never does.
   - The updater needs no sign-in; it reads the public releases. The GitHub heatmap in the Git tab goes through the GitHub CLI's own sign-in.
-- **Network:** only what you switch on: claude.ai's usage page, Codex's ChatGPT requests, Nous Portal's account read, the copy of your server's Hermes export (over SSH with your own key), the update check (GitHub's public releases) and the GitHub heatmap (through the GitHub CLI). None of these readings sends a message to an AI model.
+- **Network:** only what you switch on: claude.ai's usage page, Codex's ChatGPT requests, Nous Portal's account read (once the wallet ships), the copy of your server's Hermes export (over SSH with your own key), the update check (GitHub's public releases) and the GitHub heatmap (through the GitHub CLI). None of these readings sends a message to an AI model.
 - **Camera and microphone:** only "in use or not" is read from Windows' own consent store; app names are never stored or shown.
 
 Full details: [docs/PRIVACY.md](docs/PRIVACY.md) and [SECURITY.md](SECURITY.md).
@@ -107,7 +107,7 @@ Later versions install from inside the app (Settings, About, Updates). The insta
 | Drag the capsule | Move it; it snaps to the nearest anchor |
 | Settings, Modules, **Claude plan usage**, Sign in to claude.ai | Claude's 5-hour and weekly usage, a few seconds after each reply |
 | Settings, Modules, **ChatGPT plan usage**, Sign in with ChatGPT | The shared Work/Codex allowance and every limit bucket, with reset times |
-| Settings, Modules, **Hermes and the Nous wallet**, Sign in to Nous Portal | The Hermes column: your Nous wallet, Hermes's tokens and its model |
+| Settings, Modules, **Hermes and the Nous wallet**, turn on Hermes | The Hermes column: Hermes's tokens, its spend and its model (the Nous wallet is coming soon) |
 | Settings, General, **Always display usage** | The island rests as the usage strip |
 | Settings, Position, **Auto-hide in apps** | Choose which apps make the island step aside |
 
@@ -121,7 +121,7 @@ Everything is set in the Settings window and applies immediately:
 |---|---|
 | General | Start with Windows, always on top, launch hidden, keep the island open, always display usage, keyboard shortcut, Claude peak hours |
 | Position | Monitor, anchor, custom position; auto-hide in apps (notch or hide, only when maximized, app list) |
-| Modules | Each module on or off and its order; Claude plan usage; ChatGPT plan usage; Hermes and the Nous wallet (sign-in, token source, low balance warning); Git repositories |
+| Modules | Each module on or off and its order; Claude plan usage; ChatGPT plan usage; Hermes and the Nous wallet (token source, low balance warning; the wallet sign-in is coming soon); Git repositories |
 | Appearance | System or Dark for Settings (the island itself is always dark) |
 | About | Version, updates, daily update check, data folder |
 
@@ -181,7 +181,7 @@ More, including offscreen snapshots and the README media: [docs/DEVELOPMENT.md](
 ## Known limitations
 
 - **Plan usage needs a one-time sign-in** for Claude (claude.ai) and Codex (ChatGPT through the Codex app or CLI); token usage works either way. claude.ai's usage address isn't a public API: if it changes, Quotalis shows "unknown format" instead of a wrong number.
-- **Hermes:** the wallet works with Nous Portal only. Nous reports no model per call, so the model shown is the one in Hermes's own records (a minute late at most from a server). The Nous sign-in currently borrows Hermes's own app name, so Nous's page says "Connect Hermes".
+- **Hermes:** the wallet works with Nous Portal only. Nous reports no model per call, so the model shown is the one in Hermes's own records (a minute late at most from a server). The wallet stays locked in public builds until Quotalis has its own Nous Portal app name (today's sign-in would borrow Hermes's).
 - The installer is **not code-signed** yet. Only **x64** is built and tested.
 - More in [docs/STATUS.md](docs/STATUS.md).
 
