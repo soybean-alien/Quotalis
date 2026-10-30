@@ -2,6 +2,19 @@
 
 All notable changes to Quotalis (called Claudex before 0.7.0) are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [0.8.0] - 2026-10-29
+
+### Added
+
+- **A "Today" slide in the capsule rotation.** Star the Usage tab and the compact capsule takes turns every 7 s: Claude, Codex, Hermes, then **Today** with the fresh tokens of all three together ("Today 4.2M tokens"). The slide appears whenever two or more AI tools are favorites, right after the last of them.
+
+### Changed
+
+- **Hermes has a yellow dot in the capsule**, in the logo slot where Claude and Codex show their marks. The Today slide shows one dot per tool in their colours.
+- **The usage graph fills the panel and colours each day by the tool used most.** The 26 weeks now stretch to the same margin on the right as on the left, so the squares are bigger and easier to hover and click. Instead of three shades of purple, a day takes the colour of the tool with the most fresh tokens that day (Claude orange, Codex blue, Hermes yellow), and the legend names the three tools. Hermes claims any day it spent more than $1 from the Nous wallet, since its token counts alone would never lead a day. Hermes records $0 for Nous models, so Quotalis now logs what the wallet loses each day (drops between readings, top-ups ignored) in `.quotalis\hermes-spend.json`; days before this log started have no spend on record. The Git tab's GitHub calendar keeps its size.
+
 ## [0.7.3] - 2026-10-29
 
 ### Fixed

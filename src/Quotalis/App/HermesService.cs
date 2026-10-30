@@ -24,6 +24,7 @@ internal sealed class HermesService : IDisposable
     private readonly NousPortalClient _portal = new(Http);
     private readonly NousTokenStore _store;
     private readonly string _gaugePath;
+    private readonly string _spendPath;
     private readonly string _usageCache;
     private readonly NousPollSchedule _schedule = new();
     private readonly DispatcherQueueTimer _walletTimer;
@@ -41,10 +42,11 @@ internal sealed class HermesService : IDisposable
     private string _remoteKey = "";
     private string _remotePath = "";
 
-    public HermesService(DispatcherQueue dispatcher, NousTokenStore store, string gaugePath, string usageCache)
+    public HermesService(DispatcherQueue dispatcher, NousTokenStore store, string gaugePath, string spendPath, string usageCache)
     {
         _store = store;
         _gaugePath = gaugePath;
+        _spendPath = spendPath;
         _usageCache = usageCache;
         _walletTimer = dispatcher.CreateTimer();
         _walletTimer.IsRepeating = false;
@@ -53,6 +55,7 @@ internal sealed class HermesService : IDisposable
         _usageTimer.IsRepeating = false;
         _usageTimer.Tick += (_, _) => _ = ReadUsageAsync();
         Gauge = LoadGauge();
+        Spend = LoadSpend();
     }
 
     /// <summary>Raised on the UI thread when anything below changed.</summary>
@@ -66,6 +69,9 @@ internal sealed class HermesService : IDisposable
     public NousWalletReading? Wallet { get; private set; }
 
     public WalletGauge? Gauge { get; private set; }
+
+    /// <summary>What the wallet lost each day; a new instance whenever a drop is recorded.</summary>
+    public WalletSpendLog Spend { get; private set; }
 
     /// <summary>Reads run every second right now (Hermes is working or the balance just moved).</summary>
     public bool IsFast => _schedule.IsFast(DateTimeOffset.UtcNow) && !_schedule.Paused;
@@ -293,6 +299,13 @@ internal sealed class HermesService : IDisposable
                 case NousReadStatus.Ok when NousWalletParser.Parse(answer.Body!, now) is { } reading:
                     var changed = Wallet is null || reading.TotalUsd != Wallet.TotalUsd;
                     Wallet = reading;
+                    var spend = Spend.Record(DateOnly.FromDateTime(DateTime.Now), Gauge?.LastUsd, reading.TotalUsd);
+                    if (!ReferenceEquals(spend, Spend))
+                    {
+                        Spend = spend;
+                        SaveSpend(spend);
+                    }
+
                     var gauge = WalletGauge.Next(Gauge, reading.TotalUsd);
                     if (gauge != Gauge)
                     {
@@ -400,6 +413,34 @@ internal sealed class HermesService : IDisposable
         catch (Exception ex)
         {
             Log.Debug("nous", "Wallet scale not saved", new { error = ex.GetType().Name });
+        }
+    }
+
+    private WalletSpendLog LoadSpend()
+    {
+        try
+        {
+            return File.Exists(_spendPath) ? WalletSpendLog.FromJson(File.ReadAllText(_spendPath)) : WalletSpendLog.Empty;
+        }
+        catch (Exception ex)
+        {
+            Log.Debug("nous", "Wallet spend log not read", new { error = ex.GetType().Name });
+            return WalletSpendLog.Empty;
+        }
+    }
+
+    private void SaveSpend(WalletSpendLog spend)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_spendPath)!);
+            var temp = _spendPath + ".tmp";
+            File.WriteAllText(temp, spend.ToJson());
+            File.Move(temp, _spendPath, overwrite: true);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug("nous", "Wallet spend log not saved", new { error = ex.GetType().Name });
         }
     }
 

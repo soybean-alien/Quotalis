@@ -107,6 +107,14 @@ public sealed record SpendTotals(decimal Week, decimal Month, decimal Lifetime, 
     public static readonly SpendTotals Zero = new(0m, 0m, 0m, false, false, false);
 }
 
+/// <summary>The tools whose tokens the usage history graph counts.</summary>
+public enum UsageTool
+{
+    Claude,
+    Codex,
+    Hermes,
+}
+
 /// <summary>One cell of the usage history graph.</summary>
 /// <param name="ClaudePartial">Some of Claude's tokens that day have no list price; its value covers the priced ones.</param>
 /// <param name="CodexPartial">Some of Codex's tokens that day have no list price; its value covers the priced ones.</param>
@@ -128,10 +136,31 @@ public sealed record UsageDay(
     /// </summary>
     public TokenCounts Hermes { get; init; }
 
+    /// <summary>What Hermes spent from the Nous wallet that day (real money, never part of the API-equivalent values).</summary>
+    public decimal HermesSpentUsd { get; init; }
+
+    /// <summary>
+    /// Hermes claims a day in the history graph once it spends more than this. Its token counts are small next to
+    /// Claude's and Codex's, so on tokens alone it would never lead a day.
+    /// </summary>
+    public const decimal HermesClaimsDayAboveUsd = 1m;
+
     public bool ApiValuePartial => ClaudePartial || CodexPartial;
 
-    /// <summary>Fresh tokens of every tool (drives the history graph intensity).</summary>
+    /// <summary>Fresh tokens of every tool.</summary>
     public long FreshTokens => Claude.Fresh + Codex.Fresh + Hermes.Fresh;
+
+    /// <summary>
+    /// The tool that colours the day in the history graph: Hermes when it spent more than
+    /// <see cref="HermesClaimsDayAboveUsd"/>, otherwise the tool with the most fresh tokens (a tie goes to Claude,
+    /// then Codex); null without either.
+    /// </summary>
+    public UsageTool? Leader =>
+        HermesSpentUsd > HermesClaimsDayAboveUsd ? UsageTool.Hermes
+        : FreshTokens <= 0 ? null
+        : Claude.Fresh >= Codex.Fresh && Claude.Fresh >= Hermes.Fresh ? UsageTool.Claude
+        : Codex.Fresh >= Hermes.Fresh ? UsageTool.Codex
+        : UsageTool.Hermes;
 
     public long ProcessedTokens => Claude.Processed + Codex.Processed + Hermes.Processed;
 

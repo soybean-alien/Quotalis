@@ -78,6 +78,30 @@ public class CompactFavoritesTests
     }
 
     [Fact]
+    public void The_AI_tools_are_followed_by_a_today_total_slide()
+    {
+        IReadOnlyList<ModuleId> favorites = [ModuleId.Claude, ModuleId.Codex, ModuleId.Hermes];
+
+        Assert.Equal((ModuleId.Claude, false), CompactSelector.SelectSlide(favorites, null, _ => true, 0));
+        Assert.Equal((ModuleId.Codex, false), CompactSelector.SelectSlide(favorites, null, _ => true, 1));
+        Assert.Equal((ModuleId.Hermes, false), CompactSelector.SelectSlide(favorites, null, _ => true, 2));
+        Assert.Equal(((ModuleId?)null, true), CompactSelector.SelectSlide(favorites, null, _ => true, 3));
+        Assert.Equal((ModuleId.Claude, false), CompactSelector.SelectSlide(favorites, null, _ => true, 4));
+    }
+
+    [Fact]
+    public void The_today_slide_sits_after_the_last_AI_tool_and_needs_two_of_them()
+    {
+        IReadOnlyList<ModuleId> withGit = [ModuleId.Claude, ModuleId.Codex, ModuleId.Git];
+        Assert.Equal(((ModuleId?)null, true), CompactSelector.SelectSlide(withGit, null, _ => true, 2));
+        Assert.Equal((ModuleId.Git, false), CompactSelector.SelectSlide(withGit, null, _ => true, 3));
+
+        IReadOnlyList<ModuleId> oneTool = [ModuleId.Claude, ModuleId.Git];
+        Assert.Equal((ModuleId.Claude, false), CompactSelector.SelectSlide(oneTool, null, _ => true, 2));
+        Assert.Equal((ModuleId.Codex, false), CompactSelector.SelectSlide([], ModuleId.Codex, _ => true, 3));
+    }
+
+    [Fact]
     public void When_no_favorite_speaks_they_still_rotate()
     {
         Assert.Equal(ModuleId.Hermes, CompactSelector.Select([ModuleId.Git, ModuleId.Hermes], null, _ => false, 1));

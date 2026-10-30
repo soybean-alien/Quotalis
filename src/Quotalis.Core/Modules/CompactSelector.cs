@@ -7,6 +7,8 @@ namespace Quotalis.Core.Modules;
 /// <item>Several favorites: they take turns every <see cref="RotationInterval"/>; favorites with
 /// nothing to say right now (no track playing, no session today) are skipped, unless none has
 /// anything to say.</item>
+/// <item>Two or more AI tools among them (Claude, Codex, Hermes): a "Today" slide with their combined
+/// total follows the last of them (<see cref="SelectSlide"/>).</item>
 /// <item>No favorite: the module opened last.</item>
 /// <item>Neither: null, and the island keeps its classic summary (focus, AI usage, music).</item>
 /// </list>
@@ -32,6 +34,30 @@ public static class CompactSelector
         var index = (int)(((turn % pool.Count) + pool.Count) % pool.Count);
         return pool[index];
     }
+
+    /// <summary>
+    /// Like <see cref="Select"/>, with the "Today" slide: when two or more AI tools take turns, one more
+    /// turn after the last of them shows today's combined total (<c>IsTotal</c>, no module).
+    /// </summary>
+    public static (ModuleId? Module, bool IsTotal) SelectSlide(IReadOnlyList<ModuleId> favorites, ModuleId? lastActive, Func<ModuleId, bool> hasContent, long turn)
+    {
+        if (favorites.Count == 0)
+        {
+            return (lastActive, false);
+        }
+
+        var speaking = favorites.Where(hasContent).ToList();
+        var pool = (speaking.Count > 0 ? speaking : favorites).Select(m => (ModuleId?)m).ToList();
+        if (pool.Count(m => IsAiTool(m!.Value)) >= 2)
+        {
+            pool.Insert(pool.FindLastIndex(m => IsAiTool(m!.Value)) + 1, null);
+        }
+
+        var index = (int)(((turn % pool.Count) + pool.Count) % pool.Count);
+        return pool[index] is { } module ? (module, false) : (null, true);
+    }
+
+    public static bool IsAiTool(ModuleId module) => module is ModuleId.Claude or ModuleId.Codex or ModuleId.Hermes;
 
     /// <summary>Whether a rotation timer is needed at all (two or more favorites).</summary>
     public static bool Rotates(IReadOnlyList<ModuleId> favorites) => favorites.Count > 1;

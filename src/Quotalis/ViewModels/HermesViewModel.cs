@@ -19,6 +19,7 @@ public sealed class HermesViewModel : ObservableObject
     private NousWalletReading? _wallet;
     private WalletGauge? _gauge;
     private HermesUsage? _usage;
+    private WalletSpendLog _spend = WalletSpendLog.Empty;
     private string? _usageProblem;
     private bool _isFast;
     private bool _isPaused;
@@ -62,6 +63,9 @@ public sealed class HermesViewModel : ObservableObject
         _lowUsd = lowUsd;
         OnAllPropertiesChanged();
     }
+
+    /// <summary>The wallet's daily drops, read with Hermes's own costs for the $1 rule.</summary>
+    public void SetSpend(WalletSpendLog spend) => _spend = spend;
 
     public void SetUsage(HermesUsage? usage, string? problem)
     {
@@ -181,7 +185,9 @@ public sealed class HermesViewModel : ObservableObject
 
     public bool HasUsageToday => Today is { } d && d.Tokens.Processed > 0;
 
-    public string TokensText => DisplayFormat.Tokens(Today?.Tokens.Fresh ?? 0);
+    public long FreshTokensToday => Today?.Tokens.Fresh ?? 0;
+
+    public string TokensText => DisplayFormat.Tokens(FreshTokensToday);
 
     public string TokensUnit => "fresh tokens";
 
@@ -217,6 +223,24 @@ public sealed class HermesViewModel : ObservableObject
     /// <summary>Token use per local day, for the heatmap.</summary>
     public IReadOnlyDictionary<DateOnly, TokenCounts> TokensByDay =>
         _usage?.Days.ToDictionary(d => d.Day, d => d.Tokens) ?? new Dictionary<DateOnly, TokenCounts>();
+
+    /// <summary>
+    /// What Hermes spent each day: the larger of its own cost (billed or estimated) and what the Nous wallet lost.
+    /// Hermes records $0 for Nous models, so the wallet's drop is usually the real figure.
+    /// </summary>
+    public IReadOnlyDictionary<DateOnly, decimal> SpentByDay
+    {
+        get
+        {
+            var days = new Dictionary<DateOnly, decimal>(_spend.Days);
+            foreach (var d in _usage?.Days ?? [])
+            {
+                days[d.Day] = Math.Max(d.CostUsd, days.GetValueOrDefault(d.Day));
+            }
+
+            return days;
+        }
+    }
 
     private static Microsoft.UI.Xaml.Media.Brush Brush(string key) =>
         (Microsoft.UI.Xaml.Media.Brush)Microsoft.UI.Xaml.Application.Current.Resources[key];

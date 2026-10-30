@@ -112,6 +112,51 @@ public sealed record WalletGauge(decimal FullUsd, decimal LastUsd)
 }
 
 /// <summary>
+/// What the wallet lost each local day (owner's rule, 2026-10-29: Hermes claims a day in the usage graph once it
+/// spends more than $1). Hermes records $0 cost for Nous models, so the spend is read off the balance: every drop
+/// between two readings counts toward the day of the later reading, and top-ups are ignored. Only days since
+/// Quotalis started keeping this log are known.
+/// </summary>
+public sealed record WalletSpendLog(IReadOnlyDictionary<DateOnly, decimal> Days)
+{
+    /// <summary>Days older than this are dropped; the usage graph shows 26 weeks.</summary>
+    public const int KeepDays = 190;
+
+    public static readonly WalletSpendLog Empty = new(new Dictionary<DateOnly, decimal>());
+
+    /// <summary>The log after a reading of <paramref name="currentUsd"/> that followed one of <paramref name="previousUsd"/>.</summary>
+    public WalletSpendLog Record(DateOnly day, decimal? previousUsd, decimal currentUsd)
+    {
+        if (previousUsd is not { } previous || currentUsd >= previous)
+        {
+            return this;
+        }
+
+        var days = Days.Where(d => d.Key > day.AddDays(-KeepDays)).ToDictionary(d => d.Key, d => d.Value);
+        days[day] = days.GetValueOrDefault(day) + (previous - Math.Max(0, currentUsd));
+        return new WalletSpendLog(days);
+    }
+
+    public decimal SpentOn(DateOnly day) => Days.GetValueOrDefault(day);
+
+    public string ToJson() => JsonSerializer.Serialize(Days.OrderBy(d => d.Key).ToDictionary(d => d.Key.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), d => d.Value));
+
+    public static WalletSpendLog FromJson(string json)
+    {
+        var days = new Dictionary<DateOnly, decimal>();
+        foreach (var (key, value) in JsonSerializer.Deserialize<Dictionary<string, decimal>>(json) ?? [])
+        {
+            if (DateOnly.TryParseExact(key, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day) && value > 0)
+            {
+                days[day] = value;
+            }
+        }
+
+        return new WalletSpendLog(days);
+    }
+}
+
+/// <summary>
 /// When to read the wallet next (owner's rule, 2026-10-24): every second while Hermes works; once nothing has
 /// happened for five minutes, every five minutes; never while the PC is locked or asleep. "Something happened" is a
 /// balance change, new Hermes activity or a sign-in. Failures and throttling back off, honouring Retry-After.

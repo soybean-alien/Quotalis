@@ -57,6 +57,7 @@ internal sealed class AppHost : IDisposable
     private HermesService? _hermes;
     private Core.Hermes.HermesUsage? _hermesUsageShown;
     private bool _hermesShown;
+    private Core.Hermes.WalletSpendLog? _hermesSpendShown;
     private DispatcherQueueTimer? _planReset;
     private DispatcherQueueTimer? _historyDebounce;
     private DispatcherQueueTimer? _displaySettle;
@@ -161,7 +162,7 @@ internal sealed class AppHost : IDisposable
             _chatGptUsage = new ChatGptUsageReader(_dispatcher);
             _chatGptUsage.Changed += OnChatGptUsageChanged;
             _chatGptUsage.Configure(settings.CodexEnabled);
-            _hermes = new HermesService(_dispatcher, new NousTokenStore(AppPaths.NousSignIn), AppPaths.HermesWallet, AppPaths.HermesUsageCache);
+            _hermes = new HermesService(_dispatcher, new NousTokenStore(AppPaths.NousSignIn), AppPaths.HermesWallet, AppPaths.HermesSpend, AppPaths.HermesUsageCache);
             _hermes.Changed += OnHermesChanged;
             _hermes.Configure(settings);
             _host.SessionActiveChanged += active => _hermes?.SetSessionActive(active);
@@ -377,6 +378,14 @@ internal sealed class AppHost : IDisposable
         {
             _viewModel.SetFavorites([module]);
             await shot("50-compact-" + module.ToString().ToLowerInvariant());
+        }
+
+        // The Usage star: Claude, Codex, Hermes, then today's total.
+        _viewModel.SetFavorites([ModuleId.Claude, ModuleId.Codex, ModuleId.Hermes]);
+        for (var turn = 0; turn < 4; turn++)
+        {
+            await shot("52-compact-usage-turn-" + turn);
+            _viewModel.AdvanceCompactRotation();
         }
 
         _viewModel.SetFavorites([ModuleId.Claude, ModuleId.Hermes, ModuleId.Git]);
@@ -686,12 +695,14 @@ internal sealed class AppHost : IDisposable
         };
         var hermes = _viewModel.Usage.Hermes;
         hermes.SetWallet(state, _hermes.Wallet, _hermes.Gauge, _hermes.IsFast, _hermes.IsPaused, _settings.Current.HermesLowBalanceUsd);
-        // The wallet can change every second; the graph is rebuilt only when Hermes's token use (or the column) did.
+        // The wallet can change every second; the graph is rebuilt only when Hermes's token use, its daily spend (or the column) did.
         var shown = _settings.Current.HermesEnabled;
-        if (!ReferenceEquals(_hermes.Usage, _hermesUsageShown) || shown != _hermesShown)
+        if (!ReferenceEquals(_hermes.Usage, _hermesUsageShown) || !ReferenceEquals(_hermes.Spend, _hermesSpendShown) || shown != _hermesShown)
         {
             _hermesUsageShown = _hermes.Usage;
+            _hermesSpendShown = _hermes.Spend;
             _hermesShown = shown;
+            hermes.SetSpend(_hermes.Spend);
             hermes.SetUsage(_hermes.Usage, _hermes.UsageProblem);
             _viewModel.Usage.RefreshHermesHistory();
         }
