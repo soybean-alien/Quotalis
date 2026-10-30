@@ -6,7 +6,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Company>soybean_alien</Company>
     <Product>Quotalis</Product>
-    <Version>0.7.3</Version>
+    <Version>0.8.0</Version>
     <Copyright>Copyright © 2026 Maximilian Köhlenbeck</Copyright>
     <!-- Keep the build machine's folders (and so the Windows user name) out of the binaries' embedded PDB paths. -->
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=/_/</PathMap>

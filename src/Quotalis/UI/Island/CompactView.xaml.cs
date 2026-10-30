@@ -40,13 +40,17 @@ public sealed partial class CompactView : UserControl
     {
         var module = _viewModel.CompactModule;
         var isProvider = module is ModuleId.Claude or ModuleId.Codex;
+        var isHermes = module == ModuleId.Hermes;
+        var isTotal = _viewModel.CompactShowsTotal;
         FeaturedMark.Visibility = isProvider ? Visibility.Visible : Visibility.Collapsed;
-        FeaturedModuleIcon.Visibility = isProvider ? Visibility.Collapsed : Visibility.Visible;
+        FeaturedHermesDot.Visibility = isHermes ? Visibility.Visible : Visibility.Collapsed;
+        FeaturedTotalDots.Visibility = isTotal ? Visibility.Visible : Visibility.Collapsed;
+        FeaturedModuleIcon.Visibility = isProvider || isHermes || isTotal ? Visibility.Collapsed : Visibility.Visible;
         if (isProvider)
         {
             FeaturedMark.Kind = module == ModuleId.Claude ? "Claude" : "Codex";
         }
-        else if (module is { } m)
+        else if (module is { } m && !isHermes)
         {
             FeaturedModuleIcon.Module = m;
         }

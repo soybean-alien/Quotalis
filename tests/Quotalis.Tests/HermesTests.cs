@@ -166,6 +166,28 @@ public class HermesTests
         Assert.Equal(0, WalletGauge.Next(gauge, -3m).Fraction);
     }
 
+    [Fact]
+    public void Each_day_logs_what_the_wallet_lost_and_ignores_top_ups()
+    {
+        var monday = new DateOnly(2026, 10, 26);
+        var log = WalletSpendLog.Empty.Record(monday, null, 20m);   // first reading: nothing to compare
+        Assert.Same(WalletSpendLog.Empty, log);
+
+        log = log.Record(monday, 20m, 19.40m).Record(monday, 19.40m, 18.90m).Record(monday, 18.90m, 30m);
+        Assert.Equal(1.10m, log.SpentOn(monday));
+
+        log = log.Record(monday.AddDays(1), 30m, 29.75m);
+        Assert.Equal(0.25m, log.SpentOn(monday.AddDays(1)));
+        Assert.Equal(1.10m, log.SpentOn(monday));
+
+        var back = WalletSpendLog.FromJson(log.ToJson());
+        Assert.Equal(log.Days.OrderBy(d => d.Key), back.Days.OrderBy(d => d.Key));
+
+        // Old days fall out of the log.
+        var later = log.Record(monday.AddDays(WalletSpendLog.KeepDays + 1), 29.75m, 29m);
+        Assert.Equal(0m, later.SpentOn(monday));
+    }
+
     [Theory]
     [InlineData(10, 5, WalletLevel.Healthy)]
     [InlineData(4.99, 5, WalletLevel.Low)]

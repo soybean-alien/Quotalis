@@ -125,7 +125,7 @@ The display priority is Dragging > Auto-hide or hidden > explicitly expanded > h
 
 ## Compact island and favorites
 
-`CompactSelector` picks the featured module: one favorite is shown, several rotate every 7 s (skipping those with nothing to say), otherwise the module opened last (`ui-state.json`), otherwise the classic summary (Claude and Codex usage). The rotation timer runs only while the compact capsule is on screen. A featured Git repository adds its change count after a dot; Claude and Codex show no money in the capsule.
+`CompactSelector` picks the featured module: one favorite is shown, several rotate every 7 s (skipping those with nothing to say; with two or more AI tools among them, a "Today" slide with their combined fresh tokens follows the last one), otherwise the module opened last (`ui-state.json`), otherwise the classic summary (Claude and Codex usage). The rotation timer runs only while the compact capsule is on screen. A featured Git repository adds its change count after a dot; Claude and Codex show no money in the capsule.
 
 Ticking values sit in a `StableText`: an invisible copy of the widest form (`CompactWidth.Reserve`: "Claude 9%" reserves "Claude 000%", "376k" and "1.12M" reserve "000.00M") holds the slot and tabular figures make every digit equally wide, so the capsule changes width only when its content changes kind.
 

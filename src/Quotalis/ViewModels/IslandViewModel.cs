@@ -1,3 +1,4 @@
+using Quotalis.Core.Formatting;
 using Quotalis.Core.Modules;
 using Quotalis.Core.Providers;
 
@@ -23,6 +24,7 @@ public sealed class IslandViewModel : ObservableObject
     private IReadOnlyList<ModuleId> _favorites = [];
     private ModuleId? _lastActive;
     private ModuleId? _compactModule;
+    private bool _compactTotal;
     private long _turn;
     private bool _refreshingCompact;
 
@@ -79,11 +81,20 @@ public sealed class IslandViewModel : ObservableObject
     /// <summary>The module the compact island features, or null for the classic summary.</summary>
     public ModuleId? CompactModule => _compactModule;
 
-    public bool IsFeaturing => _compactModule is not null;
+    public bool IsFeaturing => _compactModule is not null || _compactTotal;
+
+    /// <summary>The rotation's "Today" slide: today's fresh tokens of every AI tool together.</summary>
+    public bool CompactShowsTotal => _compactTotal;
+
+    /// <summary>Today's fresh tokens across the enabled AI tools (Claude, Codex, Hermes).</summary>
+    public long TodayTotalTokens =>
+        (Usage.Claude.IsEnabled && Usage.Claude.IsReady ? Usage.Claude.Snapshot.Today.Fresh : 0)
+        + (Usage.Codex.IsEnabled && Usage.Codex.IsReady ? Usage.Codex.Snapshot.Today.Fresh : 0)
+        + (Usage.Hermes.IsEnabled ? Usage.Hermes.FreshTokensToday : 0);
 
     public bool CompactRotates => CompactSelector.Rotates(_favorites.Where(IsModuleEnabled).ToList());
 
-    public string CompactPrimaryLabel => _compactModule switch
+    public string CompactPrimaryLabel => _compactTotal ? "Today" : _compactModule switch
     {
         ModuleId.Claude => Usage.Claude.ShortName,
         ModuleId.Codex => Usage.Codex.ShortName,
@@ -93,7 +104,7 @@ public sealed class IslandViewModel : ObservableObject
 
     public bool HasCompactPrimaryLabel => CompactPrimaryLabel.Length > 0;
 
-    public string CompactPrimaryValue => _compactModule switch
+    public string CompactPrimaryValue => _compactTotal ? $"{DisplayFormat.Tokens(TodayTotalTokens)} tokens" : _compactModule switch
     {
         ModuleId.Claude => ProviderValue(Usage.Claude),
         ModuleId.Codex => ProviderValue(Usage.Codex),
@@ -113,9 +124,11 @@ public sealed class IslandViewModel : ObservableObject
 
     public bool HasCompactPrimaryDetail => CompactPrimaryDetail.Length > 0;
 
-    public bool CompactPrimaryShowsIcon => _compactModule is not null;
+    public bool CompactPrimaryShowsIcon => IsFeaturing;
 
-    public string CompactPrimaryAccessibleName => _compactModule is { } m
+    public string CompactPrimaryAccessibleName => _compactTotal
+        ? $"Today, {DisplayFormat.Tokens(TodayTotalTokens)} fresh tokens across your AI tools"
+        : _compactModule is { } m
         ? string.Join(" ", new[] { ModuleCatalog.DisplayName(m), CompactPrimaryValue, CompactPrimaryDetail }.Where(t => t.Length > 0))
         : string.Empty;
 
@@ -182,10 +195,12 @@ public sealed class IslandViewModel : ObservableObject
     {
         var favorites = _favorites.Where(IsModuleEnabled).ToList();
         var last = _lastActive is { } l && IsModuleEnabled(l) ? l : (ModuleId?)null;
-        var next = CompactSelector.Select(favorites, last, HasCompactContent, _turn);
-        if (next != _compactModule)
+        var (next, total) = CompactSelector.SelectSlide(favorites, last, HasCompactContent, _turn);
+        if (next != _compactModule || total != _compactTotal)
         {
             _compactModule = next;
+            _compactTotal = total;
+            OnPropertyChanged(nameof(CompactShowsTotal));
             OnCompactChanged();
             CompactModuleChanged?.Invoke();
         }
@@ -198,7 +213,7 @@ public sealed class IslandViewModel : ObservableObject
     /// <summary>A module's content changed; refresh the capsule only if it is the featured one.</summary>
     private void OnPrimaryChanged(ModuleId? module)
     {
-        if (module is not null && module == _compactModule)
+        if ((module is not null && module == _compactModule) || _compactTotal)
         {
             OnPropertyChanged(nameof(CompactPrimaryLabel));
             OnPropertyChanged(nameof(HasCompactPrimaryLabel));

@@ -10,12 +10,14 @@ using Windows.UI;
 namespace Quotalis.UI.Components;
 
 /// <summary>
-/// soybean-alien's GitHub contribution calendar, laid out like the usage heatmap (same cell size): one column per week,
+/// soybean-alien's GitHub contribution calendar, laid out like the usage heatmap at its smallest cell size: one column per week,
 /// Sunday on top as on GitHub, in GitHub's dark-mode greens for its five levels. Hover a day to read it, click to pin it.
 /// </summary>
 public sealed class ContributionHeatmap : UserControl
 {
-    private const double Pitch = UsageHeatmap.CellSize + UsageHeatmap.Gap;
+    private const double CellSize = 11;
+    private const double Gap = 3;
+    private const double Pitch = CellSize + Gap;
 
     /// <summary>GitHub's dark theme: no contributions, then the four quartiles.</summary>
     public static readonly Color[] Palette =
@@ -32,8 +34,8 @@ public sealed class ContributionHeatmap : UserControl
     private readonly Canvas _canvas = new() { Background = new SolidColorBrush(Colors.Transparent) };
     private readonly Rectangle _marker = new()
     {
-        Width = UsageHeatmap.CellSize + 4,
-        Height = UsageHeatmap.CellSize + 4,
+        Width = CellSize + 4,
+        Height = CellSize + 4,
         RadiusX = 3,
         RadiusY = 3,
         StrokeThickness = 1.5,
@@ -94,8 +96,8 @@ public sealed class ContributionHeatmap : UserControl
             columns = Math.Max(columns, column + 1);
             var cell = new Rectangle
             {
-                Width = UsageHeatmap.CellSize,
-                Height = UsageHeatmap.CellSize,
+                Width = CellSize,
+                Height = CellSize,
                 RadiusX = 2,
                 RadiusY = 2,
                 Fill = Brushes[Math.Clamp(day.Level, 0, Brushes.Length - 1)],
@@ -107,8 +109,8 @@ public sealed class ContributionHeatmap : UserControl
         }
 
         _canvas.Children.Add(_marker);
-        _canvas.Width = columns * Pitch - UsageHeatmap.Gap;
-        _canvas.Height = 7 * Pitch - UsageHeatmap.Gap;
+        _canvas.Width = columns * Pitch - Gap;
+        _canvas.Height = 7 * Pitch - Gap;
         PlaceMarker();
     }
 

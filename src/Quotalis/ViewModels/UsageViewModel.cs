@@ -190,7 +190,7 @@ public sealed class UsageViewModel : ObservableObject
         get
         {
             var active = _days.Count(d => d.HasUsage);
-            return active == 0 ? "No usage in the last 26 weeks" : $"{DisplayFormat.Count(active, "active day", "active days")}, combined fresh tokens";
+            return active == 0 ? "No usage in the last 26 weeks" : $"{DisplayFormat.Count(active, "active day", "active days")}, coloured by the tool used most";
         }
     }
 
@@ -404,8 +404,11 @@ public sealed class UsageViewModel : ObservableObject
     private void ApplyHistory()
     {
         var hermes = ShowHermes ? Hermes.TokensByDay : new Dictionary<DateOnly, Core.Models.TokenCounts>();
+        var spent = ShowHermes ? Hermes.SpentByDay : new Dictionary<DateOnly, decimal>();
         var days = hermes.Count == 0 ? _storedDays
-            : _storedDays.Select(d => hermes.TryGetValue(d.Day, out var t) ? d with { Hermes = t } : d).ToList();
+            : _storedDays.Select(d => hermes.TryGetValue(d.Day, out var t)
+                ? d with { Hermes = t, HermesSpentUsd = spent.GetValueOrDefault(d.Day) }
+                : d).ToList();
         var showingPinned = IsShowingPinned;
         _days = days;
         // Intensity follows fresh tokens: cache reads would let one long session flatten every other day.

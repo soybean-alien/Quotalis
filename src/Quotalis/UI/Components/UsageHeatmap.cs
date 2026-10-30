@@ -14,8 +14,10 @@ using Windows.UI;
 namespace Quotalis.UI.Components;
 
 /// <summary>
-/// Contribution-style usage graph: one column per week, one row per weekday. Claude and Codex are
-/// pooled; the purple intensity (dim, brighter, brightest) follows thirds of the active days.
+/// Contribution-style usage graph: one column per week, one row per weekday. Each day takes the colour of the tool
+/// with the most fresh tokens that day (Claude orange, Codex blue, Hermes yellow); days without use stay dim.
+/// The graph fills the width it is given, so the cells grow with the panel (square, from <see cref="MinCellSize"/>
+/// up to <see cref="MaxCellSize"/>).
 /// Pointer hover and arrow keys inspect a day; a left click or tap (or Enter and Space) pins it, so the readout keeps
 /// that day after the pointer leaves, until another day is clicked or the island collapses. A fainter ring marks the
 /// pinned day while another one is hovered. The readout (per-tool bars and the total) lives in the panel below the
@@ -26,17 +28,11 @@ namespace Quotalis.UI.Components;
 /// </summary>
 public sealed class UsageHeatmap : UserControl
 {
-    public const double CellSize = 11;
-    public const double Gap = 3;
-    private const double Pitch = CellSize + Gap;
+    public const double MinCellSize = 11;
+    public const double MaxCellSize = 26;
+    public const double Gap = 4;
 
-    private static readonly SolidColorBrush[] LevelBrushes =
-    [
-        new(Color.FromArgb(0x16, 0xFF, 0xFF, 0xFF)),
-        new(Color.FromArgb(0xFF, 0x3B, 0x2A, 0x6B)),
-        new(Color.FromArgb(0xFF, 0x6A, 0x52, 0xC4)),
-        new(Color.FromArgb(0xFF, 0xA9, 0x96, 0xFF)),
-    ];
+    private static readonly SolidColorBrush EmptyBrush = new(Color.FromArgb(0x16, 0xFF, 0xFF, 0xFF));
 
     private readonly Canvas _canvas = new() { Background = new SolidColorBrush(Colors.Transparent) };
     private readonly Rectangle _ring;
@@ -47,6 +43,7 @@ public sealed class UsageHeatmap : UserControl
     private UsageViewModel? _viewModel;
     private int _columns;
     private DateOnly _firstDay;
+    private double _pitch = MinCellSize + Gap;
 
     public UsageHeatmap()
     {
@@ -55,10 +52,6 @@ public sealed class UsageHeatmap : UserControl
         FocusVisualMargin = new Thickness(-4);
         _ring = new Rectangle
         {
-            Width = CellSize + 4,
-            Height = CellSize + 4,
-            RadiusX = 4,
-            RadiusY = 4,
             Stroke = (Brush)Application.Current.Resources["TextPrimaryBrush"],
             StrokeThickness = 1.5,
             Visibility = Visibility.Collapsed,
@@ -66,10 +59,6 @@ public sealed class UsageHeatmap : UserControl
         };
         _pinRing = new Rectangle
         {
-            Width = CellSize + 4,
-            Height = CellSize + 4,
-            RadiusX = 4,
-            RadiusY = 4,
             Stroke = (Brush)Application.Current.Resources["TextTertiaryBrush"],
             StrokeThickness = 1.5,
             Visibility = Visibility.Collapsed,
@@ -119,6 +108,66 @@ public sealed class UsageHeatmap : UserControl
             Rebuild();
         }
     }
+
+    private double CellSize => _pitch - Gap;
+
+    /// <summary>Fills the offered width: square cells, so the height follows from the width.</summary>
+    protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
+    {
+        _canvas.Measure(availableSize);
+        if (_columns == 0)
+        {
+            return new Windows.Foundation.Size(0, 0);
+        }
+
+        var pitch = double.IsInfinity(availableSize.Width)
+            ? MinCellSize + Gap
+            : Math.Clamp((availableSize.Width + Gap) / _columns, MinCellSize + Gap, MaxCellSize + Gap);
+        if (Math.Abs(pitch - _pitch) > 0.01)
+        {
+            _pitch = pitch;
+            Place();
+        }
+
+        return new Windows.Foundation.Size(_columns * _pitch - Gap, 7 * _pitch - Gap);
+    }
+
+    protected override Windows.Foundation.Size ArrangeOverride(Windows.Foundation.Size finalSize)
+    {
+        _canvas.Arrange(new Windows.Foundation.Rect(0, 0, finalSize.Width, finalSize.Height));
+        return finalSize;
+    }
+
+    /// <summary>Sizes and positions every cell and the rings for the current pitch.</summary>
+    private void Place()
+    {
+        var cell = CellSize;
+        var radius = Math.Round(cell * 0.22, 1);
+        for (var i = 0; i < _cells.Count; i++)
+        {
+            var (column, row) = _positions[i];
+            _cells[i].Width = _cells[i].Height = cell;
+            _cells[i].RadiusX = _cells[i].RadiusY = radius;
+            Canvas.SetLeft(_cells[i], column * _pitch);
+            Canvas.SetTop(_cells[i], row * _pitch);
+        }
+
+        foreach (var ring in new[] { _ring, _pinRing })
+        {
+            ring.Width = ring.Height = cell + 4;
+            ring.RadiusX = ring.RadiusY = radius + 1.5;
+        }
+
+        UpdateRing();
+    }
+
+    private static Brush CellBrush(Quotalis.Core.Models.UsageDay day) => day.Leader switch
+    {
+        Quotalis.Core.Models.UsageTool.Claude => (Brush)Application.Current.Resources["ClaudeBrush"],
+        Quotalis.Core.Models.UsageTool.Codex => (Brush)Application.Current.Resources["CodexBrush"],
+        Quotalis.Core.Models.UsageTool.Hermes => (Brush)Application.Current.Resources["HermesBrush"],
+        _ => EmptyBrush,
+    };
 
     protected override AutomationPeer OnCreateAutomationPeer() => new FrameworkElementAutomationPeer(this);
 
@@ -174,8 +223,7 @@ public sealed class UsageHeatmap : UserControl
         {
             for (var i = 0; i < _cells.Count; i++)
             {
-                var level = i < current.Levels.Count ? current.Levels[i] : 0;
-                _cells[i].Fill = LevelBrushes[Math.Clamp(level, 0, LevelBrushes.Length - 1)];
+                _cells[i].Fill = CellBrush(current.Days[i]);
             }
 
             UpdateRing();
@@ -187,7 +235,8 @@ public sealed class UsageHeatmap : UserControl
         _positions.Clear();
         if (_viewModel is not { } vm || vm.Days.Count == 0)
         {
-            Width = Height = 0;
+            _columns = 0;
+            InvalidateMeasure();
             return;
         }
 
@@ -196,31 +245,18 @@ public sealed class UsageHeatmap : UserControl
 
         for (var i = 0; i < vm.Days.Count; i++)
         {
-            var (column, row) = _layout.Positions[i];
-            var level = i < vm.Levels.Count ? vm.Levels[i] : 0;
-            var cell = new Rectangle
-            {
-                Width = CellSize,
-                Height = CellSize,
-                RadiusX = 2.5,
-                RadiusY = 2.5,
-                Fill = LevelBrushes[Math.Clamp(level, 0, LevelBrushes.Length - 1)],
-                IsHitTestVisible = false,
-            };
-            Canvas.SetLeft(cell, column * Pitch);
-            Canvas.SetTop(cell, row * Pitch);
+            var cell = new Rectangle { Fill = CellBrush(vm.Days[i]), IsHitTestVisible = false };
             _canvas.Children.Add(cell);
             _cells.Add(cell);
-            _positions.Add((column, row));
+            _positions.Add(_layout.Positions[i]);
         }
 
         _columns = _layout.Columns;
         _firstDay = vm.Days[0].Day;
         _canvas.Children.Add(_pinRing);
         _canvas.Children.Add(_ring);
-        Width = _columns * Pitch - Gap;
-        Height = 7 * Pitch - Gap;
-        UpdateRing();
+        Place();
+        InvalidateMeasure();
     }
 
     /// <summary>
@@ -235,7 +271,7 @@ public sealed class UsageHeatmap : UserControl
             return;
         }
 
-        var index = _layout.IndexAt(point.Position.X, point.Position.Y, Pitch);
+        var index = _layout.IndexAt(point.Position.X, point.Position.Y, _pitch);
         if (index >= 0 && index < _viewModel.Days.Count)
         {
             _viewModel.Pin(index);
@@ -252,7 +288,7 @@ public sealed class UsageHeatmap : UserControl
             return;
         }
 
-        _viewModel.Inspect(_layout.IndexAt(point.X, point.Y, Pitch));
+        _viewModel.Inspect(_layout.IndexAt(point.X, point.Y, _pitch));
     }
 
     private void UpdateRing()
@@ -266,8 +302,8 @@ public sealed class UsageHeatmap : UserControl
         }
 
         var (column, row) = _positions[vm.InspectedIndex];
-        Canvas.SetLeft(_ring, column * Pitch - 2);
-        Canvas.SetTop(_ring, row * Pitch - 2);
+        Canvas.SetLeft(_ring, column * _pitch - 2);
+        Canvas.SetTop(_ring, row * _pitch - 2);
         _ring.Visibility = Visibility.Visible;
         AutomationProperties.SetName(this, vm.InspectedAccessibleText);
     }
@@ -283,8 +319,8 @@ public sealed class UsageHeatmap : UserControl
         }
 
         var (column, row) = _positions[pinned];
-        Canvas.SetLeft(_pinRing, column * Pitch - 2);
-        Canvas.SetTop(_pinRing, row * Pitch - 2);
+        Canvas.SetLeft(_pinRing, column * _pitch - 2);
+        Canvas.SetTop(_pinRing, row * _pitch - 2);
         _pinRing.Visibility = Visibility.Visible;
     }
 }

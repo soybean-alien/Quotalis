@@ -17,6 +17,14 @@
                     <Grid x:Name="FeaturedIcon" Visibility="{x:Bind ViewModel.CompactPrimaryShowsIcon, Mode=OneWay}">
                         <components:ProviderMark x:Name="FeaturedMark" Width="14" Height="14" />
                         <components:ModuleIcon x:Name="FeaturedModuleIcon" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <!-- Hermes: a yellow dot in the logo slot. -->
+                        <Ellipse x:Name="FeaturedHermesDot" Width="10" Height="10" Fill="{StaticResource HermesBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                        <!-- Today's total: one dot per tool, in their colours. -->
+                        <Canvas x:Name="FeaturedTotalDots" Width="16" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                            <Ellipse Canvas.Left="4.5" Canvas.Top="0" Width="7" Height="7" Fill="{StaticResource ClaudeBrush}" />
+                            <Ellipse Canvas.Left="0" Canvas.Top="8" Width="7" Height="7" Fill="{StaticResource CodexBrush}" />
+                            <Ellipse Canvas.Left="9" Canvas.Top="8" Width="7" Height="7" Fill="{StaticResource HermesBrush}" />
+                        </Canvas>
                     </Grid>
                 </Grid>
                 <TextBlock Text="{x:Bind ViewModel.CompactPrimaryLabel, Mode=OneWay}" Style="{StaticResource LabelTextStyle}" Foreground="{StaticResource TextSecondaryBrush}"

@@ -102,6 +102,37 @@ public class TokenAccountingTests
         Assert.True(cacheHeavy.FreshTokens < quiet.FreshTokens);
     }
 
+    [Fact]
+    public void A_day_belongs_to_the_tool_with_the_most_fresh_tokens()
+    {
+        static TokenCounts Fresh(long n) => new(0, n, 0, 0, 0);
+        static UsageDay Day(long claude, long codex, long hermes) =>
+            new(new DateOnly(2026, 10, 1), Fresh(claude), Fresh(codex), 0m, 0m, 1) { Hermes = Fresh(hermes) };
+
+        Assert.Equal(UsageTool.Claude, Day(500, 100, 0).Leader);
+        Assert.Equal(UsageTool.Codex, Day(100, 500, 200).Leader);
+        Assert.Equal(UsageTool.Hermes, Day(100, 200, 900).Leader);
+        Assert.Equal(UsageTool.Claude, Day(300, 300, 300).Leader);
+        Assert.Null(Day(0, 0, 0).Leader);
+
+        // Cache reads are not fresh: a cache-heavy Codex day still goes to Claude.
+        var cacheHeavy = new UsageDay(new DateOnly(2026, 10, 2), Fresh(1_000), new TokenCounts(0, 10, 0, 0, 50_000_000), 0m, 0m, 1);
+        Assert.Equal(UsageTool.Claude, cacheHeavy.Leader);
+    }
+
+    [Fact]
+    public void Hermes_claims_a_day_once_it_spends_more_than_a_dollar()
+    {
+        var day = new UsageDay(new DateOnly(2026, 10, 3), new TokenCounts(0, 5_000_000, 0, 0, 0), TokenCounts.Zero, 0m, 0m, 1)
+        {
+            Hermes = new TokenCounts(0, 10_000, 0, 0, 0),
+        };
+
+        Assert.Equal(UsageTool.Claude, (day with { HermesSpentUsd = 1.00m }).Leader);
+        Assert.Equal(UsageTool.Hermes, (day with { HermesSpentUsd = 1.01m }).Leader);
+        Assert.Equal(UsageTool.Hermes, (new UsageDay(new DateOnly(2026, 10, 4), TokenCounts.Zero, TokenCounts.Zero, 0m, 0m, 0) { HermesSpentUsd = 2m }).Leader);
+    }
+
     private static TimeZoneInfo? TryZone(string id)
     {
         try

@@ -99,6 +99,9 @@ internal static class AppPaths
     /// <summary>The Hermes wallet bar's scale ("full" since the last top-up) and the last reading, numbers only.</summary>
     public static string HermesWallet => Path.Combine(Shared, "hermes-wallet.json");
 
+    /// <summary>What the Nous wallet lost each day (dates and dollar amounts only), for the usage graph.</summary>
+    public static string HermesSpend => Path.Combine(Shared, "hermes-spend.json");
+
     /// <summary>The last copy of a server's Hermes export (numbers, model and surface names only).</summary>
     public static string HermesUsageCache => Path.Combine(Root, "hermes-usage.json");
 
