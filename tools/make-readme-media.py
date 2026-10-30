@@ -9,7 +9,7 @@ Writes to docs/assets/:
     the usage strip and Git, each with a one-line caption, joined by short crossfades (the live
     app morphs with springs instead; see docs/RECORDING.md to record that)
   - hero.png: the expanded usage view on the same stage
-The banner and social preview come from tools/banner/render.ps1.
+The banner and social preview come from tools/banner/render.ps1 (no app renders needed).
 """
 
 import shutil

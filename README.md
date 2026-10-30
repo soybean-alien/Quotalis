@@ -1,12 +1,12 @@
 # Quotalis
 
-![Quotalis: every limit, at a glance](docs/assets/banner.png)
+![Quotalis: three tools, one quiet capsule](docs/assets/banner.png)
 
 > Personal fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT), renamed and extended by **soybean_alien**. Called **Claudex** before 0.7.0; updating from Claudex keeps your settings, history and sign-ins. Upstream is tracked as the `upstream` remote; see [CHANGELOG.md](CHANGELOG.md) for everything Quotalis added.
 
-> **Every AI limit, wallet and token, plus your Git state, in one quiet capsule at the top of Windows.**
+> **Every AI limit, wallet and token, plus your Git state, in one quiet capsule at the top of your screen.**
 
-Quotalis is a native, floating capsule at the top of your Windows screen. It shows how much of your **Claude**, **Codex** and **Hermes Agent** allowance is left, what each of them used today and where your current repository stands, and opens into a full view when you click it.
+Quotalis is a native, floating capsule at the top of your screen. It shows how much of your **Claude**, **Codex** and **Hermes Agent** allowance is left, what each of them used today and where your current repository stands, and opens into a full view when you click it.
 
 [![CI](https://github.com/soybean-alien/Quotalis/actions/workflows/ci.yml/badge.svg)](https://github.com/soybean-alien/Quotalis/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/soybean-alien/Quotalis?include_prereleases&label=release)](https://github.com/soybean-alien/Quotalis/releases)
@@ -22,7 +22,7 @@ Quotalis is a native, floating capsule at the top of your Windows screen. It sho
 
 ## Why Quotalis?
 
-AI coding agents spend tokens, plan limits and real credits where you can't see them. macOS has the notch and the Dynamic Island idea; Windows has nothing in that spot. Quotalis puts your AI limits and your repository's state into one small capsule that stays out of your way: native, local-first and cheap enough to run all day.
+AI coding agents spend tokens, plan limits and real credits where you can't see them. Quotalis puts your AI limits and your repository's state into one small capsule that stays out of your way: native, local-first and cheap enough to run all day.
 
 ## Features
 
