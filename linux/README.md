@@ -21,8 +21,8 @@ There's no window of its own. Everything is text in the terminal's 16 colours an
 ## Install
 
 ```bash
-tar xzf quotalis-0.1.1-linux-x64.tar.gz
-cd quotalis-0.1.1-linux-x64
+tar xzf quotalis-0.1.2-linux-x64.tar.gz
+cd quotalis-0.1.2-linux-x64
 ./install.sh
 ```
 
@@ -73,7 +73,7 @@ The logs are read locally. The program's own requests are the ones `gh`, `codex`
 - Setup doesn't touch your Hyprland config. The bar's click opens `xdg-terminal-exec --app-id=TUI.float quotalis`, or another terminal if that isn't installed. Omarchy floats that window by itself, and on Hyprland 0.55 or later Quotalis shrinks it to fit its text; elsewhere, add a window rule if you'd like it to float. Started by hand in a terminal, it never resizes that terminal.
 - The time after each percent is when that limit resets.
 - Omarchy 4 has its own `omarchy.agents` bar widget for Claude and Codex limits. Quotalis adds the limits at a glance on the bar, cost at API prices, Hermes, the Git page and the usage history. You can keep both, or drop Omarchy's with `omarchy plugin disable omarchy.agents`.
-- On Omarchy's bar the module turns on the accent colour once a limit reaches 80%. It refreshes every 30 seconds, and each refresh takes about 0.2 s of CPU.
+- On Omarchy's bar the module turns on the accent colour once a limit reaches 80%. The tools take turns every 7 seconds, and the tooltip shows them all. Each turn runs the program once, about 0.11 s of CPU. Waybar's module shows them side by side instead.
 
 ## Build and test
 

@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Quotalis.Linux</RootNamespace>
     <AssemblyName>quotalis</AssemblyName>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <!-- No libicu needed on the target; numbers and dates use one fixed format. -->
     <InvariantGlobalization>true</InvariantGlobalization>
     <ServerGarbageCollection>false</ServerGarbageCollection>

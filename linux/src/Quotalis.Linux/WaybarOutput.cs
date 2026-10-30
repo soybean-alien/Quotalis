@@ -6,11 +6,16 @@ namespace Quotalis.Linux;
 /// <summary>
 /// The line a Waybar custom module expects: JSON with text, tooltip, class and percentage. Omarchy's bar reads the same
 /// line but styles only the class "active", so for that bar it marks a limit that's close rather than a tool at work.
+/// That bar is narrow too, so there the tools take turns, as they do in the Windows capsule.
 /// </summary>
 internal static class WaybarOutput
 {
     public const double WarningPercent = 80;
     public const double CriticalPercent = 95;
+    public const int CycleSeconds = 7;
+
+    // Omarchy centres the text on a fractional pixel at fractional scales, which can cut the last glyph's right edge.
+    private const string RightPad = "\u00A0";
 
     private const int Cells = 5;
 
@@ -18,12 +23,12 @@ internal static class WaybarOutput
     {
         if (state is null)
         {
-            return Json("Quotalis", "The background service isn't running. Run quotalis setup.", ["stopped"], 0);
+            return Json(omarchy ? "Quotalis" + RightPad : "Quotalis", "The background service isn't running. Run quotalis setup.", ["stopped"], 0);
         }
 
         if (!state.Demo && now - state.GeneratedAt > TimeSpan.FromMinutes(2))
         {
-            return Json("Quotalis", "The background service stopped updating " + DisplayFormat.Ago(now - state.GeneratedAt), ["stopped"], 0);
+            return Json(omarchy ? "Quotalis" + RightPad : "Quotalis", "The background service stopped updating " + DisplayFormat.Ago(now - state.GeneratedAt), ["stopped"], 0);
         }
 
         // The shorter window when there is one; a plan may have only the weekly window.
@@ -34,16 +39,18 @@ internal static class WaybarOutput
         var parts = new List<string>();
         if (claudeWindow is not null) parts.Add("C " + Bar(claude) + " " + claude.ToString("0") + "%");
         if (codexWindow is not null) parts.Add("X " + Bar(codex) + " " + codex.ToString("0") + "%");
-        parts.Add(DisplayFormat.Usd(state.TodayUsd));
-
         var worst = Math.Max(Math.Max(claude, codex), Math.Max(Live(state.Claude.Weekly, now), Live(state.Codex.Weekly, now)));
         var classes = new List<string>();
         if (omarchy)
         {
             if (worst >= WarningPercent) classes.Add("active");
-            return Json(string.Join("  ", parts), Tooltip(state, now), classes, (int)Math.Round(worst));
+            if (state.Hermes.Enabled) parts.Add("H " + DisplayFormat.Usd(state.Hermes.TodayUsd));
+            parts.Add("Today " + DisplayFormat.Usd(state.TodayUsd));
+            var slide = parts[(int)(now.ToUnixTimeSeconds() / CycleSeconds % parts.Count)];
+            return Json(slide + RightPad, Tooltip(state, now), classes, (int)Math.Round(worst));
         }
 
+        parts.Add(DisplayFormat.Usd(state.TodayUsd));
         if (worst >= CriticalPercent) classes.Add("critical");
         else if (worst >= WarningPercent) classes.Add("warning");
         if (state.Claude.Active || state.Codex.Active) classes.Add("active");

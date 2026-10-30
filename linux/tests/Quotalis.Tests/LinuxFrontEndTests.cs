@@ -106,6 +106,36 @@ public class LinuxFrontEndTests
         }
         """;
 
+    private static string OmarchyText(AppState state, int turn) =>
+        JsonDocument.Parse(WaybarOutput.Render(state, Now.AddSeconds(turn * WaybarOutput.CycleSeconds), omarchy: true)).RootElement.GetProperty("text").GetString()!;
+
+    [Fact]
+    public void OmarchyBarTakesTurnsWithAPaddedRightEdge()
+    {
+        var shown = Enumerable.Range(0, 3).Select(turn => OmarchyText(State(), turn)).ToList();
+        Assert.Contains("C ▰▰▰▱▱ 58%\u00A0", shown);
+        Assert.Contains("X ▰▱▱▱▱ 21%\u00A0", shown);
+        Assert.Contains("Today $0.00\u00A0", shown);
+        Assert.Equal(shown[0], OmarchyText(State(), 3));
+    }
+
+    [Fact]
+    public void OmarchyBarGivesHermesATurnWhenItIsOn()
+    {
+        var demo = StateBuilder.Demo(Now);
+        Assert.Contains(Enumerable.Range(0, 4).Select(turn => OmarchyText(demo, turn)), text => text.StartsWith("H $"));
+    }
+
+    [Fact]
+    public void OmarchyBarConfigMovesOnlyTheOldInterval()
+    {
+        var old = OmarchyBarConfig.Add(OmarchyShell, "/home/u/.local/bin/quotalis")!.Replace("\"interval\": 7", "\"interval\": 30");
+        var upgraded = OmarchyBarConfig.Add(old, "/home/u/.local/bin/quotalis")!;
+        Assert.Contains("\"interval\": 7", upgraded);
+        var own = old.Replace("\"interval\": 30", "\"interval\": 12");
+        Assert.Equal(own, OmarchyBarConfig.Add(own, "/home/u/.local/bin/quotalis"));
+    }
+
     [Fact]
     public void OmarchyBarConfigKeepsEverythingElse()
     {

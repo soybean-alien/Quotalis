@@ -102,18 +102,27 @@ Later versions install from inside the app (Settings, About, Updates). The insta
 
 ### If you're on Linux
 
-A smaller version for Arch and Hyprland ([Omarchy](https://omarchy.org)): the same usage numbers in a terminal screen and your bar, in your theme's colours. It has no island, no claude.ai sign-in and no Nous wallet.
+A smaller version for Arch and Hyprland ([Omarchy](https://omarchy.org)): the same usage numbers in your bar and a terminal screen, in your theme's colours. It has no island, no claude.ai sign-in and no Nous wallet.
+
+- **In your bar:** it joins Omarchy's own bar, where Claude, Codex, Hermes and today's cost take turns every 7 seconds, like the Windows capsule. Hover for all of them at once. Waybar works too.
+- **One click away:** click the module for a small floating window with the full numbers, the Git page and the usage history.
 
 <p align="center">
-  <img src="docs/assets/linux-screen.png" alt="Quotalis for Linux on Omarchy (sample data): Claude, Codex and Hermes usage in a small terminal window" width="420">
+  <img src="docs/assets/linux-bar.gif" alt="Omarchy's bar (sample data, sped up): the Quotalis module takes turns showing Claude, Codex, Hermes and today's cost" width="630">
 </p>
 
-1. Download [`quotalis-0.1.1-linux-x64.tar.gz`](https://github.com/soybean-alien/Quotalis/releases/download/v0.8.0/quotalis-0.1.1-linux-x64.tar.gz) (x64, no .NET needed).
+<p align="center">
+  <img src="docs/assets/linux-desktop.png" alt="Quotalis for Linux on Omarchy (sample data): the module on the bar, and the floating window with Claude, Codex and Hermes usage" width="760">
+</p>
+
+<p align="center"><sub>Sample data, on Omarchy 4.0.6.</sub></p>
+
+1. Download [`quotalis-0.1.2-linux-x64.tar.gz`](https://github.com/soybean-alien/Quotalis/releases/download/v0.8.0/quotalis-0.1.2-linux-x64.tar.gz) (x64, no .NET needed).
 2. Install it:
 
    ```bash
-   tar xzf quotalis-0.1.1-linux-x64.tar.gz
-   cd quotalis-0.1.1-linux-x64
+   tar xzf quotalis-0.1.2-linux-x64.tar.gz
+   cd quotalis-0.1.2-linux-x64
    ./install.sh
    ```
 
