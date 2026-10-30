@@ -5,23 +5,33 @@
 
 Writes to docs/assets/:
   - the screenshots, copied under stable names (no editing, no mockups)
-  - hero.gif: 1270 x 840, about 18 s: the notch, the capsule, a live activity, Claude, Codex and Hermes usage,
-    the usage strip and Git, each with a one-line caption, joined by short crossfades (the live
-    app morphs with springs instead; see docs/RECORDING.md to record that)
+  - hero.gif: 1270 x 840, about 20 s: the notch, the capsule, a live activity, Claude, Codex and Hermes usage,
+    the usage graph, the usage strip, the Today slide and Git, each with a one-line caption, joined by short
+    crossfades (the live app morphs with springs instead; see docs/RECORDING.md to record that)
   - hero.png: the expanded usage view on the same stage
-The banner and social preview come from tools/banner/render.ps1 (no app renders needed).
+The stage and captions follow the Risograph design language (cream stock, Instrument Serif in navy ink); captions
+are drawn by tools/banner/caption.html in a headless Chrome or Edge. The banner and social preview come from
+tools/banner/render.ps1 (no app renders needed).
 """
 
 import shutil
+import subprocess
 import sys
+import tempfile
+import urllib.parse
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "docs" / "assets"
-STAGE = (0, 0, 0)
-CAPTION = (134, 134, 139)
+STAGE = (239, 231, 214)  # Risograph cream stock
+CAPTION = (29, 32, 64)  # navy ink, only for the fallback caption font
+CAPTION_PAGE = ROOT / "tools" / "banner" / "caption.html"
+CAPTION_HEIGHT = 84
+BROWSERS = [Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
+            Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"),
+            Path("C:/Program Files/Microsoft/Edge/Application/msedge.exe")]
 
 # Snapshot name -> asset name.
 SCREENSHOTS = {
@@ -50,9 +60,10 @@ SEQUENCE = [
     ("01-compact", 1.6, "Your Claude and Codex limits, at rest"),
     ("04-activity-claude", 1.4, "Claude Code at work"),
     ("10-expanded-usage", 3.4, "Claude, Codex and Hermes: plan limits, the Nous wallet, today's tokens"),
-    ("11-usage-tooltip", 2.6, "Every day, every tool, on one graph"),
+    ("11-usage-tooltip", 2.8, "Each day takes the colour of the tool you used most"),
     ("12-usage-strip", 2.0, "Or keep the usage strip on screen"),
     ("50-compact-hermes", 1.4, "Hermes's wallet, at rest"),
+    ("52-compact-usage-turn-3", 1.6, "Today: every tool's tokens, together"),
     ("10-expanded-git", 2.4, "Your repository, from the session you're in"),
     ("50-compact-git", 1.4, "Git, at rest"),
     ("01-compact", 1.0, "Quotalis"),
@@ -70,7 +81,7 @@ def capsule_box(image):
 
 
 def place(image, caption=None, canvas_size=CANVAS, top=TOP):
-    """The render on the black stage, capsule centered and its top at `top`, with an optional caption."""
+    """The render on the cream stage, capsule centered and its top at `top`, with an optional caption."""
     left, upper, right, lower = capsule_box(image)
     # A capsule taller than the stage (the three-column usage view with a day open) is scaled to fit above the caption.
     room = canvas_size[1] - top - (80 if caption else 24)
@@ -82,11 +93,39 @@ def place(image, caption=None, canvas_size=CANVAS, top=TOP):
     x = canvas_size[0] // 2 - (left + right) // 2
     canvas.alpha_composite(image, (x, top - upper))
     if caption:
-        draw = ImageDraw.Draw(canvas)
-        face = font(["SegUIVar.ttf", "segoeui.ttf"], 26)
-        width = draw.textlength(caption, font=face)
-        draw.text(((canvas_size[0] - width) / 2, canvas_size[1] - 58), caption, font=face, fill=CAPTION)
+        strip = caption_strip(caption, canvas_size[0])
+        if strip:
+            canvas.alpha_composite(strip, (0, canvas_size[1] - CAPTION_HEIGHT - 6))
+        else:
+            draw = ImageDraw.Draw(canvas)
+            face = font(["georgiai.ttf", "segoeui.ttf"], 28)
+            width = draw.textlength(caption, font=face)
+            draw.text(((canvas_size[0] - width) / 2, canvas_size[1] - 60), caption, font=face, fill=CAPTION)
     return canvas.convert("RGB")
+
+
+_strips = {}
+
+
+def caption_strip(text, width):
+    """The caption rendered by caption.html (Instrument Serif needs a browser); None without Chrome or Edge."""
+    if text in _strips:
+        return _strips[text]
+    browser = next((b for b in BROWSERS if b.exists()), None)
+    strip = None
+    if browser:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "caption.png"
+            url = CAPTION_PAGE.resolve().as_uri() + "?" + urllib.parse.urlencode({"t": text, "w": width})
+            subprocess.run([str(browser), "--headless=new", "--disable-gpu", "--hide-scrollbars",
+                            f"--user-data-dir={Path(tempfile.gettempdir()) / 'quotalis-banner-profile'}",
+                            f"--window-size={width},{CAPTION_HEIGHT}", "--virtual-time-budget=6000",
+                            f"--screenshot={out}", url], check=False, timeout=90,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if out.exists():
+                strip = Image.open(out).convert("RGBA").crop((0, 0, width, CAPTION_HEIGHT))
+    _strips[text] = strip
+    return strip
 
 
 def hero_gif(snaps, out):
