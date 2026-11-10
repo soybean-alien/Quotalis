@@ -235,6 +235,6 @@ No dates; priorities follow feedback.
 - Based on [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT). Third-party components keep their own licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Built on [.NET 10](https://github.com/dotnet/runtime) and [WinUI 3 / Windows App SDK](https://github.com/microsoft/WindowsAppSDK).
 - Claude is a trademark of Anthropic, Codex and ChatGPT of OpenAI, and Hermes Agent and Nous Portal belong to Nous Research. Quotalis is an unofficial project and isn't affiliated with or endorsed by any of them. Claude Code and Codex are shown with the Claude and OpenAI marks (from Simple Icons, CC0).
-- **AI disclosure:** Quotalis was designed with and written by **Claude Code (Anthropic, Claude Opus 5.5)**, with some releases by **Codex (OpenAI)**, directed and tested in the real app by the author on Windows 11. The Linux version was tested in a virtual machine with made-up usage.
+- **AI disclosure:** Quotalis was designed with and written by **Claude Code (Anthropic: Claude Opus 5.5 through 0.8.0, Fable 5.2 from the next version on)**, with some releases by **Codex (OpenAI)**, directed and tested in the real app by the author on Windows 11. The Linux version was tested in a virtual machine with made-up usage.
 
 The design follows an [Apple design analysis](docs/design/apple-design-analysis.md), the [Taste Skill](https://github.com/Leonxlnx/taste-skill) and the [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines).
