@@ -2,6 +2,8 @@
 
 ![Quotalis: three tools, one quiet capsule, on Windows and Linux](docs/assets/banner.png)
 
+<p align="center"><img src="docs/assets/Quotalis-Stack.svg" alt="Built with C# 96.5%, PowerShell 1.8% (GitHub language breakdown)"></p>
+
 > A fork of [Developer Island](https://github.com/maximilian467/Developer-Island) by Maximilian Köhlenbeck (MIT), renamed and extended by **soybean_alien**. Upstream is tracked as the `upstream` remote; see [CHANGELOG.md](CHANGELOG.md) for everything Quotalis added.
 
 > **Every AI limit, wallet and token, plus your Git state, in one quiet capsule at the top of your screen.**
