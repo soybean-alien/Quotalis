@@ -2,6 +2,11 @@
 
 Quotalis for Linux. Format: [Keep a Changelog](https://keepachangelog.com), versions: [SemVer](https://semver.org).
 
+## [Unreleased]
+
+### Added
+- The saved state of each Codex log keeps the reasoning effort of the newest turn (same change as the Windows app; nothing new is shown).
+
 ## [0.1.2]
 
 ### Changed

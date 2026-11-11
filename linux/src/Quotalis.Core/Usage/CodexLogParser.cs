@@ -21,6 +21,9 @@ public sealed record CodexFileState
 
     public string? Model { get; init; }
 
+    /// <summary>Reasoning effort of the newest turn (for example "high"), when Codex records one.</summary>
+    public string? Effort { get; init; }
+
     public string? Cwd { get; init; }
 
     /// <summary>Newer Codex builds write <c>token_usage_record</c> lines with a unique response id.</summary>
@@ -97,6 +100,8 @@ public sealed class CodexLogParser
                     State = State with
                     {
                         Model = ClaudeLogParser.GetString(payload, "model") ?? State.Model,
+                        Effort = ClaudeLogParser.GetString(payload, "effort")
+                            ?? ClaudeLogParser.GetString(payload, "reasoning_effort") ?? State.Effort,
                         Cwd = ClaudeLogParser.GetString(payload, "cwd") ?? State.Cwd,
                     };
                     return false;

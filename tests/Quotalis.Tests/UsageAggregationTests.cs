@@ -135,6 +135,22 @@ public class UsageAggregationTests
     }
 
     [Fact]
+    public void Codex_parser_keeps_the_effort_of_the_newest_turn()
+    {
+        var parser = new CodexLogParser();
+        parser.TryParse("""{"timestamp":"2026-09-23T20:30:12.000Z","type":"turn_context","payload":{"model":"gpt-5-codex","cwd":"C:\\code\\web","effort":"high"}}""", out _);
+        Assert.Equal("high", parser.State.Effort);
+
+        // A turn that names no effort keeps the last one; a new value replaces it.
+        parser.TryParse(TestData.CodexTurnContext("gpt-5-codex", @"C:\code\web"), out _);
+        Assert.Equal("high", parser.State.Effort);
+        parser.TryParse("""{"timestamp":"2026-09-23T20:31:12.000Z","type":"turn_context","payload":{"model":"gpt-5-codex","effort":"low"}}""", out _);
+
+        var json = System.Text.Json.JsonSerializer.Serialize(parser.State);
+        Assert.Equal("low", System.Text.Json.JsonSerializer.Deserialize<CodexFileState>(json)!.Effort);
+    }
+
+    [Fact]
     public void Summary_marks_partial_value_when_some_models_are_unpriced()
     {
         var events = new[]

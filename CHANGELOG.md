@@ -6,6 +6,7 @@ All notable changes to Quotalis (called Claudex before 0.7.0) are documented her
 
 ### Added
 
+- **Codex reasoning effort is kept with each Codex log's saved state.** Quotalis already reads the model from Codex's `turn_context` lines; it now keeps the effort of the newest turn beside it (`effort` in `file_cursors.state`), so other local tools can read it from Quotalis's database. Nothing new is shown in the app and no table changes.
 - **Quotalis for Linux, as an optional download.** Its source is in `linux/` with its own version numbers and changelog (now 0.1.2, tag `linux-v0.1.2`). The Windows app and its updater don't change.
 
 ### Changed
