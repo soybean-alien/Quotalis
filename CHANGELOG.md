@@ -4,6 +4,16 @@ All notable changes to Quotalis (called Claudex before 0.7.0) are documented her
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-13
+
+### Added
+
+- **Claude's banked limit resets for Quotalis Mini.** When Quotalis reads plan usage from claude.ai, it also reads the "Limit resets" count from the Usage page's own request and writes the count, the weekly reset time and the reading time to `claude-resets.json` in the shared folder. Grant names and ids are not kept. Nothing new is shown in the app.
+
+### Changed
+
+- The README's AI disclosure names Claude Opus 5.5 and Claude Fable 5.2, since releases after 0.8.0 were not all made with Fable 5.2.
+
 ## [0.8.1] - 2026-11-11
 
 ### Added

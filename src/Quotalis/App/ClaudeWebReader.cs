@@ -221,6 +221,7 @@ internal sealed class ClaudeWebReader : IDisposable
 
             _store.Save(usage);
             succeeded = true;
+            await ReadResetsAsync(web, usage, now);
             LastRead = now;
             SetStatus(ClaudeWebStatus.SignedIn, force: true);
         }
@@ -234,6 +235,29 @@ internal sealed class ClaudeWebReader : IDisposable
             _busy = false;
             _schedule.OnAttempt(now, succeeded);
             Arm();
+        }
+    }
+
+    /// <summary>
+    /// Banked limit resets for Quotalis Mini's Claude key. Optional: a failure here leaves the plan reading alone and
+    /// keeps the last count, which Mini then shows as stale.
+    /// </summary>
+    private async Task ReadResetsAsync(CoreWebView2 web, PlanUsage usage, DateTimeOffset now)
+    {
+        try
+        {
+            var (status, body) = await GetAsync(web, ClaudeResetGrants.Url(_organization)!);
+            if (status != 200 || ClaudeResetGrants.ParseAvailable(body) is not { } available)
+            {
+                Log.Info("claude-web", "claude.ai limit resets not read", new { status });
+                return;
+            }
+
+            ClaudeResetGrants.Save(AppPaths.ClaudeResets, new ClaudeResetCount(available, usage.Weekly?.ResetsAt, now));
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("claude-web", "claude.ai limit resets read failed", new { error = ex.GetType().Name });
         }
     }
 

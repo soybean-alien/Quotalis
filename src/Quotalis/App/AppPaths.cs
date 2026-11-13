@@ -83,6 +83,9 @@ internal static class AppPaths
     /// <summary>Plan usage read from claude.ai or handed over by Claude Code's status line (numbers only).</summary>
     public static string ClaudePlan => Path.Combine(Shared, "claude-plan.json");
 
+    /// <summary>Claude's banked limit resets read from claude.ai, published for other programs (Quotalis Mini).</summary>
+    public static string ClaudeResets => Path.Combine(Shared, "claude-resets.json");
+
     /// <summary>
     /// The browser profile of the claude.ai sign-in (<see cref="ClaudeWebReader"/>): claude.ai's cookies, on this PC only.
     /// In the user profile like <see cref="Shared"/>, so a Quotalis started from a packaged app finds the same sign-in.
