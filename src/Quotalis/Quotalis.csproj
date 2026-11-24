@@ -37,11 +37,11 @@
     AI, ML/ONNX and Widgets, about 45 MB the island never loads). Versions match WinAppSDK 1.8.260921001.
   -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK.Base" Version="1.8.251216001" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="1.8.260803002" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="1.8.260708001" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="1.8.260803003" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.DWrite" Version="1.8.25122902" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Base" Version="2.6.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="2.6.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.6.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.6.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.DWrite" Version="2.6.5" />
   </ItemGroup>
 
   <ItemGroup>
