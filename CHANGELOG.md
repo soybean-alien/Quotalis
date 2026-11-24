@@ -4,6 +4,8 @@ All notable changes to Quotalis (called Claudex before 0.7.0) are documented her
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-11-24
+
 ### Changed
 
 - Dependencies brought up to date, in place of Dependabot's four separate pull requests: Windows App SDK 2.6.5 (was 1.8), Microsoft.Data.Sqlite 11.0.0, Microsoft.Extensions.TimeProvider.Testing 11.0.0 and Microsoft.NET.Test.Sdk 18.12.0. The Linux tree takes the same Sqlite and test package versions. Nothing visible changes.
